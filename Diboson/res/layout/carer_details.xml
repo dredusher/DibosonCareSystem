@@ -1,0 +1,102 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appointments_scrollview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin" >
+
+    <RelativeLayout
+        android:id="@+id/appointment_relativelayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
+        android:orientation="vertical" >
+		
+        <TextView
+            android:id="@+id/title_carer_name"
+            style="@style/customTextView"
+            android:layout_marginTop="@dimen/default_font_size_smaller"
+            android:text="@string/title_carer_name" />
+        
+		<EditText
+		    android:id="@+id/input_carer_name"
+		    style="@style/customEditText"
+		    android:layout_below="@+id/title_carer_name"
+		    android:ems="10"
+		    android:inputType="textCapWords" >
+        </EditText>
+        
+         <TextView
+             android:id="@+id/title_carer_phone"
+             style="@style/customTextView"
+             android:layout_below="@+id/input_carer_name"
+             android:text="@string/title_carer_phone" />
+
+        <EditText
+            android:id="@+id/input_carer_phone"
+            style="@style/customEditText"
+            android:layout_below="@+id/title_carer_phone"
+            android:ems="10"
+            android:inputType="phone" >
+        </EditText>
+        
+        <TextView
+            android:id="@+id/title_carer_bluetooth"
+            style="@style/customTextView"
+            android:layout_below="@+id/input_carer_phone"
+            android:text="@string/title_carer_bluetooth" />
+
+        <EditText
+            android:id="@+id/input_carer_bluetooth"
+            style="@style/customEditText"
+            android:layout_below="@+id/title_carer_bluetooth"
+            android:ems="10"
+            android:inputType="text" >
+        </EditText>
+        
+        <TextView
+            android:id="@+id/title_carer_agency"
+            style="@style/customTextView"
+            android:layout_below="@+id/input_carer_bluetooth"
+            android:text="@string/title_carer_agency" />
+        
+         <Spinner
+            android:id="@+id/input_carer_agency"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/title_carer_agency"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/appointment"
+            />
+         
+          <TextView
+              android:id="@+id/title_carer_photo"
+              style="@style/customTextView"
+              android:layout_below="@+id/input_carer_agency"
+              android:text="@string/enter_file_name_photo" />
+
+    	<EditText
+    	    android:id="@+id/input_carer_photo"
+    	    style="@style/customEditText"
+    	    android:layout_below="@+id/title_carer_photo"
+    	    android:ems="10"
+    	    android:hint="@string/click_select_photo_list" />
+
+         <Button
+             android:id="@+id/carer_new_button"
+             style="@style/customButton"
+             android:layout_below="@+id/input_carer_photo"
+             android:layout_marginTop="@dimen/default_font_size"
+             android:text="@string/carer_new_button" />
+         
+    </RelativeLayout>
+
+</ScrollView>

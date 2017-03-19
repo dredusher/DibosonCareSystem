@@ -1,0 +1,36 @@
+<html>
+
+<head>
+<meta http-equiv="Content-Language" content="en-gb">
+<meta name="GENERATOR" content="Microsoft FrontPage 5.0">
+<meta name="ProgId" content="FrontPage.Editor.Document">
+<meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+<title>Diboson Care System</title>
+</head>
+
+<body>
+
+<hr>
+<h1 align="center"><font face="Arial" color="#0000FF" size="7">Diboson Care System</font></h1>
+<hr>
+<h4 align="center"><font face="Arial" size="6" color="#FFFF00">Commands</font></h4>
+<hr>
+<p><font face="Arial" size="5">
+<a href="http://DYNAMIC_IP_ADDRESS:SOCKET_NUMBER/1.command">Show System Details</a></font></p>
+<p><font face="Arial" size="5">
+<a href="http://DYNAMIC_IP_ADDRESS:SOCKET_NUMBER/2.command">Show Project Log Data</a></font></p>
+<hr>
+<h4 align="center"><font face="Arial" size="6" color="#FFFF00">
+<a href="http://DYNAMIC_IP_ADDRESS:SOCKET_NUMBER/3.command">Start a Particular 
+Activity</a></font></h4>
+<hr>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<p>&nbsp;</p>
+<hr>
+<p align="center"><i><font face="Arial" size="2">DYNAMIC_COPYRIGHT</font></i></p>
+<p align="center">&nbsp;</p>
+
+</body>
+
+</html>

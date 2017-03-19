@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/carer" >
+
+     <TextView
+         android:id="@+id/appointment_active"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_margin="@dimen/default_font_size"
+         android:gravity="center_horizontal"
+         android:text="@string/default_textview"
+         android:textSize="@dimen/default_big_font_size"
+         android:textStyle="bold" />
+     
+    <TextView
+        android:id="@+id/appointment_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/appointment_active"
+        android:layout_margin="@dimen/default_font_size"
+        android:maxLines="@integer/Number1000"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbars="vertical"
+        android:text="@string/default_textview"
+        android:textSize="@dimen/default_font_size_smaller"
+        android:textStyle="bold"
+        android:typeface="monospace" />
+
+</RelativeLayout>

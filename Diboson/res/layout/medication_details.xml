@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/MedicationFormLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge" >
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical" >
+            
+    <TextView
+        android:id="@+id/title_medication_name"
+        style="@style/customTextView"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/enter_name_medication" />
+
+    <EditText
+        android:id="@+id/medication_name"
+        style="@style/customEditText"
+        android:layout_gravity="center"
+        android:ems="10"
+        android:inputType="text"/>
+
+    <TextView
+        android:id="@+id/textView2"
+        style="@style/customTextView"
+        android:text="@string/enter_description_medication" />
+
+    <EditText
+        android:id="@+id/medication_description"
+        style="@style/customEditText"
+        android:ems="10"
+        android:inputType="text"/>
+
+     <TextView
+         android:id="@+id/textViewPhoto"
+         style="@style/customTextView"
+         android:text="@string/enter_file_name_photo" />
+
+    <EditText
+        android:id="@+id/medication_photo"
+        style="@style/customEditText"
+        android:ems="10"
+        android:hint="@string/click_select_photo_list" />
+    
+    <TextView
+        android:id="@+id/textView3"
+        style="@style/customTextView"
+        android:text="@string/select_form_medication" />
+
+    <RadioGroup
+        android:id="@+id/medication_form_radiogroup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" >
+
+        <RadioButton
+            android:id="@+id/tablet_radiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:checked="true"
+            android:text="@string/tablet"
+            android:textSize="@dimen/default_font_size" />
+
+        <RadioButton
+            android:id="@+id/liquid_radiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:text="@string/liquid"
+            android:textSize="@dimen/default_font_size" />
+
+        <RadioButton
+            android:id="@+id/spray_radiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:text="@string/spray"
+            android:textSize="@dimen/default_font_size" />
+
+        <RadioButton
+            android:id="@+id/ointment_radiobutton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:text="@string/ointment"
+            android:textSize="@dimen/default_font_size" />
+
+    </RadioGroup>
+
+    <Button
+        android:id="@+id/medication_form_enter"
+        style="@style/customButton"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/enter_information" />
+
+    <Button
+        android:id="@+id/medication_form_finish"
+        style="@style/customButton"
+        android:text="@string/no_more_medication_enter" />
+    
+     <Button
+         android:id="@+id/medication_delete_button"
+         style="@style/customButton"
+         android:text="@string/medication_delete_button"
+         android:visibility="invisible" />
+     
+      <Button
+          android:id="@+id/medication_reset_button"
+          style="@style/customButton"
+          android:text="@string/medication_reset_button"
+          android:visibility="invisible" />
+    
+    </LinearLayout>
+
+</ScrollView>

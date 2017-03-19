@@ -1,0 +1,919 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Diboson</string>
+    <string name="action_settings">Not In Use</string>
+    <string name="hello_world">This is a test</string>
+    <string name="menu_graphics">Graphics</string>
+    <string name="menu_call">Phone Call</string>
+    <string name="menu_set_number">Set Phone Number</string>
+    <string name="menu_URL">Web Page</string>
+    <string name="menu_record">Record</string>
+    <string name="menu_track_mode">Track Mode</string>
+    <string name="menu_exit">Exit this App</string>
+    <string name="title_activity_child_">Child Activity</string>
+    <string name="title_activity_falls_activity">Falls Activity</string>
+    <string name="dummy_button">Dummy Button</string>
+    <string name="dummy_content">DUMMY\nCONTENT</string>
+    <string name="title_activity_falls">FallsActivity</string>
+    <string name="MusclesForCharity">Muscles\nFor\nCharity</string>
+    <string name="x_coordinate_label">X Coordinate : </string>
+    <string name="y_coordinate_label">Y Coordinate : </string>
+    <string name="z_coordinate_label">Z Coordinate : </string>
+    <string name="value_pointer_label">Value Pointer :</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_audio_recorder">Audio Recorder</string>
+    <string name="choose_format_title">Choose Audio Format</string>
+    <string name="start_recording">Record</string>
+    <string name="stop_recording">Stop</string>
+    <string name="audio_format">Format</string>
+    <string name="recorder_info">To start recording\nPress \'Record\'\nTo stop recording\nPress \'Stop\'</string>
+    <string name="debug_info">Debug Info</string>
+    <string name="title_activity_video_recorder">Video Recorder</string>
+    <string name="menu_audio_recorder">Record Audio</string>
+    <string name="menu_video_recorder">Record Video</string>
+    <string name="title_activity_start_up">App Start Up Information</string>
+    <string name="title_activity_graphics">Graphics Activity</string>
+    <string name="title_activity_display_url">Display a Web Page</string>
+    <string name="URL_To_Display">http://musclesforcharity.wordpress.com</string>
+    <string name="title_activity_track">Track</string>
+    <string name="track_content">Tracking\nApp</string>
+    <string name="track_button">Track</string>
+    <string name="project_directory">/DibosonCareSystem/</string>
+    <string name="track_directory">TrackingDetails/</string>
+    <string name="tracks_directory">Tracks/</string>
+    <string name="audio_directory">audio/</string>
+    <string name="video_directory">Videos/</string>
+    <string name="title_activity_map">Map Activity</string>
+    <string name="menu_always_play">Always Play File</string>
+    <string name="title_activity_video_viewer">Display a Video</string>
+    <string name="title_activity_timer">Timer Activity</string>
+    <string name="menu_timers">Timers and Alarms</string>
+    <string name="title_activity_alarm_service">Alarm Service</string>
+    <string name="title_activity_alarm_actions">Alarm Actions</string>
+    <string name="title_activity_medication">Medication Activity</string>
+    <string name="title_activity_media">MediaActivity</string>
+    <string name="menu_media">Media Options</string>
+    <string name="title_activity_slide_show">Slide Show Activity</string>
+    <string name="photos_directory">AlbumPhotos/</string>
+    <string name="title_activity_help">HelpActivity</string>
+
+    <color name="transparent">#00000000</color>
+
+    <string name="menu_help">Help Instructions</string>
+    <string name="menu_torch">Torch</string>
+    <string name="title_activity_game_one">Game One</string>
+    <string name="menu_game_one">Game One</string>
+    <string name="title_activity_wait">Wait Activity</string>
+    <string name="title_activity_grid">Grid Activity</string>
+    <string name="menu_grid_view">Grid View of Tasks</string>
+    <string name="title_activity_game_two">Game Two</string>
+
+    <string-array name="medication_type">
+        <item>Tablet</item>
+        <item>Liquid</item>
+        <item>Ointment</item>
+    </string-array>
+    <string-array name="medication_type_values">
+        <item>1</item>
+        <item>0</item>
+        <item>-1</item>
+    </string-array>
+
+    <string name="medication_type_title">Medication Type</string>
+    <string name="medication_details">Medication Details</string>
+    <string name="medication_details_default">You must enter the details</string>
+    <string name="medication_header_type">Medication Type</string>
+    <string name="medication_administration_title">Administration of Medicine</string>
+    <string name="medication_dosage_title">Medicine Dosage</string>
+
+    <string-array name="medication_dosage_form">
+        <item>Tablet</item>
+        <item>ml (millilitres)</item>
+    </string-array>
+    <string-array name="medication_dosage_form_values">
+        <item>0</item>
+        <item>1</item>
+    </string-array>
+    <string-array name="medication_days">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+    <string-array name="medication_days_values">
+        <item>0</item>
+        <item>1</item>
+        <item>2</item>
+        <item>3</item>
+        <item>4</item>
+        <item>5</item>
+        <item>6</item>
+    </string-array>
+
+    <string name="title_activity_carer">Carer Activity</string>
+    <string name="title_activity_medication_input">Medication Input Details</string>
+    <string name="title_activity_disk_handling">Device Cloning Utility</string>
+    <string name="medication_details_file">MedicationDetails</string>
+    <string name="voice_command_phrases_file">VoiceCommandPhrases</string>
+
+    <string-array name="days_of_week">
+        <item>Monday</item>
+        <item>Tuesday</item>
+        <item>Wednesday</item>
+        <item>Thursday</item>
+        <item>Friday</item>
+        <item>Saturday</item>
+        <item>Sunday</item>
+    </string-array>
+
+    <string name="title_activity_smshandler">SMS Handler</string>
+    <string name="title_activity_music_player">Diboson Music Player</string>
+    <string name="music_root_folder">/sdcard/Music</string>
+    <string name="menu_shuffle">Shuffle</string>
+    <string name="menu_player_exit">Exit the Music Player</string>
+    <string name="album_art_file">Folder.jpg</string>
+    <string name="music_player_data">MusicPlayerData</string>
+    <string name="menu_rebuild_playlist">Rebuild the Playlist</string>
+    <string name="title_activity_compass">Compass Activity</string>
+    <string name="menu_debug_mode_on">Switch Debug Mode On</string>
+    <string name="menu_debug_mode_off">Switch Debug Mode Off</string>
+    <string name="mail_package_name_htc">com.htc.android.mail</string>
+    <string name="contacts_package_name_htc">com.android.htccontacts</string>
+    <string name="title_activity_voice_recognition">Voice Recognition for Diboson App</string>
+    <string name="clickButtonToSpeak">Click the button below and start speaking</string>
+    <string name="build_copyright">&#169; 2013-2017  Ed Usher</string>
+    <string name="build_date">08/08/2013</string>
+    <string name="phone_number_ed">02085555256</string>
+    <string name="phone_number_phyllis">02089898897</string>
+    <string name="help_file">help_file</string>
+    <string name="whoami">whoami</string>
+    <string name="no_match_found">sorry i could not find a match, please try again</string>
+    <string name="age_message" formatted="false">your birthday is the %s,, making you %d years old</string>
+    <string name="address_ed">Yor address is,,, 57, Kingsdown Road, Leytonstone, London, E11, 3LW</string>
+    <string name="mobile_number_ed">07951479368</string>
+    <string name="medication_file">medication_read_file</string>
+    <string name="title_activity_timer_event">Timer Event Activity</string>
+    <string name="project_name">Diboson</string>
+    <string name="title_activity_blue_tooth">Blue Tooth Activity</string>
+    <string name="title_activity_tcp">TCP Communication Activity</string>
+    <string name="title_activity_server_service">Server for TCP Clients</string>
+    <string name="title_activity_system_info">System Information Activity</string>
+    <string name="title_activity_audio_test">AudioTestActivity</string>
+    <string name="title_activity_server_commands">ServerCommands</string>
+    <string name="devices_file">devices</string>
+    <string name="locate_sound_file">locate.wav</string>
+    <string name="test_file_wav">test.wav</string>
+    <string name="title_activity_scan_network">Scan Network Activity</string>
+    <string name="title_activity_discover_network">Network Discovery Activity</string>
+    <string name="title_activity_test">Activity for Testing Android</string>
+    <string name="datagram_enable">Enable Datagrams</string>
+    <string name="datagram_disable">Disable Datagrams</string>
+    <string name="temp_file_socket">temp_file_socket.wav</string>
+    <string name="title_activity_remote_player_details">Get Remote Player Details</string>
+    <string name="title_activity_audio_stream">Audio Stream Activity</string>
+    <string name="title_activity_nfc_">NFC_Activity</string>
+    <string name="start_bluetooth_discovery">Start Bluetooth Discovery</string>
+    <string name="stop_bluetooth_discovery">Stop Bluetooth Discovery</string>
+    <string name="help_directory">Help/</string>
+    <string name="app_author">Ed Usher</string>
+    <string name="bar_code_data">BarCodeData</string>
+    <string name="title_activity_bar_code_entry">Enter a Bar Code and its Description</string>
+    <string name="google_product_search">http://www.google.co.uk/m/products?q=</string>
+    <string name="falls_version">Falls Detector - Version 1.1</string>
+    <string name="discovered_addresses">Discovered Addresses</string>
+    <string name="title_activity_accelerometer">Accelerometer Activity</string>
+    <string name="menu_accelerometer">Accelerometer</string>
+    <string name="title_activity_diboson_view">Test of Custom View - DibosonView</string>
+    <string name="title_activity_audio_analyser">Audio Analyser Activity</string>
+    <string name="menu_analyser">Audio Analyser</string>
+    <string name="mail_package_name_android">com.google.android.email</string>
+    <string name="contacts_package_name_android">com.google.android.contacts</string>
+    <string name="IP_address_label">IP Address</string>
+    <string name="network_being_discovered_label">Network Being Discovered</string>
+    <string name="please_be_patient_label">Please Be Patient !!</string>
+    <string name="number_of_threads_running_label">Number of Threads Running</string>
+    <string name="title_activity_dialogue">Dialogue Activity</string>
+    <string name="dialogue_directory">Dialogue/</string>
+    <string name="set_the_alarm">Set The Alarm</string>
+    <string name="display_current_alarms">Display Current Alarms</string>
+    <string name="phone_home">Phone Home</string>
+    <string name="select_action_to_take">Select Action To Take</string>
+    <string name="slide_show">Display The Slide Show</string>
+    <string name="start_up_image">Start Up Image</string>
+    <string name="tablet_reminder">Tablet Reminder</string>
+    <string name="title_activity_file_choser">Chose a File</string>
+    <string name="audio_recorder_temp_file">record_temp.raw</string>
+    <string name="audio_file_extension">.wav</string>
+    <string name="title_activity_television">Remote Control of Devices</string>
+    <string name="found">found</string>
+    <string name="no_device_found">no Arduino device found</string>
+    <string name="title_activity_arduino_communicator_service">ArduinoCommunicatorService</string>
+    <string name="title_activity_blue_tooth_communication">Communication to Arduino using BlueTooth</string>
+    <string name="title_activity_blue_tooth_service">Blue Tooth Service</string>
+    <string name="remote_controller">Remote Controller</string>
+    <string name="menu_display_image">Display Image</string>
+    <string name="menu_display_icon">Display Icon</string>
+    <string name="increase_accuracy">Increase Accuracy</string>
+    <string name="decrease_accuracy">Decrease Accuracy</string>
+    <string name="latitude">Latitude</string>
+    <string name="longitude">Longitude</string>
+    <string name="audio_filename">Name of Audio File</string>
+    <string name="wireless">wireless</string>
+    <string name="gps">gps</string>
+    <string name="location_details">Location Details</string>
+    <string name="network">network</string>
+    <string name="last_updated">Last Updated</string>
+    <string name="digital_clock">Digital Clock</string>
+    <string name="location_provider">Location Provider</string>
+    <string name="title_activity_location">Location and Tracking Activity</string>
+    <string name="tracking_mode_on">Set Tracking Mode On</string>
+    <string name="tracking_mode_off">Set Tracking Mode Off</string>
+    <string name="track_log_on">Log Details to File</string>
+    <string name="track_log_off">Stop Logging Details to File</string>
+    <string name="track_log_time">Time between Log Writes</string>
+    <string name="track_log_time_summary">Specify the time in seconds so that after data has been written to the track file no further data will be written until this time has elapsed</string>
+    <string name="set_track_log_time">Set the Time</string>
+    <string name="care_details_file">CareDetails.txt</string>
+    <string name="waiting_for_care_details">Waiting for Care Details .... details should be entered into file \'CareDetails.txt\' in the project directory</string>
+    <string name="press_here_to_continue">Press Here To Continue</string>
+    <string name="press_to_exit">Press the Button to Exit</string>
+    <string name="acknowledgement_file">Acknowledgement.txt</string>
+    <string name="care_visit_tasks_file">CareVisitTasks</string>
+    <string name="default_dose">1.0</string>
+    <string name="select_time_dose">Select the Time for This Dose</string>
+    <string name="enter_dose_take">Enter the Dose To Take</string>
+    <string name="enter_units_dose">Enter the Units of the Dose</string>
+    <string name="enter_notes">Enter any Notes</string>
+    <string name="enter_dose_settings">Enter your Dose Settings</string>
+    <string name="all_doses_entered">All Doses Entered for This Day</string>
+    <string name="enter_name_medication">Enter Name of Medication</string>
+    <string name="enter_description_medication">Enter Description of the Medication</string>
+    <string name="enter_file_name_photo">Enter File Name for Photo</string>
+    <string name="select_form_medication">Select the Form of the Medication</string>
+    <string name="click_select_photo_list">Click to select photo from a list</string>
+    <string name="enter_information">Enter the Information</string>
+    <string name="no_more_medication_enter">No More Medication To Enter</string>
+    <string name="ointment">Ointment</string>
+    <string name="tablet">Tablet</string>
+    <string name="liquid">Liquid</string>
+    <string name="spray">Spray</string>
+    <string name="monday">Monday</string>
+    <string name="tuesday">Tuesday</string>
+    <string name="wednesday">Wednesday</string>
+    <string name="thursday">Thursday</string>
+    <string name="friday">Friday</string>
+    <string name="saturday">Saturday</string>
+    <string name="sunday">Sunday</string>
+    <string name="select_days_doses">Select the Days for Doses</string>
+    <string name="confirm_dose">Confirm Dose</string>
+    <string name="reject_dose">Reject Dose</string>
+    <string name="default_textview">TextView</string>
+    <string name="smtp_server">smtp.live.com</string>
+    <string name="smtp_user_name">diboson@hotmail.co.uk</string>
+    <string name="smtp_user_password">orient8337</string>
+    <string name="smtp_email_receiver">ebmusher@aol.com</string>
+    <string name="smtp_port_number">587</string>
+    <string name="email_details_file">EmailDetails</string>
+    <string name="title_activity_email_details">Set Email Details</string>
+    <string name="select_smtp_server">Please Input the SMTP Server</string>
+    <string name="select_smtp_port">Please Input the SMTP Port</string>
+    <string name="select_smtp_username">Please Input the User Name</string>
+    <string name="select_smtp_password">Please Input the Associated Password</string>
+    <string name="select_smtp_recipients">Please Input SMTP Recipients</string>
+    <string name="smtp_accept_details">Press to Accept the Values</string>
+    <string name="smtp_set_defaults">Set the Default Setting</string>
+    <string name="email_enabled">Enable Emails</string>
+    <string name="email_disabled">Disable Emails</string>
+    <string name="patient_details_file">PatientDetailsFile</string>
+    <string name="welcome_message">Welcome to the Diboson App</string>
+    <string name="title_activity_get_message">GetMessage</string>
+    <string name="input_message">Please Enter your Message</string>
+    <string name="press_to_accept_message">Press to Accept the Message</string>
+    <string name="title_activity_appointments">Appointments Activity</string>
+    <string name="title_appointment_type">Select Appointment Type</string>
+    <string name="title_appointment_name">Who Appointment is With</string>
+    <string name="title_appointment_address">Address of Appointment</string>
+    <string name="title_appointment_contactname">Name of Contact</string>
+    <string name="title_appointment_phone_number">Phone Number</string>
+    <string name="title_appointment_notes">Any Notes</string>
+    <string name="appointment_accept_button">Set the Appointment</string>
+    <string name="appointment_cancel_button">Cancel this Operation</string>
+    <string name="appointments_file">Appointments</string>
+    <string name="appointment_types_file">AppointmentTypes</string>
+    <string name="appointment_edit_button">Edit this Appointment</string>
+    <string name="appointment_delete_button">Delete this Appointment</string>
+    <string name="appointment_new_button">Create New Appointment</string>
+    <string name="stored_data_file">StoredData</string>
+    <string name="appointment_reminder_title">Enter Reminder Details</string>
+    <string name="appointment_reminder_repeat_title">How often reminder is repeated</string>
+    <string name="appointment_reminder_preferred_title">Preferred time for first reminder</string>
+    <string name="title_carer_name">Enter the Carer\'s Name</string>
+    <string name="title_carer_phone">Enter Carer\'s Phone Number</string>
+    <string name="title_carer_bluetooth">Enter Carer\'s Bluetooth Name</string>
+    <string name="carer_new_button">Enter New Carer</string>
+    <string name="carers_file">Carers</string>
+    <string name="carer_log_file">CarerLogFile</string>
+    <string name="visits_file">Visits</string>
+    <string name="title_activity_agency">Creation of Agency Details</string>
+    <string name="title_agency_name">Name of the Agency</string>
+    <string name="title_agency_address">Enter Address of the Agency</string>
+    <string name="title_agency_phonenumber">Enter the Phone Number of the Agency</string>
+    <string name="title_agency_emailaddress">Enter the email address of the Agency</string>
+    <string name="title_agency_contactName">Enter the Contact Name</string>
+    <string name="title_agency_notes">Enter any Relevant Notes</string>
+    <string name="agency_new_button">"Press to Create "</string>
+    <string name="agencies_file">Agencies</string>
+    <string name="menu_agency">Register an Agency</string>
+    <string name="menu_carer">Register a Carer</string>
+    <string name="title_activity_carer_system">Activities associated with Care System</string>
+    <string name="title_activity_care_plan_visit">Create a Care Plan Visit</string>
+    <string name="careplanvisit_new_button">Create a Visit</string>
+    <string name="title_careplanvisit_carer">Select the Name of the Carer</string>
+    <string name="title_careplanvisit_agency">Select the Name of the Agency</string>
+    <string name="title_careplanvisit_starttine">Select when the Visit Starts</string>
+    <string name="title_careplanvisit_duration">Input duration of visit in minutes</string>
+    <string name="menu_care_visit">Enter A Care Visit</string>
+    <string name="title_activity_care_plan">Prepare a Care Plan</string>
+    <string name="menu_care_plan">Prepare a Care Plan</string>
+    <string name="careplan_new_visit_button">Create Details for a New Visit</string>
+    <string name="careplan_done_visit_button">All visit done for this day</string>
+    <string name="register_carer_button">Carers</string>
+    <string name="register_agency_button">Agencies</string>
+    <string name="register_care_plan_button">Care Plans</string>
+    <string name="care_plan_file">CarePlan</string>
+    <string name="print_care_plan_button">Display Current Care Plan</string>
+    <string name="careplan_out_of_bed">Assist with getting Patient out of Bed</string>
+    <string name="careplan_wash_patient">Assist the Patient with Washing</string>
+    <string name="careplan_feed_patient">Assist in Feeding the Patient</string>
+    <string name="title_careplanvisit_tasks">Enter Tasks to be Performed</string>
+    <string name="careplan_visit_summary">No Visit set for Today</string>
+    <string name="careplanvisit_edit_button">Edit the Current Visit</string>
+    <string name="careplanvisit_cancel_button">Cancel this Operation</string>
+    <string name="careplanvisit_delete_button">Delete this Visit</string>
+    <string name="careplanvisit_accept_button">Accept the Data</string>
+    <string name="careplan_visit_new_button">Create A Visit</string>
+    <string name="careplan_visit_edit_button">Edit the Display Visit</string>
+    <string name="careplan_visit_delete_button">Delete the Displayed Visit</string>
+    <string name="careplan_visit_cancel_button">Cancel the Operation</string>
+    <string name="careplan_visit_accept_button">Accept the Entered Data</string>
+    <string name="title_carer_agency">Select the Agency</string>
+    <string name="medication_delete_button">Delete this Medication</string>
+    <string name="medication_reset_button">Reset associated Times</string>
+    <string name="title_activity_dose">Enter Details of a Dose</string>
+    <string name="title_activity_dose_days">Select the Days for Doses</string>
+    <string name="frequency_increment_start">Increment the Start Frequency by 1 KHz</string>
+    <string name="frequency_decrement_end">Decrement theEnd Frequency by 1 KHz</string>
+    <string name="frequency_reset">Reset the Frequencies</string>
+    <string name="menu_development_mode_off">Normal Mode</string>
+    <string name="menu_development_mode_on">Development Mode</string>
+    <string name="grid_cell_legend">Legend  for Image</string>
+    <string name="grid_content_description">Task to be performed</string>
+    <string name="waiting_for_system_update">Waiting for System Update</string>
+    <string name="menu_logcat">Display LogCat Entries</string>
+    <string name="menu_logcat_condensed">LogCat</string>
+    <string name="carer_finish_button">All Details Entered</string>
+    <string name="send_text">Send Text</string>
+    <string name="phone">Phone</string>
+    <string name="text">Text</string>
+    <string name="carer_name">Carer\'s Name</string>
+    <string name="carer_phone">Carer\'s Phone</string>
+    <string name="carer_agency">Carer\'s Agency</string>
+    <string name="help_icon">Press for Help</string>
+    <string name="title_activity_bar_code">Bar Code Activity</string>
+    <string name="title_activity_text_to_speech_service">TextToSpeechService</string>
+    <string name="delete">Delete</string>
+    <string name="title_speaking_clock_gap">Speaking Clock Gap</string>
+    <string name="summary_speaking_clock_gap">The time in minutes between each announcement of the time</string>
+    <string name="title_activity_speaking_clock">Speaking Clock Activity</string>
+    <string name="title_speaking_clock_start">Enter Time When Speaking Clock Starts</string>
+    <string name="speaking_clock_checkbox">Check to enable the speaking clock</string>
+    <string name="confirm_details">Confirm Details</string>
+    <string name="title_speaking_clock_stop">Enter Time When Speaking Clock Stops</string>
+    <string name="title_speaking_clock_interval">Interval</string>
+    <string name="title_sort_by_usage">Sort Cells By Usage</string>
+    <string name="summary_sort_by_usage">Enables the grid cells to be sorted by usage</string>
+    <string name="title_sort_by_legend">Sort Cells By Legend</string>
+    <string name="summary_sort_by_legend">Enables the grid cells to be sorted alphabetically by legend</string>
+    <string name="project_log_file">ProjectLog</string>
+    <string name="help_text">This is the help text view</string>
+    <string name="default_description">default description</string>
+    <string name="mail_package_name_moto">com.android.email</string>
+    <string name="contacts_package_name_moto">com.android.contacts</string>
+    <string name="title_ambient_light_trigger">Ambient Light Trigger Level</string>
+    <string name="summary_ambient_light_trigger">The level at which the \'darkness\' warning appears. \n\nThe light level must be below this level for a number of seconds, which is configurable (see \'darkness\' setting below), before the warning is displayed.\n\nSetting a value of \'0\' will effectively disable ambient light monitoring.</string>
+    <string name="current_light_level">Current light level is</string>
+    <string name="title_ambient_light_rearm">Level at which trigger is rearmed</string>
+    <string name="summary_ambient_light_rearm">Level at which the light trigger is rearmed following the display of the \'darkness\' warning.\n\nFollowing the display of a \'darkness\' warning then it will not be redisplayed until the light level has exceeded that being set here.</string>
+    <string name="carer_photos_directory">CarerPhotos/</string>
+    <string name="photos_notes_directory">PhotoNotes/</string>
+    <string name="button_start_recording">Start Recording</string>
+    <string name="button_stop_recording">Stop Recording</string>
+    <string name="button_play_the_latest">Play the Latest</string>
+    <string name="title_project_log_enable">Enable logging to Project Log</string>
+    <string name="summary_project_log_enable">Set if messages are to be logged to the project log</string>
+    <string name="menu_project_log">Display the Project Log</string>
+    <string name="menu_project_log_condensed">Display Project Log</string>
+    <string name="menu_system_info">Display System Information</string>
+    <string name="menu_system_info_condensed">Display System Info</string>
+    <string name="dialogue_status_messages">Status Messages</string>
+    <string name="dialogue_spoken_phrase">Phrase Spoken</string>
+    <string name="dialogue_matching_phrase">Matching Phrase</string>
+    <string name="popup_dismiss">Press to Acknowledge</string>
+    <string name="title_daily_scheduler">Daily Scheduler</string>
+    <string name="appointment_finished_button">All Done</string>
+    <string name="menu_logcat_latest">Display LogCat - Latest First</string>
+    <string name="menu_logcat_latest_condensed">LogCat - Latest</string>
+    <string name="menu_logcat_clear">Clear LogCat</string>
+    <string name="menu_logcat_clear_condensed">Clear LogCat</string>
+    <string name="menu_project_log_clear">Clear Project Log</string>
+    <string name="menu_project_log_clear_condensed">Clear Project Log</string>
+    <string name="record_a_view">Record A View</string>
+    <string name="enter_file_name_or_device_name">Enter file name or Device Name</string>
+    <string name="IP_192_168_1_4">192.168.1.4</string>
+    <string name="enter_IP_address">Enter IP Address or \'all\'</string>
+    <string name="client">Connect to a TCP Server</string>
+    <string name="send_datagram">Send Datagram</string>
+    <string name="Broadcast">Broadcast</string>
+    <string name="network_discovery">Network Discovery</string>
+    <string name="mask_network_discovery">Long Press to Specify Network Mask then Discover</string>
+    <string name="transmit_buffer">Transmit the Specified File</string>
+    <string name="remote_music_player">Remote Music Player</string>
+    <string name="remote_streaming_device">Set the Remote Streaming Device</string>
+    <string name="set_device_name">Set Device Name</string>
+    <string name="activity">activity</string>
+    <string name="text_activity">activity</string>
+    <string name="rext_handler">handler</string>
+    <string name="text_thread">thread</string>
+    <string name="runOnUIthread">runOnUIthread</string>
+    <string name="text_datagram">datagram</string>
+    <string name="text_button">Button</string>
+    <string name="select_command_for_tag">Select the Command for the Tag</string>
+    <string name="write_command_to_tag">Write Command to Tag</string>
+    <string name="text_output">Text Output</string>
+    <string name="hint_dose_time_units">Enter the Units of the Dose</string>
+    <string name="find_bluetooth_server">Find BlueTooth Server</string>
+    <string name="medication_date">medication_date</string>
+    <string name="medication_day">medication_day</string>
+    <string name="medication_time">medication_time</string>
+    <string name="clone_files">Clone All Project Files</string>
+    <string name="clone_files_ftp">Clone Project Files using FTP</string>
+    <string name="file_summary">File Summary</string>
+    <string name="hint_ip_address">Enter IP address of device to which files are to be copied</string>
+    <string name="title_activity_exercise">Exercise Activity</string>
+    <string name="visual_exercise">Visual Exercise</string>
+    <string name="dexterity_exercise">Dexterity Exercise</string>
+    <string name="exercise_content">Touch the screen to see which exercises are available to you.</string>
+    <string name="title_activity_selector">Selector</string>
+    <string name="edit">Edit</string>
+    <string name="custom">Custom</string>
+    <string name="hint_message">Enter the details of the message</string>
+    <string name="title_activity_shopping">Shopping Activity</string>
+    <string name="shopping_products">Products</string>
+    <string name="shopping_brands">Brands</string>
+    <string name="shopping_items">Items</string>
+    <string name="shopping_shops">Shops</string>
+    <string name="shopping_transactions">Transactions</string>
+    <string name="shopping_file">ShoppingDetails.txt</string>
+    <string name="title_product_name">Product Name</string>
+    <string name="title_activity_shopping_product">Shopping Product</string>
+    <string name="confirm_button">Confirm Details</string>
+    <string name="title_brand_name">Brand Name</string>
+    <string name="title_shop_name">Shop Name</string>
+    <string name="title_item_name">Select Item</string>
+    <string name="title_transaction_name">Transaction</string>
+    <string name="title_amount">Amount</string>
+    <string name="shopping_lists">Lists</string>
+    <string name="title_checkbox_list">Tick to Select</string>
+    <string name="shopping_list">Email Shopping List</string>
+    <string name="yes">Yes</string>
+    <string name="no">No</string>
+    <string name="FileView02">FileView02</string>
+    <string name="FileView01">FileView01</string>
+    <string name="FileView03">FileView03</string>
+    <string name="menu_clone_mode">Set to Clone Mode</string>
+    <string name="title_activity_clone">Clone Activity</string>
+    <string name="title_async_copy">Copy file Async Mode</string>
+    <string name="title_con_async_copy">Async Copy</string>
+    <string name="keep_screen_on">The screen will be kept on for this activity</string>
+    <string name="title_activity_blue_tooth_discovery">BlueToothDiscoveryActivity</string>
+    <string name="discovered_devices">Discovered Devices</string>
+    <string name="bonded_devices">Bonded Devices</string>
+    <string name="title_remote_controller">Remote Controller</string>
+    <string name="summary_remote_controller">Remote Controller Details</string>
+    <string name="title_remote_MAC_address">MAC address of Bluetooth Device</string>
+    <string name="summary_remote_MAC_address">The MAC address of the bluetooth device in the remote controller</string>
+    <string name="title_remote_always">Enable Screen independent of Hardware</string>
+    <string name="summary_remote_always">Check this box if the app screens are to be displayed irrespective of whether there is any hardware.</string>
+    <string name="title_activity_swipe">Swipe Activity</string>
+    <string name="title_section1">Section 1</string>
+    <string name="title_section2">Section 2</string>
+    <string name="title_section3">Section 3</string>
+    <string name="version_label">"Version "</string>
+    <string name="zooming_available">Zooming is available by using the volume buttons.</string>
+    <string name="zooming_reset">Press the RETURN key to restore the display to normal</string>
+    <string name="grid_help_file_header">Grid_</string>
+    <string name="title_activity_run">Run an Activity</string>
+    <string name="set_clone_mode">Place Device into Clone Mode</string>
+    <string name="image_header">Image</string>
+    <string name="note_header">Note</string>
+    <string name="transmit_clone_mode">Clone Files To A Device</string>
+    <string name="tracking_file_format">Note_%1$d_%2$d_%3$d.wav</string>
+    <string name="image_file_format">Image_%1$d_%2$d_%3$d.jpg</string>
+    <string name="tracking_file_format_pattern">\\S*_(\\d*)_(\\d*)_(\\d*).\\S*</string>
+    <string name="title_activity_invade">InvadeActivity</string>
+    <string name="invade_hint">Will contain details of invading device</string>
+    <string name="InstallationFile">InstallationFile</string>
+    <string name="title_activity_activation">ActivationActivity</string>
+    <string name="activation_key_testview">Please enter the activation key that you have been given</string>
+    <string name="activation_key_button">Enter Activation Key</string>
+    <string name="activation_key_hint">enter the activation key</string>
+    <string name="blank_textview"></string>
+    <string name="title_activity_new_settings">NewSettingsActivity</string>
+
+    <string-array name="fragment_titles">
+        <item>System Information</item>
+        <item>Project Log</item>
+        <item>LogCat</item>
+        <item>LogCat (Latest First)</item>
+    </string-array>
+
+    <string name="data_refreshed">The data on the screen has been refreshed</string>
+    <string name="noise_file">NoiseFile</string>
+    <string name="delete_dose">Delete this Dose</string>
+    <string name="email_medication_details">Do you want to email details of your medication details ??</string>
+    <string name="press_to_confirm">Press to Confirm</string>
+    <string name="start_activity">Start An Activity</string>
+    <string name="title_activity_radar">Radar Capture Activity</string>
+    <string name="radar_description">Generalised radar graphics</string>
+    <string name="web_directory">htdocs</string>
+    <string name="file_list_hint">This window will display the names of all files transferred to the chosen device</string>
+    <string name="timeout_clone_mode_request">Timeout waiting for response to clone mode request</string>
+    <string name="title_activity_navigation_drawer">Navigation Drawer Activity</string>
+    <string name="drawer_open">Open navigation drawer</string>
+    <string name="drawer_close">Close navigation drawer</string>
+    <string name="photo_add_comment">If you want to add a comment to a photo then just touch the microphone symbol</string>
+    <string name="photo_unfortunately">unfortunately there are no photos to be displayed</string>
+    <string name="photo_unfortunately_no_folder">Unfortunately the folder does not exist</string>
+    <string name="app_description">Provides tools to help people be cared for in their own home.</string>
+    <string name="bluetooth_discover">Start Discovery</string>
+    <string name="in_range">\u0020is in range</string>
+    <string name="out_of_range"> is out of range</string>
+    <string name="welcome_to_care_system">welcome to this care system, which is now ready to use.</string>
+    <string name="the_aim_is">The aim is to keep you safe, healthy and happy in your own home.</string>
+    <string name="try_and_relax">Try and relax and let the system help you.</string>
+    <string name="title_activity_appointment_swipe">AppointmentSwipeActivity</string>
+    <string name="bluetooth_not_supported">Bluetooth is not supported on this device</string>
+    <string name="no_music_to_play">Sorry but there is no music to play</string>
+    <string name="unable_to_send_sms">Unable to send an SMS message as there is no compatible device</string>
+    <string name="edit_the_alarm">Edit an Alarm</string>
+    <string name="add">Add</string>
+    <string name="alarm_file_name">AlarmDataFile</string>
+    <string name="message">Free Text Message</string>
+    <string name="title_activity_display_amessage">Display A Message</string>
+    <string name="press_to_cancel">Press to Cancel the Displayed Message</string>
+    <string name="front_facing_camera">Front Facing Camera</string>
+    <string name="rear_facing_camera">Rear Facing Camera</string>
+    <string name="video_file">local_video.mp4</string>
+    <string name="title_activity_upn_p">UPnP Activities</string>
+    <string name="title_activity_we_mo">Belkin WeMo Activity</string>
+    <string name="title_activity_we_mo_service">WeMoService</string>
+    <string name="request_a_refresh">Request A Refresh</string>
+    <string name="set_a_timer">Set Up a Timer</string>
+    <string name="title_activity_we_mo_timer">Timers for the Belkin WeMo Devices</string>
+    <string name="select_days">Select the Required Days</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="reset_all_timers">Clear All of the Timers</string>
+    <string name="title_activity_we_mo_device_timer">Belkin WeMo Device Timer Activity</string>
+    <string name="getting_dark">It seems that it is getting dark. Please make sure you switch the lights on.</string>
+    <string name="title_battery_category">Battery Alarm Configuration</string>
+    <string name="summary_battery_category">This section enables the levels at which the alarms are configured and the actions that are to be taken.</string>
+    <string name="auto_scroll_enable">Enable Auto Scrolling</string>
+    <string name="auto_scroll_disable">Disable Auto Scrolling</string>
+    <string name="album_art_button">This is the art associated with the album</string>
+    <string name="album_name_textview">Album Name</string>
+    <string name="artist_textview">Artist</string>
+    <string name="track_name_textview">Track Name</string>
+    <string name="track_composer_textview">Track Composer</string>
+    <string name="cancel_this_operation">Cancel this Selection</string>
+    <string name="cancel_this_operation_rebuild">Cancel this Selection and Rebuild Original List</string>
+    <string name="track_progress_textview">Track Progress</string>
+    <string name="select_track">Select the Required Track</string>
+    <string name="track_title">Track Title</string>
+    <string name="track_artist">Artist</string>
+    <string name="track_album">Album</string>
+    <string name="composer_album">Composer</string>
+    <string name="enter_search_string">Enter the string to be searched for</string>
+    <string name="search_string">Search String</string>
+    <string name="select_search_fields">Check the Items to be Searched</string>
+    <string name="serverservice_destroyed">ServerService has been destroyed</string>
+    <string name="default_language_not_supported">Default Locale Language is not supported</string>
+    <string name="scrolling_track">Turn Scrolling of Track Information\u0020</string>
+    <string name="title_activity_screen_capture">Screen Capture Activity</string>
+    <string name="received_from">Received from\u0020</string>
+    <string name="unable_to_connect">Unable to connect to remote device</string>
+    <string name="received_file_1">Received_File_1_</string>
+    <string name="received_file_2">Received_File_2_</string>
+    <string name="enter_text">Enter your text here</string>
+    <string name="ddns_ip_address">bt2994.myfoscam.org</string>
+    <string name="press_text">Press the above text to reset to the default value</string>
+    <string name="noises_directory">Noises/</string>
+    <string name="title_activity_television_swipe">Remote Controllers - Swipe to Change</string>
+    <string name="delete_button">Delete this Item</string>
+    <string name="shopping_list_complete">Complete Shopping List</string>
+    <string name="buy">Buy</string>
+    <string name="title_activity_email">Manual Sending of an Email</string>
+    <string name="email_message">Email Message</string>
+    <string name="title_project_log_clear">Optionally clear the project log on restart</string>
+    <string name="summary_project_log_clear">Checking this box will cause the project log to be cleared when the application is started.</string>
+    <string name="stored_value">The stored value is</string>
+    <string name="title_activity_tone_generator">Tone Generator Activity</string>
+    <string name="tone_generator_message" formatted="false">A tone of \n%d Hz\nwill be played for \n%d milliSeconds</string>
+    <string name="click_to_set_duration">Click to set the duration</string>
+    <string name="click_to_set_buffer_size">Click to set the buffer size</string>
+    <string name="default_buffer_size">Use default buffer size</string>
+    <string name="click_to_set_response_time">Click to set the response time</string>
+    <string name="click_to_set_prompt_interval">Click to set the interval between prompts</string>
+    <string name="click_to_set_tone">Click to set the tone frequency</string>
+    <string name="cancel_operation">Cancel this Operation</string>
+    <string name="current_care_plan">Current Care Plan</string>
+    <string name="current_visits">Current and Stored Visits</string>
+    <string name="show_bonded_devices">Show Bonded Devices</string>
+    <string name="title_activity_video_recorder_simple">VideoRecorderSimple</string>
+    <string name="title_activity_video_recorder_old">Video Recorder (pre Jelly Bean)</string>
+    <string name="title_activity_tvchannels">TV Channels</string>
+    <string name="epg_channels">Obtain EPG Channels</string>
+    <string name="epg_select_channels">Select TV Channels</string>
+    <string name="epg_selected_channels">Show Selected TV Channels</string>
+    <string name="select">Select</string>
+    <string name="deselect">\u0020Deselect\u0020</string>
+    <string name="epg_channels_available_file">EPG_ChannelsAvailable</string>
+    <string name="epg_channels_selected_file">EPG_ChannelsSelected</string>
+    <string name="epg_show_epg">"Show Current EPG"</string>
+    <string name="epg_generate">"Generate EPG"</string>
+    <string name="title_activity_show_epg">Display the EPG</string>
+    <string name="epg_details">Show Details of Programs</string>
+    <string name="epg_details_long_press_on">Align Programs to the last Selected Time</string>
+    <string name="epg_details_long_press_off">Show Programs by Time</string>
+    <string name="epg_hide_details">Hide Details of Programs</string>
+    <string name="epg_search">Set Search String</string>
+    <string name="menu_logcat_write">Write LogCat to File</string>
+    <string name="menu_logcat_write_condensed">Write LogCat to File</string>
+    <string name="menu_logcat_filter">Enter LogCat Filter</string>
+    <string name="menu_logcat_filter_condensed">Enter LogCat Filter</string>
+    <string name="epg_directory">EPGDirectory/</string>
+    <string name="appointments_directory">AppointmentsDirectory/</string>
+    <string name="remote_device_available">the bluetooth remote controller is available </string>
+    <string name="menu_read_file_on">Read the selected file</string>
+    <string name="menu_read_file_off">Do not read the selected file</string>
+    <string name="start_up_title">Diboson Care System\nby\nEd Usher</string>
+    <string name="title_activity_documentation">Documentation Activity</string>
+    <string name="add_note">Add Note</string>
+    <string name="documentation_directory">Documentation/</string>
+    <string name="screen_capture_directory">ScreenCaptureDirectory/</string>
+    <string name="notes_summary">Please enter any notes that you wish to record for the selected activity</string>
+    <string name="notes_title">Please enter the notes</string>
+    <string name="title_activity_database">Database Utilities</string>
+    <string name="scan">Scan</string>
+    <string name="title_activity_panic_alarm">Panic Alarm Activity</string>
+    <string name="panic_alarm_disable">Disable Panic Alarm</string>
+    <string name="panic_alarm_enable">Enable Panic Alarm</string>
+    <string name="panic_alarm_start">Set Start Time</string>
+    <string name="panic_alarm_end">Set End Time</string>
+    <string name="panic_alarm_interval">Set Interval between Prompts</string>
+    <string name="panic_alarm_response">Set the Response Time</string>
+    <string name="panic_alarm_actions">Set the Alarm Commands</string>
+    <string name="panic_alarm_acknowledge">Press if you are OK</string>
+    <string name="panic_alarm_prompts">Set the Prompt Commands</string>
+    <string name="panic_alarm_security">"Set Security "</string>
+    <string name="entered_security_code">The Entered Security Code</string>
+    <string name="panic_alarm_response_actions">Set the Response Commands</string>
+    <string name="bluetooth_delay">There will be a slight delay whilst trying to locate a remote device</string>
+    <string name="title_carer_visit">Carer Visit Variables</string>
+    <string name="summary_carer_visit">This section enables variables associated with the visit of a carer to be configured.</string>
+    <string name="press_for_help">Press for Help</string>
+    <string name="actions_when_fall_occurs">Define Actions when a Fall Occurs</string>
+    <string name="status">Status</string>
+    <string name="display_care_visit_log_button">Display the Visits Log</string>
+    <string name="type_in_track_file_name">Type in the file where details are to be logged</string>
+    <string name="track_file">Enter File Name</string>
+    <string name="enter_track_file">Enter the name of the file where the track locations are to be logged.</string>
+    <string name="track_email_title">Email Track</string>
+    <string name="track_email_summary">Please indicate whether the latest track is to be emailed to the configured recipient</string>
+    <string name="set">Set</string>
+    <string name="none_found">none found</string>
+    <string name="language">\u0020\u0020Language =\u0020</string>
+    <string name="api_level">API level =\u0020</string>
+    <string name="package_last_updated" formatted="false">Package was last updated \nat %s on %s</string>
+    <string name="current_time">Current time\u0020</string>
+    <string name="current_battery_level">Current battery level %d %%\u0020</string>
+    <string name="screen_density" formatted="false">Screen Density = %d (%.1f)</string>
+    <string name="remote_controller_server">Remote Controller Server =\u0020</string>
+    <string name="phone_server">Phone Server =\u0020</string>
+    <string name="belkin_wemo_controller">Belkin WeMo Controller =\u0020</string>
+    <string name="bluetooth_discovery_disabled">Bluetooth Discovery Disabled</string>
+    <string name="project_folder_info">Project Folder :\u0020</string>
+    <string name="phone_number_info">Phone Number =\u0020</string>
+    <string name="ip_address_info">IP Address =\u0020</string>
+    <string name="strict_mode_info">Strict Mode =\u0020</string>
+    <string name="screen_width_info">Screen Width in dp %.1f</string>
+    <string name="device_info" formatted="false">Device Number = %d     %s</string>
+    <string name="public_url_info" formatted="false">Public Access URL = http://%s:%d/index.html</string>
+    <string name="screen_size_info" formatted="false">Screen Size\nwidth = %d (pixels)    height = %d (pixels)"</string>
+    <string name="generated_from_shopping_list">Generated from the current shopping list\n\n</string>
+    <string name="shop_info_format">"==============================\n%s\n==============================\n</string>
+    <string name="enter_password_title">Password</string>
+    <string name="enter_password_summary">The password must be entered before settings can be entered</string>
+    <string name="enter_password_hint">Please enter the password</string>
+    <string name="enter_password_error">You entered an invalid password</string>
+    <string name="ready_to_go">Ready to go</string>
+    <string name="item_first">first</string>
+    <string name="item_last">last</string>
+    <string name="item_next">next</string>
+    <string name="item_only">only</string>
+    <string name="titlebar_default">This is a test title bar</string>
+    <string name="email_signature">&lt;font face=\"Arial\"&gt;&lt;p align=\"center\"&gt;Generated automatically by the Diboson Care System - do &lt;b&gt;NOT&lt;/b&gt; reply to this email.&lt;br&gt;&lt;br&gt;All displayed information is confidential and must &lt;b&gt;NOT&lt;/b&gt; be disclosed without prior written permission.&lt;br&gt;&lt;br&gt;The sender does not accept responsibility for the accuracy or completeness of the contents of this email as it has been transmitted over a public network. If you receive this email in error please accept our apology. If this is the case we would be obliged if you would contact the &lt;a href=\"mailto:ebmusher@aol.com\">sender&lt;/a&gt; and then delete this email.&lt;/p&gt;&lt;/font&gt;</string>
+    <string name="started_manually">manually</string>
+    <string name="started_automatically">automatically</string>
+    <string name="started_by_alarm">by alarm</string>
+    <string name="app_started">App started\u0020</string>
+    <string name="menu_alarm_data">Display the Alarm Data</string>
+    <string name="send_hello_message">Send HELLO Message</string>
+    <string name="monitor_a_device">Monitor a Device</string>
+    <string name="monitor_data_action_title">Action Data from Monitored Device</string>
+    <string name="monitor_data_action_summary">Decide how the data from a monitored device is to be handled.</string>
+    <string name="monitor_device_finished" formatted="false">The device %s will no longer be monitored</string>
+    <string name="monitor_device_currently_monitoring" formatted="false">The device %s is currently being monitored</string>
+    <string name="title_activity_liquid">Liquid Activity</string>
+    <string name="liquid_register">Register A Liquid</string>
+    <string name="liquid_process">Process Liquids</string>
+    <string name="ambient_light_value">Ambient Light Level\n</string>
+    <string name="enter_liquid_name">Enter the name of the liquid being registered</string>
+    <string name="register_this_liquid">Register This Liquid</string>
+    <string name="press_to_define_actions">Press to Define Actions</string>
+    <string name="liquid_actions_message">The defined actions will be shown here</string>
+    <string name="liquid_start_processing">Start Processing</string>
+    <string name="spoken_phrase_entry">Enter Spoken Phrases</string>
+    <string name="spoken_phrase_enter_hint">Enter the spoken phrases to be matched.\n\nEach phrase must be on a separate line.</string>
+    <string name="spoken_phrase_actions_title">Actions to be taken</string>
+    <string name="spoken_phrase_define">Define Spoken Phrase</string>
+    <string name="enter_actions_to_be_taken">Enter the actions of be taken</string>
+    <string name="press_to_define_spoken_phrase">Press to Define Spoken Phrase</string>
+    <string name="liquid_clear">Clear the Stored Liquids</string>
+    <string name="liquid_display">Display the Stored Liquids</string>
+    <string name="liquid_tolerance">Set the Detection Tolerance</string>
+    <string name="liquid_tolerance_title">Set Detection Tolerance</string>
+    <string name="liquid_tolerance_summary">When checking the ambient light value then this tolerance will define a range within which a liquid\'s value needs to be.</string>
+    <string name="spoken_phrase_display">Display Stored phrases</string>
+    <string name="no_network">This device does not have access to a network so it will have limited functionality.</string>
+    <string name="prediction_message" formatted="false">Prediction will occur after you type in %d characters</string>
+    <string name="title_activity_nfc">NFC Activity</string>
+    <string name="command_write_title_string">Data to be Written to Tag</string>
+    <string name="bar_code_description_hint">Enter the description associated with the bar code.</string>
+    <string name="bar_code_actions_hint">Enter the actions associated with the bar code or press the button below to help.</string>
+    <string name="bar_code_create">Create Bar Code Entry</string>
+    <string name="bar_code_search">"Search Google "</string>
+    <string name="description">Description</string>
+    <string name="actions">Actions</string>
+    <string name="nfc_remote_processor">Set the Remote Processor</string>
+    <string name="epg_sort_channels">Sort TV Channels</string>
+    <string name="epg_do_not_sort_channels">Do Not Sort TV Channels</string>
+    <string name="title_activity_notifications">Notifications Activity</string>
+    <string name="acknowledge">Acknowledge</string>
+    <string name="named_actions_file">NamedActions</string>
+    <string name="title_activity_named_actions">Named Actions Activity</string>
+    <string name="named_actions_name">Name of Actions</string>
+    <string name="named_actions_name_hint">Enter the name used for the stored actions</string>
+    <string name="named_actions_actions">Define the associated Actions</string>
+    <string name="named_actions_actions_hint">Enter the actions directly or use the wizard.</string>
+    <string name="named_actions_define_legend">Define the Named Actions</string>
+    <string name="named_actions_wizard_button">Actions Wizard</string>
+    <string name="named_actions_name_title">Select the Name of the Stored Actions</string>
+    <string name="test">Test</string>
+    <string name="title_activity_upn_p_">WeMo Control using CyberGarage</string>
+    <string name="title_activity_group">Group Activities</string>
+    <string name="title_group_list_name">Group List Name</string>
+    <string name="enter_group_list_name">Enter the name that is to be associated with this group list.</string>
+    <string name="input_notes">Enter the Notes</string>
+    <string name="hint_notes">Type in any notes to be added</string>
+    <string name="press_to_accept_notes">Press to accept the Notes</string>
+    <string name="group_delete_all">Delete all Groups</string>
+    <string name="group_delete">Delete A Group</string>
+    <string name="group_display">Display A Group</string>
+    <string name="group_create">Create A Group</string>
+    <string name="group_redefine">Redefine A Group</string>
+    <string name="press_to_speak_notes">Press to Speak Notes</string>
+    <string name="title_activity_documents">Documents Activity</string>
+    <string name="document_registration">Register a Document</string>
+    <string name="document_register">Register the Document</string>
+    <string name="document_browse">Browse for the Document</string>
+    <string name="document_enter_title">Enter the title of the document</string>
+    <string name="document_path">Enter the path to the document or click the button below.</string>
+    <string name="press_to_record_notes">Record Notes</string>
+    <string name="press_to_play_notes">Play Most Recent Notes</string>
+    <string name="press_to_play_notes_format">Long press to play all or one of the %s stored</string>
+    <string name="stop_playing_notes">Stop playing the Notes</string>
+    <string name="title_activity_play_music_file">Play Music File Activity</string>
+    <string name="progress_of_notes">\u0020\u0020\u0020Progress of Current Playback\u0020\u0020\u0020</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="file_not_available">File not available yet</string>
+    <string name="day_month_format">dd/MM</string>
+
+    <string-array name="appointment_type_values">
+        <item>hospital</item>
+        <item>doctor</item>
+        <item>foot clinic</item>
+        <item>hairdresser</item>
+        <item>dentist</item>
+        <item>optician</item>
+        <item>miscellaneous</item>
+    </string-array>
+    <string-array name="appointment_reminder_start_values">
+        <item>no reminder</item>
+        <item>1 day before appointment</item>
+        <item>2 days before appointment</item>
+        <item>1 week before appointment</item>
+        <item>30 days before appointment</item>
+        <item>2 hours before appointment</item>
+    </string-array>
+    <string-array name="appointment_reminder_gap_values">
+        <item>\u0020</item>
+        <item>reminder every hour</item>
+        <item>reminder every day</item>
+        <item>reminder every week</item>
+        <item>reminder every 10 minutes</item>
+    </string-array>
+
+    <string name="permissions_denied">The runtime permissions do not allow this app to start.\n\nStart \'Settings\' and change the permissions for this app</string>
+    <string name="request_device_details">Request Device Details</string>
+    <string name="audio_recorder_message">the following note was recorded on\u0020</string>
+    <string name="generating_address_file">Generating the file of IP addresses</string>
+    <string name="maximum_volume_title">Maximum Volume</string>
+    <string name="maximum_volume_frequency">Frequency with Maximum Volume</string>
+    <string name="no_help_exists">No help exists</string>
+    <string name="notes_speak">Speak Notes</string>
+    <string name="notes_play">Play Audio Notes</string>
+    <string name="notes_finish">Finish</string>
+    <string name="tasks_to_do">Care Visit Tasks</string>
+    <string name="visit_task_reminder">Remember to check existing visits to ensure that any associated tasks reflect the changes that have been made.</string>
+    <string name="clone_list">The list of received files will appear here</string>
+    <string name="clone_waiting">Waiting for cloning to Start</string>
+    <string name="cloning_error_files">The following files failed to be cloned\n\n</string>
+    <string name="mtu_title">Select the MTU multiplier for buffer size&quot;</string>
+    <string name="mtu_summary">Set the multiplier that will be used when setting the size of buffer used for transmitting files. The buffer size will be (the entered multipler * the MTU)</string>
+    <string name="cloning_to_format">Cloning to %s in progress</string>
+    <string name="cloning_transferring_format" formatted="false">Transferring File %d of %d</string>
+    <string name="cloning_processing_format" formatted="false">Processing File %d of %d</string>
+    <string name="cloning_to">Cloning to\u0020</string>
+    <string name="cloning_wrong_mode">The destination device is not in clone mode - do you want to try the FTP utilities ??</string>
+    <string name="values_folder_title">Values Folder =\u0020</string>
+    <string name="transfer_block_format" formatted="false">Transfer Block Counter = %d of %d</string>
+    <string name="cloned_number">Number of Files Cloned =\u0020</string>
+    <string name="cloning_progress">Cloning in Progress from\u0020</string>
+    <string name="cloner_default_file_size_format">Because the device is old then only files below\n%d bytes\nwill be cloned</string>
+    <string name="background_title">Change Background Image</string>
+    <string name="background_summary">Decide whether to change the image used for the background or just reset to get the default image.</string>
+    <string name="background_define">Define Background Image</string>
+    <string name="background_reset">Reset Background Image</string>
+    <string name="documentation_title">Documentation or Screen Capture</string>
+    <string name="documentation_summary">Select whether notes are to be added to the testing documentation or the current screen is to be captured.</string>
+    <string name="documentation">Documentation</string>
+    <string name="screen_capture">Capture Screen</string>
+    <string name="flashlight_time">Flashlight Operation Time</string>
+    <string name="set_time">Set Time</string>
+    <string name="flashlight_summary">Select the time, in seconds, for which the torch will be switched\u0020</string>
+    <string name="on">on</string>
+    <string name="On">On</string>
+    <string name="off">off</string>
+    <string name="Off">Off</string>
+    <string name="sd_card_not_mounted">SD Card not Mounted</string>
+    <string name="speaking_clock_text">Select if the time is to be displayed</string>
+    <string name="separating_line">----------------------------------</string>
+    <string name="title_activity_daily_summary">DailySummaryActivity</string>
+    <string name="carer_visits">Carer Visits</string>
+    <string name="appointments">Appointments</string>
+    <string name="timer_alarms">Timer Alarms</string>
+    <string name="another_instance">Another instance started at \u0020</string>
+    <string name="speaking_clock_westminster">Select for Westminster Chimes</string>
+    <string name="menu_bugs">Details of Known Bugs</string>
+    <string name="menu_notes">Display Notes</string>
+    <string name="title_project_log">Project Log</string>
+    <string name="title_logcat_latest_first">Displaying LogCat - Latest Entries First</string>
+    <string name="title_notes">Program Notes</string>
+    <string name="title_bugs">Program Bugs</string>
+    <string name="title_logcat">Displaying LogCat Entries</string>
+    <string name="title_stored_alarms">Stored Alarms</string>
+    <string name="filter_none">No Filter</string>
+    <string name="filter_format">Filter = \'%s\'</string>
+    <string name="enter_logcat_filter">Enter LogCat Filter</string>
+    <string name="enter_logcat_filter_summary">Please enter the string that will be used to filter the LogCat entries. Leave empty if no filter is needed.</string>
+    <string name="debug_version">Debug Version</string>
+    <string name="release_version">Release Version</string>
+    <string name="stored_alarms_none">There are no stored alarms</string>
+
+</resources>

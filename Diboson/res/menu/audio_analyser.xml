@@ -1,0 +1,6 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/frequency_increment_start" android:title="@string/frequency_increment_start"></item>
+    <item android:id="@+id/frequency_decrement_end" android:title="@string/frequency_decrement_end"></item>
+    <item android:id="@+id/frequency_reset" android:title="@string/frequency_reset"></item>
+
+</menu>

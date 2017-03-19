@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_grey"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/epg_date"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginStart="@dimen/default_font_size"
+        android:text="@string/blank_textview"
+        android:textColor="@color/red" />
+    
+    <TextView
+        android:id="@+id/epg_start_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginStart="@dimen/default_big_font_size"
+        android:layout_toRightOf="@+id/epg_date"
+        android:layout_toEndOf="@+id/epg_date"
+        android:text="@string/blank_textview"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/epg_end_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBaseline="@+id/epg_start_time"
+        android:layout_alignBottom="@+id/epg_start_time"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginStart="@dimen/default_font_size"
+        android:layout_toRightOf="@+id/epg_start_time"
+        android:layout_toEndOf="@+id/epg_start_time"
+        android:text="@string/blank_textview"
+        android:textStyle="bold" />
+    
+    <TextView
+        android:id="@+id/epg_genre"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginEnd="@dimen/default_font_size"
+        android:text="@string/blank_textview"
+        android:textColor="@color/gray"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/epg_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/epg_start_time"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginStart="@dimen/default_big_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginEnd="@dimen/default_font_size"
+        android:text="@string/blank_textview"
+        android:textColor="@color/dark_blue_background" />
+
+    <TextView
+        android:id="@+id/epg_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/epg_title"
+        android:layout_alignStart="@+id/epg_title"
+        android:layout_below="@+id/epg_title"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginLeft="@dimen/Font_40dp"
+        android:layout_marginStart="@dimen/Font_40dp"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginEnd="@dimen/default_font_size"
+        android:maxHeight="@dimen/activity_horizontal_margin"
+        android:maxLines="@integer/Number30"
+        android:text="@string/blank_textview"
+        android:textColor="@color/gray" />
+ 
+</RelativeLayout>

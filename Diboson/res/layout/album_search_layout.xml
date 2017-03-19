@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/album_search_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <TextView
+         android:id="@+id/Select_search_fields_textview"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_marginLeft="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_big_font_size"
+         android:layout_marginTop="@dimen/default_big_font_size"
+         android:gravity="center"
+         android:text="@string/select_search_fields"
+         android:textSize="@dimen/default_font_size" />
+ 
+    <CheckBox
+        android:id="@+id/title_checkBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/Select_search_fields_textview"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginRight="@dimen/default_big_font_size"
+        android:checked="true"
+        android:text="@string/track_title" />
+
+    <CheckBox
+        android:id="@+id/artist_checkBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/title_checkBox"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginRight="@dimen/default_big_font_size"
+        android:text="@string/track_artist" />
+
+    <CheckBox
+        android:id="@+id/album_checkBox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/artist_checkBox"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginRight="@dimen/default_big_font_size"
+        android:text="@string/track_album" />
+
+     <CheckBox
+         android:id="@+id/composer_checkBox"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@id/album_checkBox"
+         android:layout_marginLeft="@dimen/default_big_font_size"
+         android:layout_marginRight="@dimen/default_big_font_size"
+         android:text="@string/composer_album" />
+     
+      <TextView
+          android:id="@+id/Album_search_testview_title"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@+id/composer_checkBox"
+          android:layout_centerVertical="false"
+          android:layout_marginLeft="@dimen/default_big_font_size"
+          android:layout_marginRight="@dimen/default_big_font_size"
+          android:layout_marginTop="@dimen/default_font_size"
+          android:gravity="center"
+          android:text="@string/search_string"
+          android:textSize="@dimen/default_font_size" />
+
+     <EditText
+         android:id="@+id/album_search_testview"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/Album_search_testview_title"
+         android:layout_marginLeft="@dimen/default_big_font_size"
+         android:layout_marginRight="@dimen/default_big_font_size"
+         android:layout_marginTop="@dimen/default_big_font_size"
+         android:ems="10"
+         android:hint="@string/enter_search_string"
+         android:maxLines="1"
+         android:minLines="1" >
+
+         <requestFocus />
+     </EditText>
+
+ 
+</RelativeLayout>

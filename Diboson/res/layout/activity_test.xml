@@ -1,0 +1,102 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/TestLinearLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/carer"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".TestActivity" >
+
+    <TextView
+        android:id="@+id/test_activity_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:gravity="center"
+        android:text="@string/text_activity"
+        android:textSize="@dimen/Font_28dp" />
+    
+    <TextView
+        android:id="@+id/test_handler_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/rext_handler"
+        android:textSize="@dimen/Font_28dp" />
+    
+    <TextView
+        android:id="@+id/test_thread_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/text_thread"
+        android:textSize="@dimen/Font_28dp" />
+    
+     <TextView
+         android:id="@+id/test_runonui_view"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:gravity="center"
+         android:text="@string/runOnUIthread"
+         android:textSize="@dimen/Font_28dp" />
+     
+      <TextView
+          android:id="@+id/test_datagram_view"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:gravity="center"
+          android:text="@string/text_datagram"
+          android:textSize="@dimen/Font_16dp" />
+      
+      <TextView
+          android:id="@+id/test_marquee"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:ellipsize="marquee"
+          android:fadingEdge="horizontal"
+          android:singleLine="true"
+          android:marqueeRepeatLimit="marquee_forever"
+          android:scrollHorizontally="true"
+          android:text="This is a simple test to see if I can get marquee working on this display"
+          android:textColor="#ff4500"
+          android:textSize="@dimen/default_big_font_size" />
+      
+       
+      <TextView
+          android:id="@+id/test_marquee2"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:ellipsize="marquee"
+          android:fadingEdge="horizontal"
+          android:singleLine="true"
+          android:marqueeRepeatLimit="marquee_forever"
+          android:scrollHorizontally="true"
+          android:text="Another example of a long text message in a field to illustrate the use of the marquee ellipsize"
+          android:textColor="#ff4500"
+          android:textSize="@dimen/default_big_font_size" />
+      
+      <ImageView
+          android:id="@+id/test_image_view"
+          android:layout_width="124dp"
+          android:layout_height="124dp"
+          android:layout_gravity="center"
+          android:clickable="true"
+          android:contentDescription="@string/default_description"
+          android:src="@drawable/bouncing_ball" />
+
+      <Button
+          android:id="@+id/test_button"
+          style="@style/customButton"
+          android:layout_marginTop="@dimen/default_font_size"
+          android:text="@string/text_button" />
+
+</LinearLayout>

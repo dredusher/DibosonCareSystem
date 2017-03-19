@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="press_another_liquid">Press the button to check for another liquid</string>
+    <string name="liquids_cleared">The stored liquids have been cleared</string>
+    <string name="default_light_level_measurement">Make sure that the light sensor is clear so that the default light level can be measured</string>
+    <string name="press_when_ready">Press the button when ready</string>
+    <string name="detected_liquid_display">Detected liquid will be displayed here</string>
+    <string name="ambient_light_level_format">Background light level has been measured (%d) so you can place the liquid on the sensor</string>
+    <string name="liquid_no_name">A name needs to be given for the liquid being registered.</string>
+    <string name="liquid_being_replaced_format">The existing entry for \'%s\' is being replaced</string>
+    <string name="liquid_ambient_light_format">Ambient Light Value\n%.0f</string>
+    <string name="liquid_detected">Detected\u0020</string>
+    <string name="liquid_delete_format">Do you really want to delete the entry for \'%s\'</string>
+    <string name="liquid_all_deleted">All of the stored liquids have been deleted.</string>  
+    <string name="liquid_scaled_light_level_format">Scaled Light Level : %.3f</string>  
+</resources>

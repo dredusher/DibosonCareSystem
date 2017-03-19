@@ -1,0 +1,67 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/user_background"
+    android:descendantFocusability="blocksDescendants"
+    android:padding="5dp"
+    tools:context=".MainActivity" >
+
+    <TextView
+        android:id="@+id/list_button_entry_textview3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/list_button_entry_textview2"
+        android:layout_below="@+id/list_button_entry_textview2"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/carer_agency"
+        android:textSize="@dimen/font_extras" />
+
+    <TextView
+        android:id="@+id/list_button_entry_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="false"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/carer_name"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="@dimen/font_legend"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/list_button_entry_textview2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/list_button_entry_textview"
+        android:layout_below="@+id/list_button_entry_textview"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/carer_phone"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="@dimen/font_summary" />
+    
+      <Button
+          android:id="@+id/list_button_phone"
+          android:layout_width="@dimen/button_width"
+          android:layout_height="@dimen/button_height"
+          android:layout_alignParentRight="true"
+          android:layout_alignParentTop="true"
+          android:layout_margin="@dimen/font2dp"
+          android:background="@drawable/row_button"
+          android:focusable="false"
+          android:focusableInTouchMode="false"
+          android:text="@string/delete"
+          android:textColor="@color/gray"
+          android:textStyle="bold" />
+
+    <ImageButton
+        android:id="@+id/list_button_help"
+        android:layout_width="@dimen/help_icon_size"
+        android:layout_height="@dimen/help_icon_size"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:background="@drawable/round_button"
+        android:contentDescription="@string/help_icon"
+        android:scaleType="fitCenter"
+        android:src="@drawable/help_icon" />
+
+</RelativeLayout>

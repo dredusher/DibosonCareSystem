@@ -1,0 +1,48 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/get_message_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".GetMessage" >
+
+    <TextView
+        android:id="@+id/title_appointment_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:gravity="center"
+        android:text="@string/input_message"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/input_message_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_below="@+id/title_appointment_name"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@drawable/inputfield"
+        android:ems="10"
+        android:hint="@string/hint_message"
+        android:lines="@integer/Number_7"
+        android:maxLines="@integer/Number30"
+        android:textSize="@dimen/default_font_size" />
+
+    <Button
+        android:id="@+id/input_message_button"
+        style="@style/customButton"
+        android:layout_below="@+id/input_message_view"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/press_to_accept_message" />
+
+</RelativeLayout>

@@ -1,0 +1,268 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/appointments_scrollview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin" >
+
+    <RelativeLayout
+        android:id="@+id/appointment_relativelayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:animateLayoutChanges="false"
+        android:orientation="vertical" >
+
+        <TextView
+            android:id="@+id/title_appointment_type"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:text="@string/title_appointment_type"
+            android:textAlignment="center" />
+
+        <Spinner
+            android:id="@+id/input_appointment_type"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/title_appointment_type"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/appointment"
+            />
+
+        <TextView
+            android:id="@+id/title_appointment_name"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_type"
+            android:text="@string/title_appointment_name" />
+
+        <EditText
+            android:id="@+id/input_appointment_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title_appointment_name"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/inputfield"
+            android:ems="10"
+            android:inputType="text|textCapWords"
+            android:textSize="@dimen/default_font_size" >
+
+        </EditText>
+
+        <TextView
+            android:id="@+id/title_appointment_address"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_name"
+            android:text="@string/title_appointment_address" />
+
+        <EditText
+            android:id="@+id/input_appointment_address"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title_appointment_address"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/inputfield"
+            android:ems="10"
+            android:inputType="textCapWords|textMultiLine"
+            android:lines="@integer/Number_5"
+            android:maxLines="@integer/Number10"
+            android:textSize="@dimen/default_font_size" >
+
+        </EditText>
+
+        <TextView
+            android:id="@+id/title_appointment_contactname"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_address"
+            android:text="@string/title_appointment_contactname" />
+
+        <EditText
+            android:id="@+id/input_appointment_contactname"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title_appointment_contactname"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/inputfield"
+            android:ems="10"
+            android:inputType="text|textCapWords|textPersonName"
+            android:textSize="@dimen/default_font_size" >
+
+        </EditText>
+
+        <TextView
+            android:id="@+id/title_appointment_phone_number"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_contactname"
+            android:text="@string/title_appointment_phone_number" />
+
+        <EditText
+            android:id="@+id/input_appointment_phone_number"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title_appointment_phone_number"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/inputfield"
+            android:ems="10"
+            android:inputType="phone"
+            android:textSize="@dimen/default_font_size" >
+
+        </EditText>
+
+        <TextView
+            android:id="@+id/title_appointment_notes"
+            style="@style/customTextView"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_phone_number"
+            android:text="@string/title_appointment_notes" />
+
+        <EditText
+            android:id="@+id/input_appointment_notes"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/title_appointment_notes"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/inputfield"
+            android:ems="10"
+            android:inputType="textMultiLine"
+            android:lines="@integer/Number_5"
+            android:maxLines="@integer/Number1000"
+            android:scrollbars="vertical"
+            android:textSize="@dimen/default_font_size_smaller"
+            android:typeface="monospace" >
+
+        </EditText>
+
+        <DatePicker
+            android:id="@+id/input_appointment_date"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_below="@+id/input_appointment_notes" />
+
+        <TimePicker
+            android:id="@+id/input_appointment_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/input_appointment_date"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            />
+
+        <TextView
+            android:id="@+id/appointment_reminder_textview"
+            style="@style/customTextView"
+            android:layout_below="@+id/input_appointment_time"
+            android:text="@string/appointment_reminder_title" />
+
+        <Spinner
+            android:id="@+id/input_appointment_remindertime"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/appointment_reminder_textview"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/appointment"
+            />
+
+        <TextView
+            android:id="@+id/appointment_repeat_textview"
+            style="@style/customTextView"
+            android:layout_below="@+id/input_appointment_remindertime"
+            android:text="@string/appointment_reminder_repeat_title" />
+
+        <Spinner
+            android:id="@+id/input_appointment_repeat_time"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_below="@+id/appointment_repeat_textview"
+            android:layout_centerHorizontal="true"
+            android:layout_gravity="center"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:background="@drawable/appointment"
+            />
+        
+        <TextView
+            android:id="@+id/appointment_preferred_textview"
+            style="@style/customTextView"
+            android:layout_below="@+id/input_appointment_repeat_time"
+            android:text="@string/appointment_reminder_preferred_title" />
+        
+         <TimePicker
+             android:id="@+id/input_appointment_preferred_time"
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:layout_below="@+id/appointment_preferred_textview"
+             android:layout_centerHorizontal="true"
+             android:layout_gravity="center"
+             />
+        
+        <Button
+            android:id="@+id/appointment_accept_button"
+            style="@style/customButton"
+            android:layout_below="@+id/input_appointment_preferred_time"
+            android:layout_centerHorizontal="true"
+            android:text="@string/appointment_accept_button" />
+
+        <Button
+            android:id="@+id/appointment_cancel_button"
+            style="@style/customButton"
+            android:layout_below="@+id/appointment_accept_button"
+            android:layout_centerHorizontal="true"
+            android:text="@string/appointment_cancel_button" />
+        
+         <Button
+             android:id="@+id/appointment_finished_button"
+             style="@style/customButton"
+             android:layout_below="@+id/appointment_cancel_button"
+             android:layout_centerHorizontal="true"
+             android:layout_gravity="center"
+             android:text="@string/appointment_finished_button" />
+
+        <Button
+            android:id="@+id/appointment_edit_button"
+            style="@style/customButton"
+            android:layout_below="@+id/input_appointment_preferred_time"
+            android:layout_centerHorizontal="true"
+            android:text="@string/appointment_edit_button" />
+
+        <Button
+            android:id="@+id/appointment_delete_button"
+            style="@style/customButton"
+            android:layout_below="@+id/appointment_edit_button"
+            android:layout_centerHorizontal="true"
+            android:text="@string/appointment_delete_button" />
+
+        <Button
+            android:id="@+id/appointment_new_button"
+            style="@style/customButton"
+            android:layout_below="@+id/appointment_delete_button"
+            android:layout_centerHorizontal="true"
+            android:text="@string/appointment_new_button" />
+
+    </RelativeLayout>
+
+</ScrollView>

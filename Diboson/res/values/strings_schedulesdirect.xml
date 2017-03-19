@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="schedules_direct_folder">SchedulesDirect/</string>
+    <string name="schedules_direct_base_url">https://json.schedulesdirect.org/20141201/</string>
+    <string name="title_schedules_direct">Schedules Direct Parameters</string>
+    <string name="summary_schedules_direct">Enables parameters associated with accessing the Schedules Direct system to be set.</string>
+    <string name="title_schedules_direct_username">Account User Name</string>
+    <string name="summary_schedules_direct_username">Enter the user name of the account that is active on the website.</string>
+    <string name="title_schedules_direct_password">Account Password</string>
+    <string name="summary_schedules_direct_password">Enter the plain text password that is associated with the user name.</string>
+    <string name="title_schedules_direct_days">Number of Days to Retrieve</string>
+    <string name="summary_schedules_direct_days">Choose the number of days (including today) whose schedules will be retrieved.</string>
+    <string name="title_schedules_direct_url">Base URL</string>
+    <string name="summary_schedules_direct_url">Enter the base URL that is used to obtain the data</string>
+    <string name="schedules_direct_username_default">dredusher</string>
+    <string name="schedules_direct_password_default">orient8337</string>
+    <string name="programs_list">ProgramsListObject</string>
+    <string name="schedules_direct_lineup_default">GBR-0003011-DEFAULT</string>
+    <string name="title_schedules_direct_lineup">Lineup</string>
+    <string name="summary_schedules_direct_lineup">Enter the lineup that contains the stations that are wanted.</string>
+</resources>

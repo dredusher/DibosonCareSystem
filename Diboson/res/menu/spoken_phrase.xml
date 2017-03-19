@@ -1,0 +1,5 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/spoken_phrase_display" android:title="@string/spoken_phrase_display" android:titleCondensed="@string/spoken_phrase_display"></item><item android:id="@+id/spoken_phrase_define" android:titleCondensed="@string/spoken_phrase_define" android:title="@string/spoken_phrase_define"></item>
+    
+
+</menu>

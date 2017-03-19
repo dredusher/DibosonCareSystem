@@ -1,0 +1,901 @@
+==================================================================================================
+This file contains any notes that may help understand things
+==================================================================================================
+09/08/2013 ECU  When receiving buffers on a socket noticed that the maximum number read was 1448.
+               	Bit of investigation showed that this was the MTU for the interface (adjusted for
+               	headers). The MTU is in /sys/class/net/<interface>mtu which is a text file
+11/08/2013 ECU 	I want to change the transmission/reception of the socket message type from a
+               	single byte into a string of characters <stx><soh><message type><etx>. First step
+               	is to declare socketMessageType in Utilities to do transmission and reception
+13/08/2013 ECU 	I really want to set the current time on the device to that supplied by an NTP
+                server. However to do this I need to set SET_TIME permissionand the app must run as
+			   	system or signed which I do not want to do at this stage. As a temporary fix I
+			   	will set up an adjustment variable which I will adjust the current time by 
+			   	whenever the time is displayed
+22/08/2013 ECU 	With the HTC phone there was a problem with receiving multicast datagrams. The
+               	only way to get it to work was to acquire the multicast lock,            
+23/08/2013 ECU 	Bought a Nexus 7 and although it was detected by the PC it did not show it as a
+ 			   	Nexus 7. Lots of very confusing advice on the internet but all I had to do was
+ 			   	go to the Support section of the Asus web site and download the zip file that
+ 			   	contains the drives - these on in Temporary on the Samsung laptop. After loading
+ 			   	the drivers everything was fine and able to load up and run the app. 
+08/09/2013 ECU 	in BluetoothUtilities was getting a null point exception when trying to enable
+               	bluetooth using startActivityForResult. Solved the problem by passing Activity in
+               	the constructor and then using the stored activity when trying to start, i.e.
+               	activity.startActivityForResult. When calling the class pass 'this' as the
+               	argument.
+11/09/2013 ECU 	in trying to do custom toast view ran into problems with findViewById when only
+               	the context is being passed as an argument - need Activity. As a quick fix have
+               	set activity for MainActivity and have used this for all custom toast calls.
+15/09/2013 ECU 	the bar code scanner uses the open source Zxing application which runs in landscape
+               	mode - it does not appear easy to change into portrait mode unless the source
+               	is imported and modified which I do not want to do at this stage.
+16/09/2013 ECU 	tried to implement pinch open/close within GridActivity which uses a grid view.
+               	Could not get it working but it checked out OK using the TestActivity.
+18/09/2013 ECU 	when a device directs a 'phone' command to a device that was registered with                    TO LOOK INTO
+               	that capability but which has lost that capability (i.e. by being put into
+               	'airplane mode') then ideally want to indicate this fact to the source device.
+           ECU 	try to kill the MainActivity by finally issuing a 'android.os.Process.killProcess               TO LOOK INTO
+           	   	(android.os.Process.myPid());' - not happy with this but seems to work
+19/09/2013 ECU 	have been playing with the declaration of Methods and various ways of invoking
+               	them - the reason being is to try and simplify the actioning of incoming commands
+               	and would replace a switch .. case scenario.
+20/09/2013 ECU 	network discovery - have a thought about using a multicast ping. Spent a lot of
+			   	time on this and rewrote the software to use ThreadPoolExecutor which has speeded
+			   	up the whole process dramatically - all the changes are in DiscoverNetwork and
+			   	DiscoverThread - I have left the old code just in case some problems arise.	
+21/09/2013 ECU 	Was getting a 'Force Close' in the following situation on HTC
+				     1) select the grid view
+				     2) when the help screen is on display then power off the device
+				     3) power on the device
+				     4) try and start the app ---- Force Close happened - LogCat
+				     	showed a null pointer exception in customised popToast. Testing
+				     	showed that MainActivity.activity was 'null'.
+				Do not know why activity is null but as it is a rare occurrence I have
+				just included a 'try...catch' to pick the problem up.	
+22/09/2013 ECU  IMPORTANT
+				=========
+				The problems I have been having with 'Force Close' following a power off / on
+				sequence may only be an issue with the HTC (2.3.5) where the device seems to want
+				to start the device from the point it was at when it was powered down. On the
+				other devices (versions 4.1. and 4.3) the app is restarted on 'power on' which
+				is exactly what I want. I want to get rid of the 'Force Close' issue but at least
+				it is only an issue with early versions.	
+		   ECU  Just to clarify that the 'onPause' method when the user moves away from an
+		   		activity - 'onResume' is called when the activity is returned to
+		   ECU  Wrote Shutdown class to receive ACTION_SHUTDOWN intents - works on 4.3 but not
+		   		on 2.3.5.
+20/10/2013 ECU	Sometimes it is necessary to invalidate a view so that it can be redrawn - however
+                when this is required from a non-UI thread then do the following
+                            runOnUiThread(new Runnable() 
+		                    {
+		                    	public void run() 
+		                        {
+
+		    	 					// do the invalidate command, e.g.
+		    	 					// dibosonView.invalidate();
+		     					}
+							});
+				an example of this is in the AudioAnalyser class
+25/10/2013 ECU  The Scroller class is very straightforward but all the examples on the internet
+				seem to confuse the issue - the important thing is that all the class does is work
+				out the mathematics associated with 'flywheel' type scrolling and is not associated
+				with any View as such. The steps to be taken are :-
+					1) create an instance of scroller .... Scroller scroller = new Scroller (<context>);	
+					2) start the scrolling process by calling scroller.startScroll (<args>)
+					3) after starting the scroll can call scroller.computeScrollOffset for the new
+					   values can be computed and then got using scroller.getCurrX and scroller.getCurrY
+					   which can be used as required. 
+					4) scroller.isFinished() can be tested to check if the scrolling has been finished  
+05/11/2013 ECU  Be careful when trying to get the size of an ImageView in an activity - if called
+                from within onCreate then it is likely that .getHeight()/Width() will return 0. Need
+                to use 'onWindowFocusChanged(boolean hasFocus)'.
+           ECU  Tried to play with the Animation of an ImageView - all works OK but cannot get
+                the repeatCount to work. In looking on the internet it appears that this is a bug
+                so it is necessary to do a workaround in onStartAnimation.
+06/11/2013 ECU  onWindowFocusChanged is called with 'hasFocus' as a parameter. If hasFocus is
+				true then in effect the window is on view to the user - when false the window is
+				no longer visible.
+09/11/2013 ECU  Occasionally the app wants to start another app (like 'mail') which may be in
+				different packages for different devices. The method Utilities.getPackageIntent ()
+				will try and find the appropriate intent for the package which is identified by
+				MainActivity.PACKAGE_TYPE_..... . This needs to be improved at a later stage.
+03/12/2013 ECU  With bluetooth discovery the app tries to speak some information for the user -
+				this works fine with the default google text-to-speech engine but when I use
+				the Ivona Amy voice then occasionally the VoiceRecognition activity starts but
+				no speech occurs - there are some messages in the logcat talking about
+				'libvoice_en_gb_amy .... relocation of text' 
+		   ECU  Problem in TimerActivity - if entering the time using the keyboard then in
+			    the activity need to do a clearFocus to make sure that the correct modified
+			    time is used. The same is true of the date picker.
+10/12/2013 ECU  Modifies MedicationInput.java to do a very basic file chooser ... it then uses
+                Utilities.PickAFile (...). Not as good as it should be but will be OK for now
+13/12/2013 ECU  got an Arduino connected and working with my own IR blaster. Currently									TO LOOK INTO
+				am using the USBManager which required API >=12 so cannot run on the HTC phone.
+				In GridActivity I check for API level before trying to start the Television activity
+				- I intend to use bluetooth which may mean that I can remove the check.
+28/12/2013 ECU  wired up the bluetooth module (JY-MPU) to the arduino and using hyperterm was able
+                to get it working to the laptop.
+01/01/2014 ECU  Spent a lot of time looking into message passing between an activity and a service
+                - turned out to be quite straightforward but lots of misinformation on the internet/
+                
+                In the activity
+                ===============
+                1) declare a message handler ('messenger' say)
+                		class IncomingHandler extends Handler 
+						{
+        					@Override
+        					public void handleMessage(Message message) 
+        					{
+            					switch (message.what) 
+            					{
+                					case BlueToothService.MESSAGE_REMOTE_CODE:
+                    					Utilities.popToast ("MESSAGE_REMOTE_CODE : " + message.obj);
+                    					break;
+                					case BlueToothService.MESSAGE_REQUEST:
+                   					 	Utilities.popToast ("MESSAGE_REQUEST : " + message.obj);
+                    					break;
+                					default:
+                    					super.handleMessage(message);
+            					}
+        					}
+    					}
+                2) declare a 'serviceConnection' as message handler
+               			private ServiceConnection serviceConnection = new ServiceConnection() 
+						{
+        					public void onServiceConnected(ComponentName className,IBinder service) 
+        					{
+             					messengerService = new Messenger(service); 
+             					SendMessage ("hello there");
+        					}
+							@Override
+							public void onServiceDisconnected(ComponentName arg0)
+							{
+					
+							}	
+	 					};
+	 			3) bind to the service
+	 					bindService(new Intent(this,BlueToothService.class),serviceConnection,Context.BIND_AUTO_CREATE);
+  				
+  				In the service
+                ==============
+                1) declare a  message handler
+                		class IncomingHandler extends Handler 
+						{
+							// 31/12/2013 ECU handle incoming messes - only one wanted
+							@Override
+	    					public void handleMessage(Message message) 
+							{	
+								switch (message.what) 
+								{
+	            					case MESSAGE_REMOTE_CODE:
+	            						Utilities.popToast ("MESSAGE_REMOTE_CODE " + message.obj);   
+	                					break;
+	            					case MESSAGE_REQUEST:
+	            						Utilities.popToast ("MESSAGE_REQUEST " + message.obj);  
+	            	
+	            						// 01/01/2014 ECU send the required response
+	            	
+	            						Message newMessage = Message.obtain (null,MESSAGE_REQUEST,"OK");
+										try {
+												message.replyTo.send(newMessage);
+											} catch (RemoteException e) {
+											}
+	                					break;
+	            					default:
+	                					super.handleMessage(message);
+	       						 }
+							}
+						}
+  				2) in onBind then return a binding to the message handler
+  						return messenger.getBinder();    
+02/01/2014 ECU Change build version to 2.11  
+03/01/2014 ECU if setting up fount sizes that accommodate different devices then put these into
+               dimens.xml in res/<values name> where <values name> will depend on the device
+               specification. For the htc use res/values/dimens.xml, for the Nexus 7 us
+               res/values-sw600dp/dimens.xml (600dp is the screen width in 'dp').
+		   ECU If location updates are not working then check the 'location' options in the
+		       'settings' to make sure you have the option set that the WiFi can be used. 
+06/01/2014 ECU Spinner - see AppointmentsActivity about listener issues	
+           ECU When using an entry from a resources String Array then store the actual entry
+               rather than just an index. This is because the array order may change.	
+07/01/2014 ECU Preferences - had a problem that after adding an EditTextPreference then a
+ 			   'null point exception' was generated even though all of the code was correct.
+ 			   Problem seemed to go if I uninstalled the original version of the app before
+ 				loading the new version - rather than just loading it.		
+13/01/2014 ECU I got into the habit of storing the time (given as hour and minute) in milliseconds
+               using (hours * 60 * 60 * 1000) + (minute * 60 * 1000). However when this was
+               converted back using the SimpleDateFormat there was an hour's difference. Wrote
+               method in Utilities called ConvertTime to use a Calendar instance to return the
+               correct number of milliseconds.	
+25/01/2014 ECU normally the manifest is set to have a minimum target SDK set to 9 - when this
+               is changed to 10 then get a NetworkExceptionOnMainThread apparently because I am
+               using the Main UI thread for networking which is no longer allowed. Can get around
+               this by putting in the code
+               		if (android.os.Build.VERSION.SDK_INT > 9) 
+               		{
+		   				StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+		   				StrictMode.setThreadPolicy(policy);
+					}	
+			   This solves the problem but probably should shift the code into an Asynch task 
+				  
+					private class RunInBackground extends AsyncTask<String, Void, String> 
+	 				{ 
+		 				@Override 
+						protected String doInBackground(String... urls) 
+		 				{ 
+			 				
+			 				return null; 
+					 	} 
+		 				@Override 
+		 				protected void onPostExecute(String result) 
+		 				{ 
+		 				} 
+	 				}
+               added the method NetworkOnMainUIThread into Utilities to do the Build check
+               and then set the policy. 
+               12/03/2014 ECU moved the NetworkOnMainUIThread into APIIssues 
+               19/03/2017 ECU S T R I C T  M O D E  N O T E S
+                              ===============================
+               StrictMode is a developer tool which detects things you might be doing by 
+               accident and brings them to your attention so you can fix them. 
+
+			   StrictMode is most commonly used to catch accidental disk or network access 
+			   on the application's main thread, where UI operations are received and animations 
+			   take place. Keeping disk and network operations off the main thread makes for much 
+			   smoother, more responsive applications. By keeping your application's main thread 
+			   responsive, you also prevent ANR dialogs from being shown to users. 
+			   
+			   StrictMode is a special class for verifying that your Android application is not 
+			   doing things like disk I/O, Network access from the UI thread. This is a debugging 
+			   feature introduced in Android 2.3. This developer tool detect things done accidentally 
+			   and bring them to your attention so that you can fix them so as to avoid ANR dialogs
+			   (Activity Not Responding dialogs). StrictMode is used to setup thread and virtual
+			   machine policies for your application and report violations of such policies. 
+			   You will get an alert if a policy is violated. You can instruct Android to crash 
+			   your application with the alert or you can just log the alert and let your application 
+			   carry on.              	
+28/01/2014 ECU have defined a variable userView in storedData which will determine the main
+               interface seen by the user. If the variable is 'false' then the user will be
+               presented with a 'grid view'. If set to 'true' then the user will be presented
+               with a 'list view' consisting of an image and associated legend.       
+31/01/2014 ECU Shared Preferences - from API 11 the preferences should use fragments but as I
+         	   want to support back as far as API 9 then have to use deprecated methods. 
+03/02/2014 ECU When testing on the CnM tablet (Android 4.0.4) the Spinner in the Appointments 
+               layout was not allowing an entry to be selected (was working OK on the Nexus).
+               Bit of research and playing around showed that if 'android:animateLayoutChanges'
+               is changed from "true" to "false" then problem went away. 
+04/02/2014 ECU Was having a problem whereby after updating the preferences then the 'summary'
+               showed the updated information but selecting the item caused the old
+               preferences. Found that by moving 'addPreferencesFromResource (R.xml.diboson_settings)'
+               till the end of the 'onCreate' method seemed to resolve the issue.   
+06/02/2014 ECU if an image button is included in a ListView (see layout/list_button_row.xml) then
+               because  
+           	    	android:focusable="false"
+       				android:focusableInTouchMode="false" 
+       		   are not valid for an ImageView then
+					android:descendantFocusability="blocksDescendants" 
+			   must be included within the layout header. If this is not done then it will not be
+			   possible to click on an item in the ListView.
+12/02/2014 ECU Spent a lot of time trying to find a way of setting a service so that it continues
+               to run properly when tablet is in standby mode. Eventually got it working by :-
+               		1) setting up a notification and then 'startForeground'
+               		2) set up and acquire a wakeLock (released onDestroy).
+               The two services affected are TimerService and TextToSpeechService and more details
+               can be found in the log book.
+16/02/2014 ECU Declared Utilities.SetUpActivity to be called from activities in their 'onCreate'
+               method to initialise common aspects like 'portrait mode' and 'full screen mode'
+18/02/2014 ECU rename HelpActivity to DisplayDrawableActivity
+22/02/2014 ECU popToast - if text is to be centred then there is a slight problem if the
+               main text is shorter than the copyright message. The text is centred but about
+               the copyright message and therefore appears to the left of centre.
+23/02/2014 ECU Changed the Speaking Clock to use the AlarmManager because keeping services
+               alive using a 'wakelock' is killing the battery
+           ECU After a lot of playing around with AlarmManager I was still having problems
+               when the device is in standby mode. I seem to think the problem is with
+               KitKat because everything seems fine on both the htc and CnM. May have to
+               install API19 because may need to use AlarmManager.setExact which was 
+               introduced in KitKat - the normal 'set' is not exact in order to save the
+               battery. I'm worried that upgrading to API19 may cause other issues.
+26/02/2014 ECU Speaking clock issue with KitKat - after lots of playing around the only way
+               to get a consistent result was by inserting the following code into
+               AlarmManagerReceiver
+               ---------------------------------------------------------------------------------
+              		if (android.os.Build.VERSION.SDK_INT >= 19)
+					{
+						MediaPlayer mediaPlayer 
+						  = MediaPlayer.create(null, Uri.fromFile(new File(MainActivity.projectFolder + "KitKat.wav")));
+		
+						if (mediaPlayer != null)
+						{
+							mediaPlayer.start();
+							mediaPlayer.stop ();
+							mediaPlayer.release();
+						}	
+					}
+			   ---------------------------------------------------------------------------------
+               I have absolutely no idea why this should help especially as the '*.wav' is never
+               played. Need to investigate further because I am totally puzzled.
+28/02/2014 ECU Tried the code on the htc (API=10) and same 'batching' problem as on KitKat;
+               however the above mod had no effect so I am still very puzzled. Created a 
+               new project 'SpeakingClock' with very little code and this displays the same
+               problems so this eliminates the Diboson structure.
+03/03/2014 ECU When trying to add some animation onto a popupWindow (see Utilities.popToast)
+			   then you need to add an entry in 'res/values/styles.xml' as shown below		   	
+    				<style name="PopupWindowAnimation" parent="android:Animation" >     
+        				 <item name="android:windowEnterAnimation">@anim/fadein</item> 
+        				 <item name="android:windowExitAnimation">@anim/fadeout</item> 
+    				</style> 
+    		   and then create files in 'res/anim' for 'fadein' and 'fadeout' - for
+    		   example 'fadein.xml' could be
+    				<?xml version="1.0" encoding="utf-8"?> 
+					<set xmlns:android="http://schemas.android.com/apk/res/android" 
+     					android:interpolator="@android:anim/decelerate_interpolator" > 
+   						 <alpha 
+   					      	android:duration="800" 
+         					android:fromAlpha="0.0" 
+         					android:toAlpha="1.0" /> 
+ 					</set> 
+ 			   and 'fadeout.xml' could be
+ 					<?xml version="1.0" encoding="utf-8"?> 
+ 					<set xmlns:android="http://schemas.android.com/apk/res/android" > 
+     					<alpha 
+         					xmlns:android="http://schemas.android.com/apk/res/android" 
+         					android:duration="800" 
+         					android:fromAlpha="1.0" 
+         					android:toAlpha="0" /> 
+ 					</set> 
+ 			   please remember these are just those in this project. To invoke the defined
+ 			   animation then have to put
+ 				 	popupWindow.setAnimationStyle(R.style.PopupWindowAnimation);
+	    			popupWindow.showAtLocation(theView,Gravity.CENTER,0,0);	  
+04/03/2014 ECU Made major changes to Appointments and MedicationDetails to use the AlarmManager			VERY IMPORTANT
+               to schedule those events which used to be picked up by scanning the various
+               data structures from the TimerService. The original code has been commented out,
+               rather than deleted, just in case the new system fails to work.  
+11/03/2014 ECU Had a problem when the soft keyboard is on display at the point when the device
+               goes into 'standby' mode (I just pressed the button to get the problem) - got
+               'getTextBeforeCursor on inactive InputConnection' warnings. Managed to get around
+               the problem by including 'onPause' in an activity and the including
+               		@Override 
+					protected void onPause() 
+					{
+	    				InputMethodManager inputMethodManager 
+	    					= (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
+
+	    				inputMethodManager.hideSoftInputFromWindow(<view>.getWindowToken(),0);
+
+	   					super.onPause(); 
+					} 
+			   the 'view' would be the view that will be using the soft keyboard. As an example
+			   look at SpeakingClockActivity where there are two entries for 'view'
+			 		inputMethodManager.hideSoftInputFromWindow(startTime.getWindowToken(),0);
+	    			inputMethodManager.hideSoftInputFromWindow(stopTime.getWindowToken(),0);
+	    	   In playing with the AppointmentsActivity get the same problem but found that only
+	    	   had to '.hideSoftInputFromWindow' for just one view, not all of them.
+	    	   ----------------------------------------------------------------------------------
+26/03/2014 ECU Changed to version 2.13
+			   ----------------------------------------------------------------------------------
+01/04/2014 ECU Selector - did a lot of work trying to update the displayed list when changes
+			   are made. Got working by rebuilding the list at 'onResume' - hope this is correct
+			   ----------------------------------------------------------------------------------
+03/04/2014 ECU Changed to version 3.01 because of the use of Async Task for reading and writing
+               to external storage
+               ----------------------------------------------------------------------------------
+04/04/2014 ECU Spent some time looking at the use of IntentService rather than Service but do not
+               feel that this gives any advantages - probably better to introduce a thread method
+               of working because it seemed that handlers always run on the 'main' thread (it
+               appears this way when the thread name is printed). The TestService is not used
+               but displays a working IntentService. Initially try the changes with the 
+               TimerService.
+05/04/2014 ECU If the warning 'getTextBeforeCursor on inactive InputConnection' appears in LogCat
+               then I find that this is when an EditText field is being set to "" and the soft
+               keyboard is on display. To get around this then make sure the keyboard does not 
+               initially pop up
+                 getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_HIDDEN);
+16/10/2014 ECU in trying to define IntentData wanted to define the Method but this is not
+               possible because it is not Serializable
+17/10/2014 ECU There are a number of situations, e.g. when a device has been cloned, when it is
+               wanted to restart the application from an activity that has been started by other
+               activities. Rather that trying to manipulate the 'stack', or use 'finishAffinity'
+               that is available from API level 16, it was decided to use 'StartActivityForResult'
+               using the request code REQUEST_CODE_FINISH and for that activity to return with a
+               result code of RESULT_CODE_FINISH if it wants the calling activity to finish when
+               receiving the result in 'onActivityResult'. In this way all of the activities in
+               the chain up to the one that wants to restart the application will finish correctly.
+               Only when the result (RESULT_CODE_FINISH) is received by the MainActivity.class 
+               does the application finish after using the 'alarm manager' to start the application
+               after a preset time.
+20/10/2014 ECU Issues with presence of a GPS sensor on cheap tablets (a la CnM) - found that when
+               using isProviderEnabled from the LocationManager then it was return true even though
+               the device did not have a GPS sensor. Only way around this was to use PackageManager
+               - see LocationActvity for more details.
+28/10/2014 ECU Put in a facility where a Smart phone can send its phone number in an SMS message
+               to a designated mobile number (by default it is the 'mobile_number_ed' in 'strings').
+               This will be enabled by a 'settings' flag and this flag will always be set to 'false'
+               after the 'announcement' is sent. As well as sending an SMS, an email will be sent
+               to the preconfigured 'email recipient'.
+12/11/2014 ECU please note the following pixel sizes for icons in the relevant resource folders
+				      mdpi      48 x  48
+				      hdpi      72 x  72
+				      xhdpi     96 x  96
+				      xxhdpi   144 x 144
+				      xxxhdpi  192 x 192
+			   an entry is not required in the ldpi because android will autoscale to fit using
+			   images in other folders
+21/11/2014 ECU SettingsActivity is a PreferenceActivity which leads to the use of deprecated
+               methods. Did it this way to accommodate APIs before HONEYCOMB. Ideally I should I
+               should use a PreferenceFragment.																TO LOOK INTO
+28/11/2014 ECU NOTE ...... Intent cannot be included in a Serializable class as it is NOT
+               ====        Serializable
+           ECU Had a problem when trying to send an email message when rejecting the reminder
+               to take a medication dose. This problem was caused by trying to use the
+               network from the main UI thread, something which has occurred before. I overcame
+               the problem by adding methods to the EmailDetails class so that a 'timed' email
+               can be sent by the TimerService service.
+31/12/2014 ECU When designing web pages that are to be accessed remotely it is necessary to
+               take into account the dynamic nature of the IP address that the remote user
+               will need to use. To accommodate this then all hyperlinks should use the
+               variables DYNAMIC_IP_ADDRESS and SOCKET_NUMBER which will changed to the
+               values that will have been set up in 'settings'.
+04/01/2015 ECU VERY IMPORTANT The following comments relate to PointerImageView where matrix               VERY IMPORTANT
+               ============== rotation is used to rotate the canvas (in conjunction with
+               'canvas.concat') instead of 'canvas.rotate because the former operation seems
+               to be quicker. However the image handling seemed to fail on the CnM and
+               Motorola tablets - was OK for images using a width and height of MATCH_PARENT
+               but for smaller images, like the engine in RadarActivity', the pivot point for
+               rotation seemed wrong. I played around with the API and the definition of the
+               matrix but problem persisted and looking at the documentation it seemed that
+               there were issues with the matrix - initially it was associated with the canvas
+               but in later API's it is associated with the canvas. However in playing around
+               I enabled 'android:hardwareAccelerated="true"' in the manifest and found that the
+               problem went away - no idea why.          
+07/01/2015 ECU VERY IMPORTANT AsyncTask                                                                    VERY IMPORTANT
+               ========================
+               When developing the RadarActivity I wanted to have three customised ImageView's
+               (PointerImageView) which rotate automatically at the same time. The rotation
+               was achieved using matrix operations and the actual timing was achieved using
+               AsyncTasks. On the Nexus tablet, using API 12 (minimum API 9) in the manifest,
+               everything was fine but when the API was raised to 19 then only the timing
+               associated with the first defined AsyncTask worked - by playing around it
+               appeared that only one AsyncTask was ever running. Spent some time looking 
+               around and it seemed that this was the case in early API's but not in later
+               ones where there is a pool. However because I wanted the timer to run whilst
+               a flag was true, i.e.
+                                      running = true;
+                                      while (running)
+                                      {
+                                          < do some work>
+                                          sleep (<short time>)
+                                      }
+               it appeared that this is not a good use of AsyncTask's. I therefore recoded
+               the PointerImageView to use threads - everything seems to work fine and with
+               differing levels of the API.
+10/01/2015 ECU VERY IMPORTANT Toast in Thread
+               ==============================
+               Cannot call Toast in a Thread because essentially you are calling the UI
+               which is NOT allowed. This was highlighted by some monitoring that
+               existed in the TimerService where use of Toast through Utilities.popToast
+               was generating a :-
+                 java.lang.RuntimeException: Can't create handler inside thread that has not called Looper.prepare()     
+               error. If really want to do this then could use an AsyncTask (but first read the
+               comments above about AsyncTask and endless loops.    
+19/01/2015 ECU VERY IMPORTANT Subnet Mask
+               ==========================
+               When running the app on the Nexus tablet, which has been updated to Lollipop (5.0.2)
+               then a subnet mask of "0.0.0.0" is returned instead of "255.255.255.0". Even when
+               I change the manifest for a target SDK of 21 then get same issue. For the time being
+               I have put a temporary fix in Utilities.getIPAddress
+           ECU Put some methods in APIIssues to get the mask correctly using InterfaceAddress
+               and the returned network length   
+27/01/2015 ECU CHECKPOINT Eclipse_Work_260115last
+			   ==========
+			   Made a number of changes to GridActivity so that a 'long press' on a particular
+               item causes additional action. This involved changing some of the classes to
+               display and icon. Also changed the appointments so that an option exists to
+               display defined appointments using the swipe mechanism.
+06/03/2015 ECU When changing the 'darkness' warning mechanism I initially used the number of
+			   consequetive light level readings to define 'a period' but then found that some
+			   devices only gave a reading when the level changed so needed to change the
+			   mechanism to use a real 'period of time'. The changes made were for the TimerService
+			   to call Utilities.checkLightLevel (context) each second and for that method to
+			   determine whether 'darkness' has occurred - rearming is achieved by the SensorService
+09/03/2015 ECU modified GridImages so that a validation method can be added to respond to an			   
+			   enquiry as to whether the activity associated with the image can run in the
+			   particular software/hardware environment when the device is not in
+			   'development' mode.
+21/03/2015 ECU made lots of changes to remove the variable MainActivity.socketMessageType and change
+ 			   lots of methods to pass the message type via arguments to those methods. The reason for
+ 			   doing this is because the variable could be accessed simultaneously by two activities/services
+ 			   thus causing corruption (there was no locking mechanism on the variable)
+26/03/2015 ECU had a problem in that if the app is stopped and then restarted very quickly then
+               was getting errors in the TimerService and TextToSpeechService services indicating
+               that a thread that they were trying start was already running. Got around this by
+               putting in a check on '<thread name>.isAlive' but it seems that the thread keeps
+               running after the thread has been interrupted. Basically leave a bit of time before
+               restarting the app.
+27/03/2015 ECU When the MainActivity.deviceDetails was changed from 'Devices[]' to 'List<Devices>'
+			   a problem occurred because the stored object on disk was of the wrong class. Tried
+			   to pick this up on a ClassException which didn't consistently work. Also tried with     		
+	       	   'if (!deviceDetails.getClass().equals(Devices.class))' test but this wasn't good
+	       	   enough. Not a real 'running' problem but need to be aware when 'stored' objects
+	       	   have there definition changed 
+05/04/2015 ECU IMPORTANT in the original version of 'TrackDetails.populate' I was creating
+		            MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
+		       within this method but occasionally was getting an error
+					 E/AndroidRuntime( 3247): Caused by: java.lang.RuntimeException: 
+		                      setDataSource failed: status = 0xFFFFFFED
+		       I then declared the retriever in MusicPlayer and all seems well. Would think the
+		       problem was caused by the continual redefinition of the retriever	
+11/04/2015 ECU IMPORTANT (3.06.01) There have always been issued with the app being restarted
+               soon after it is stopped - there seems to be timing issues in that some
+               resources (socket ports, etc) are released before the app is restarted. Have
+               tried to detect these issues and to take two steps :
+               			1) close the app
+               			2) schedule a restart of the app in a few seconds
+               This is not ideal but provides a much cleaner environment.
+30/04/2015 ECU Had lots of problems getting javadoc to run - realised that needed to add
+                "-bootclasspath" as a configuration option but had problems including the
+                correct path because the path had spaces. Needed to put quotes around
+                the full path 
+                  -bootclasspath "C:\Users\Ed Usher\Android\adt-bundle-windows-x86_64-20130219\sdk\platforms\android-17\android.jar"
+18/08/2015 ECU Had a problem when pressing the BACK key from the 'sliderChoice' in DialogueUtilities
+               was generating a 'Attempt to finish an input event but input event receiver has already been disposed' 
+               warning - unable to find out what was causing the issue so have disable the 'cancel dialogue'
+               option and have added a 'cancel operation' button. This seemed to remove the warning but
+               need to investigate further at some stage.  
+11/09/2015 ECU when trying to check the backwards compatability on the htc and CnM had problems
+               with the latest version of VideoRecorder. Did a lot of investigating and issue
+               seems to be with the use of CameraPreview. As a temporary fix have two versions of
+               the VideoRecord - VideoRecorderOld is used on versions <= JellyBean   
+03/10/2015 ECU Was having problems with the device being turned which seemed to cause the app to
+               be restarted and this generated problems. So have added 
+               			android:configChanges="keyboardHidden|orientation"
+               to the activity definition in the manifest file. This now means that the activity
+               will not be destroyed and then recreated when the configuration changes - instead
+               'onConfigurationChanged' within the activity will be called with the new configuration. 
+06/10/2015 ECU I M P O R T A N T   (see also 05/11/2015) 
+               =================  
+               The application was behaving 'badly' when activities were automatically destroyed
+               by the OS and then restarted later. This meant, for example, that GridActivity
+               can be restarted before MainActivity is fully 'ready'. Have started to try and
+               resolve the issue by having 'MainActivityReady' variable which is only set to
+               'true' when it is 'ready' to run other activities - still need testing. Also
+               still getting error message about stopping MainActivity    
+                 java.lang.RuntimeException: Performing stop of activity that is not resumed
+               still needs sorting out (or even understanding it because onResume does call
+               super.onResume
+05/11/2015 ECU I M P O R T A N T
+			   =================
+			   This is read in conjunction with 06/10/2015. Those activities, like VideoRecorder,
+			   VideoRecorderOld and VideoViewer, which cause a configuration change (i.e. select
+			   landscape orientation) will be called twice - the first time with savedInstanceState
+			   == null and then again, when the configuration changes, with savedInstanceState != null.
+			   For those activities the changes relating to the 06/10/2015 comments have been removed.
+06/11/2015 ECU V E R Y  I M P O R T A N T
+               ==========================
+               The issues documented on 05/11/2015 do not occur if the orientation to the specified
+               activities is set in the manifest. This was done and the edits of 06/10/2015 were reinstated.
+02/12/2015 ECU V E R Y  I M P O R T A N T
+               ==========================
+               Changed the Panic Alarm activity to be controlled by alarms rather than by calls from
+               the TimerService. This works OK when the device is 'unlocked' with the screen on but
+               if the 'start time' of the alarm is set in the future and the device 'locked' before
+               the alarm set at that time 'should occur' then it doesn't. If however if wait until the
+               'start time' alarm happens and then 'lock' the device then subsequent alarms work correctly.
+               This seems to be a similar problem to that experienced with the SpeakingClock
+               (see 23/02/2014 above) and I still do not know why it happens. To get around the
+               problem I activate an alarm very quickly after the Panic Alarm is enabled and then this
+               alarm sets the alarm for the 'start time' - this seems to work. I'm beginning to wonder if 
+               there is a problem with 'context'. Needs further testing.	
+17/12/2015 ECU Over the past few days have tried to set up an AlertDialog to select a file based
+               on the FileArrayAdapter which has been modified to load images using an async task.
+               The adapter, and image updating, works fine within the FileChooser activity but
+               when used from within an AlertDialog then there seems to be an excess of updates
+               of views which makes it unusable. Spent a lot of time trying to get to the bottom
+               of this but with no success so decided to use a modified form of FileChooser with
+               a 'select method' 
+               
+               --------------------------------------------------------------------------------------
+                 This is the last code that was in DialogueUtilities
+               	// =============================================================================
+				public static void fileChoice (Context 	theContext,
+								   			   String 	theTitle,
+								   			   String 	theFileName,
+								               String 	theFileExtension,
+								               boolean	theShowImageFlag,
+								               final Method theSelectMethod,
+								               String 	theCancelLegend,
+								               final Method theCancelMethod)
+				{
+					// -------------------------------------------------------------------------
+					// 15/12/2015 ECU now use the generated 'files' to allow the use to pick
+					//                the required file
+					// -------------------------------------------------------------------------
+					fileListChoice (theContext,theTitle,Utilities.fileList (new File (theFileName),theFileExtension),theFileExtension,theShowImageFlag,
+						theSelectMethod,null,null,theCancelLegend,theCancelMethod);
+				}
+				// =============================================================================
+				static void fileListChoice (final Context 	theContext,
+											final String 	theTitle,
+											final List<FileOptions> theFileOptions,
+											final String 	theFileExtension,
+											final boolean 	theShowImageFlag,
+											final Method 	theSelectMethod,
+											final String 	theCancelLegend,
+											final Method 	theCancelMethod)
+				{
+					// ---------------------------------------------------------------------
+					// 14/12/2015 ECU change for those dialogues which are recursive 
+					// 15/12/2015 ECU added theFileExtension
+					// ---------------------------------------------------------------------
+					context = theContext;
+					// ---------------------------------------------------------------------
+					// 17/12/2015 ECU remember the files provided as the argument
+					// ---------------------------------------------------------------------
+					files = theFileOptions;
+					// ---------------------------------------------------------------------
+					// 14/12/2015 ECU created and build the dialogue 
+					// ---------------------------------------------------------------------
+					final AlertDialog.Builder builder = new AlertDialog.Builder (theContext);
+					// ---------------------------------------------------------------------
+					// 14/12/2015 ECU get the view that contains the listview to which the
+					//                adapter will be attached
+					// ---------------------------------------------------------------------
+					LayoutInflater inflater	= (LayoutInflater) theContext.getSystemService (Context.LAYOUT_INFLATER_SERVICE);
+		    		View convertView 		= (View) inflater.inflate (R.layout.file_list, null);
+		    		builder.setView (convertView);
+		   			// ---------------------------------------------------------------------
+		    		// 14/12/2015 ECU get the listview and then set its handling adapter and
+		    		//                the data associated with it
+		    		// 17/12/2015 ECU added the list view into the arguments
+		   			//            ECU change to use 'files' as the argument
+		    		// ---------------------------------------------------------------------
+		    		listView	= (ListView) convertView.findViewById (R.id.file_list_view);
+		    		adapter 	= new FileArrayAdapter (theContext,listView,R.layout.file_list_view,files,theShowImageFlag);
+		    		listView.setAdapter (adapter);
+		    		// ---------------------------------------------------------------------
+					// 14/12/2015 ECU set the required title
+					// ---------------------------------------------------------------------
+					builder.setTitle (theTitle);
+					// ---------------------------------------------------------------------
+					// 27/02/2015 ECU changed the preset option from '-1' to that stored so
+					// 				  that can accommodate editing
+					// ---------------------------------------------------------------------
+					listView.setOnItemClickListener (new OnItemClickListener()
+					{
+						@Override
+						public void onItemClick (AdapterView<?> theParent, View theView,
+												 int thePosition, long theID) 
+						{
+							try 
+							{
+								// ---------------------------------------------------------
+								// 10/04/2015 ECU call the method that handles item selection
+								// ---------------------------------------------------------
+								if (files.get(thePosition).isDirectory())
+								{
+									// -----------------------------------------------------
+									// 14/12/2015 ECU directory so show its contents
+									// -----------------------------------------------------
+									files = Utilities.fileList(new File (files.get(thePosition).getFullFileName()),theFileExtension);
+									//adapter.RebuildList (files);
+									adapter = new FileArrayAdapter (theContext,listView,R.layout.file_list_view,files,theShowImageFlag);
+									listView.setAdapter (adapter);
+									// -----------------------------------------------------
+								}
+								else
+								{
+									// -----------------------------------------------------
+									// 14/12/2015 ECU file selected so return its name
+									// -----------------------------------------------------
+									try 
+									{ 
+										// -------------------------------------------------
+										// 16/03/2015 ECU call up the method that will handle the 
+										//                input text
+										// -------------------------------------------------
+										theSelectMethod.invoke (null,new Object [] {files.get(thePosition).getFullFileName()});
+										// -------------------------------------------------
+									} 
+									catch (Exception theException) 
+									{	
+										theException.printStackTrace();
+									} 
+									// --------------------------------------------------------
+								}
+								// ------------------------------------------------------------
+							} 
+							catch (Exception theException) 
+							{	
+							} 
+							// ----------------------------------------------------------------
+						}
+					});
+					// ------------------------------------------------------------------------
+					builder.setNegativeButton (theCancelLegend, new DialogInterface.OnClickListener() 
+					{
+						@Override
+						public void onClick (DialogInterface dialog, int id)
+						{
+							// ----------------------------------------------------------------
+							try 
+							{
+								// ------------------------------------------------------------
+								// 10/04/2015 ECU call the method that handles the cancellation
+								// ------------------------------------------------------------
+								theCancelMethod.invoke (null,new Object [] {id});
+								// ------------------------------------------------------------
+							} 
+							catch (Exception theException) 
+							{	
+							} 
+							// ----------------------------------------------------------------
+						}
+					});
+					// ------------------------------------------------------------------------
+					// 08/04/2015 ECU call the common method to set font sizes
+					// ------------------------------------------------------------------------
+					adjustFonts (builder);
+					// ------------------------------------------------------------------------
+				}
+               --------------------------------------------------------------------------------------
+               
+           ECU I M P O R T A N T   E C L I P S E   M E M O R Y   I S S U E S
+               =============================================================
+               Was having problems with Eclipse running out of memory - the default being 512.
+               Changed the command line in shortcut to :-
+                 D:\Eclipse_Luna\eclipse-java-luna-SR2-win32-x86_64\eclipse\eclipse.exe -vmargs -Xmx1000m
+               to increase the memory to 1000 megabytes
+23/12/2015 ECU Broadcast receiver issues - seemed to be getting alarms before the app was up and 
+               running properly (also occasionally seemed to get alarm even when the app is not
+               running). Changed the manifest so that DailyScheduler and AlarmManagerReceiver are
+               'disabled' and then when everything is up and running then set to enabled by
+               calling Utilities.BroadcastReceiverState. OnDestroy in MainActivity then set the
+               same broadcast receivers to false.  
+26/12/2015 ECU Since upgrading to Lollipop seem to be getting the following error on start up -
+               it does not appear to affect the running of the app but needs investigating
+
+					12-25 21:01:32.965 E/System  (24568): Uncaught exception thrown by finalizer
+					12-25 21:01:32.966 E/System  (24568): java.lang.NullPointerException: Attempt to invoke virtual method 'void dalvik.system.CloseGuard.close()' on a null object reference
+					12-25 21:01:32.966 E/System  (24568): 	at java.io.FileOutputStream.close(FileOutputStream.java:132)
+					12-25 21:01:32.966 E/System  (24568): 	at java.io.FileOutputStream.finalize(FileOutputStream.java:152)
+					12-25 21:01:32.966 E/System  (24568): 	at java.lang.Daemons$FinalizerDaemon.doFinalize(Daemons.java:191)
+					12-25 21:01:32.966 E/System  (24568): 	at java.lang.Daemons$FinalizerDaemon.run(Daemons.java:174)
+					12-25 21:01:32.966 E/System  (24568): 	at java.lang.Thread.run(Thread.java:818)
+14/01/2016 ECU When writing the new FTP facilities in FileTransferUntilities I was getting an
+               'out of memory' exception on the source of data which was transferring the data using
+               a 'writeObject' on an ObjectOutputStream. After some research on the various Android
+               forums it appears that this is a known issue that seems to be resolved by issuing
+               a 'reset' on the object output stream after the object has been written and then
+               flushed.
+30/03/2016 ECU In the app it is possible to browse information via an activity and then exit the
+               activity without making any changes. However the data was being rewritten to disk
+               which would then, if appropriate, trigger a synchronisation of that file to other
+               connected, and compatible, devices. To try and get around this issue have used the
+               'hashcode' mechanism to determine if data has changed. Am aware that this is not full
+               proof but tests showed that it pick up most of the changes. It also seemed that when
+               an object contains lists (e.g. ShoppingData) then the default 'hashCode' did not
+               detect changes so in those objects defined a local HashCode to add the hascode's of
+               all of the constituent lists (am aware that changes may cancel out but unlikely).
+               These changes are for all data which is synchronised apart from 'patient details',
+               'email details' and 'medication details' which have different logic.  
+03/11/2016 ECU Some Notes on Intent and PendingIntent (taken from the official documentation)
+
+               Intent
+               ======
+               ======
+               
+  			   An Intent is a messaging object you can use to request an action from another 
+  			   app component. Although intents facilitate communication between components in 
+  			   several ways, there are three fundamental use cases:
+
+               1) Starting an activity 
+				  
+				  An Activity represents a single screen in an app. You can start a new instance 
+				  of an Activity by passing an Intent to startActivity(). The Intent describes 
+				  the activity to start and carries any necessary data.
+
+                  If you want to receive a result from the activity when it finishes, call 
+                  startActivityForResult(). Your activity receives the result as a separate Intent 
+                  object in your activity's onActivityResult() callback. For more information, see the 
+                  Activities guide.
+
+		       2) Starting a service 
+
+                  A Service is a component that performs operations in the background without a 
+                  user interface. With Android 5.0 (API level 21) and later, you can start a service 
+                  with JobScheduler. For more information about JobScheduler, see its API-reference 
+                  documentation.
+
+                  For versions earlier than Android 5.0 (API level 21), you can start a service 
+                  by using methods of the Service class. You can start a service to perform a one-time
+                  operation (such as downloading a file) by passing an Intent to startService(). 
+                  The Intent describes the service to start and carries any necessary data.
+
+                  If the service is designed with a client-server interface, you can bind to
+                  the service from another component by passing an Intent to bindService(). 
+                  For more information, see the Services guide.
+
+               3) Delivering a broadcast 
+               
+                  A broadcast is a message that any app can receive. The system delivers various 
+                  broadcasts for system events, such as when the system boots up or the device 
+                  starts charging. You can deliver a broadcast to other apps by passing an Intent 
+                  to sendBroadcast(), sendOrderedBroadcast(), or sendStickyBroadcast().
+
+               PendingIntent
+               =============
+               =============
+               
+               A PendingIntent is a description of an Intent and target action to perform with it. 
+               Instances of this class are created with getActivity(Context, int, Intent, int), 
+               getActivities(Context, int, Intent[], int), getBroadcast(Context, int, Intent, int), 
+               and getService(Context, int, Intent, int); the returned object can be handed to other 
+               applications so that they can perform the action you described on your behalf at a later time. 
+
+               By giving a PendingIntent to another application, you are granting it the right to perform the 
+               operation you have specified as if the other application was yourself (with the same permissions 
+               and identity). As such, you should be careful about how you build the PendingIntent: almost 
+               always, for example, the base Intent you supply should have the component name explicitly set 
+               to one of your own components, to ensure it is ultimately sent there and nowhere else. 
+
+               A PendingIntent itself is simply a reference to a token maintained by the system describing 
+               the original data used to retrieve it. This means that, even if its owning application's 
+               process is killed, the PendingIntent itself will remain usable from other processes that 
+               have been given it. If the creating application later re-retrieves the same kind of 
+               PendingIntent (same operation, same Intent action, data, categories, and components, 
+               and same flags), it will receive a PendingIntent representing the same token if that 
+               is still valid, and can thus call cancel() to remove it. 
+
+               Because of this behavior, it is important to know when two Intents are considered to be 
+               the same for purposes of retrieving a PendingIntent. A common mistake people make is to 
+               create multiple PendingIntent objects with Intents that only vary in their "extra" contents, 
+               expecting to get a different PendingIntent each time. This does not happen. The parts of the 
+               Intent that are used for matching are the same ones defined by Intent.filterEquals. If you 
+               use two Intent objects that are equivalent as per Intent.filterEquals, then you will get the 
+               same PendingIntent for both of them. 
+
+               There are two typical ways to deal with this. 
+
+               If you truly need multiple distinct PendingIntent objects active at the same time (such as to 
+               use as two notifications that are both shown at the same time), then you will need to ensure 
+               there is something that is different about them to associate them with different PendingIntents. 
+               This may be any of the Intent attributes considered by Intent.filterEquals, or different request 
+               code integers supplied to getActivity(Context, int, Intent, int),
+               getActivities(Context, int, Intent[], int), getBroadcast(Context, int, Intent, int), or 
+               getService(Context, int, Intent, int). 
+
+               If you only need one PendingIntent active at a time for any of the Intents you will use, then 
+               you can alternatively use the flags FLAG_CANCEL_CURRENT or FLAG_UPDATE_CURRENT to either cancel 
+               or modify whatever current PendingIntent is associated with the Intent you are supplying           
+28/11/2016 ECU The use of MonitorPhoneStatus to switch the speaker on and off depending on the state,
+               i.e. CALL_STATE_IDLE sets it to 'off', CALL_STATE_OFFHOOK sets it to 'on', works
+               fine of the Moto G (Android 5) but not on the Sony XA (Android 6). In OFFHOOK
+               do the following :-
+               				audioManager.setMode(AudioManager.MODE_IN_CALL);
+    						audioManager.setSpeakerphoneOn (true); 
+    		   but displaying audioManager.isSpeakerphoneOn () returns false. Even if the speaker is forced
+    		   on in the constructor of MonitorPhoneStatus (confirmed with isSpeakerphoneOn) the audio
+    		   is still coming out of the ear piece. Needs investigation but not a high priority.
+    		   ============================================================================
+18/03/2017 ECU I M P O R T A N T    G E N E R A T I N G   A   R E L E A S E   V E R S I O N
+               ============================================================================
+               1) If there is already a copy of the app on the device then uninstall it
+                       Settings > Apps > select 'Diboson' app > Click on menu and select 'Uninstall for all users'
+               2) Window > Preferences > Lint error checking ..... unclick 'Run full error ....'
+               3) Project ..... switch off 'Build Automatically'
+               4) Project > Clean ...... select Diboson
+               5) Right click on 'Diboson' project > Android Tools > Export Signed .....
+               6) The keystore is in D(Eclipse):\KeyStore ...... password is 'orient8337'
+               7) Select key 'Wedgbury8337' (which has a 35 year life) ..... password is 'orient8337'
+               8) Specify the folder where the apk file is to be stored
+               9) Transfer the file :-
+                     a) use adb
+                          i) go to the adb directory
+                         ii) 'adb devices' to get the server running - check device is connected
+                                                                       and online
+                        iii) 'adb install <the folder>\Diboson.apk'
+                     b) just copy to the 'download' directory on the device. Explore to that
+                        file (using ES Explorer) and select install                         	   
+=================================================================================================

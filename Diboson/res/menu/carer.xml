@@ -1,0 +1,4 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/menu_agency" android:title="@string/menu_agency"></item>
+    <item android:id="@+id/menu_carer" android:title="@string/menu_carer"></item>
+</menu>

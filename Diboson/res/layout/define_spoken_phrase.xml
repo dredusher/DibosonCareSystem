@@ -1,0 +1,76 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/ScrollView2"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".TCPActivity" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/default_font_size"
+            android:layout_marginRight="@dimen/default_font_size"
+            android:animateLayoutChanges="true"
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/spoken_phrase_enter_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/default_font_size"
+                android:gravity="center_horizontal"
+                android:text="@string/spoken_phrase_entry"
+                android:textSize="@dimen/default_font_size" />
+
+            <EditText
+                android:id="@+id/spoken_phrase_enter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/default_font_size"
+                android:ems="10"
+                android:hint="@string/spoken_phrase_enter_hint"
+                android:inputType="text|textMultiLine|textNoSuggestions"
+                android:lines="@integer/Number_7"
+                android:maxLines="@integer/Number_7" >
+
+                <requestFocus />
+            </EditText>
+
+            <TextView
+                android:id="@+id/spoken_phrase_actions_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:text="@string/spoken_phrase_actions_title"
+                android:textSize="@dimen/default_font_size" />
+
+            <EditText
+                android:id="@+id/spoken_phrase_actions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ems="10"
+                android:hint="@string/enter_actions_to_be_taken"
+                android:inputType="text|textMultiLine"
+                android:lines="@integer/Number_3"
+                android:minLines="@integer/Number_3" />
+
+   			 <Button
+   			     android:id="@+id/spoken_phrase_actions_button"
+   			     style="@style/customButton"
+   			     android:layout_marginTop="@dimen/default_font_size"
+   			     android:text="@string/press_to_define_actions" />
+   			 
+   			  <Button
+   			      android:id="@+id/spoken_phrase_define_button"
+   			      style="@style/customButton"
+   			      android:layout_marginTop="@dimen/default_font_size"
+   			      android:text="@string/press_to_define_spoken_phrase" />
+    	
+		</LinearLayout>     
+
+</ScrollView>

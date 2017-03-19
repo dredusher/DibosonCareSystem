@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/bluetooth_discover" android:title="@string/bluetooth_discover" android:titleCondensed="@string/bluetooth_discover"></item>
+    
+
+</menu>

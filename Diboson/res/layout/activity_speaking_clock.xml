@@ -1,0 +1,148 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/speaking_clock_scrollview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin" >
+
+    <RelativeLayout
+        android:id="@+id/speaking_clock_relativelayout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:animateLayoutChanges="true"
+        android:orientation="vertical" >
+
+    <CheckBox
+        android:id="@+id/speaking_clock_checkbox"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size_smaller"
+        android:gravity="center_horizontal"
+        android:text="@string/speaking_clock_checkbox"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+    
+    <TextView
+        android:id="@+id/title_speaking_clock_start"
+        style="@style/customTextView"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/speaking_clock_checkbox"
+        android:layout_marginTop="@dimen/default_font_size_smaller"
+        android:gravity="center_horizontal"
+        android:text="@string/title_speaking_clock_start" />
+
+    <TimePicker
+        android:id="@+id/input_speaking_clock_start"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title_speaking_clock_start"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/default_font_size_smaller"
+        android:background="@drawable/user_background" />
+    
+     <TextView
+         android:id="@+id/title_speaking_clock_stop"
+         style="@style/customTextView"
+         android:layout_alignParentLeft="true"
+         android:layout_alignParentStart="true"
+         android:layout_below="@+id/input_speaking_clock_start"
+         android:layout_centerHorizontal="false"
+         android:layout_marginTop="@dimen/default_font_size_smaller"
+         android:gravity="center_horizontal"
+         android:text="@string/title_speaking_clock_stop" />
+
+    <TimePicker
+        android:id="@+id/input_speaking_clock_stop"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/title_speaking_clock_stop"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="@dimen/default_font_size_smaller"
+        android:background="@drawable/user_background" />
+    
+   <TextView
+       android:id="@+id/title_speaking_clock_interval"
+       android:layout_width="wrap_content"
+       android:layout_height="wrap_content"
+       android:layout_below="@+id/input_speaking_clock_stop"
+       android:layout_marginLeft="@dimen/default_font_size"
+       android:layout_marginRight="@dimen/default_font_size"
+       android:layout_marginTop="@dimen/default_font_size_smaller"
+       android:text="@string/title_speaking_clock_interval"
+       android:textSize="@dimen/default_font_size"
+       android:textStyle="bold" />
+     
+     <EditText
+         android:id="@+id/input_speaking_clock_edittext"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignBaseline="@+id/title_speaking_clock_interval"
+         android:layout_alignBottom="@+id/title_speaking_clock_interval"
+         android:layout_toRightOf="@id/title_speaking_clock_interval"
+         android:layout_toEndOf="@id/title_speaking_clock_interval"
+         android:ems="10"
+         android:inputType="number" >
+     </EditText>
+     
+     <SeekBar
+         android:id="@+id/input_speaking_clock_seekbar"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@+id/input_speaking_clock_edittext"
+         android:layout_marginLeft="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_font_size"
+         android:max="60" />
+
+     <CheckBox
+         android:id="@+id/speaking_clock_text_checkbox"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@id/input_speaking_clock_seekbar"
+         android:layout_marginLeft="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_font_size"
+         android:layout_marginTop="@dimen/default_font_size_smaller"
+         android:gravity="center_horizontal"
+         android:text="@string/speaking_clock_text"
+         android:textSize="@dimen/default_font_size"
+         android:textStyle="bold" />
+     
+      <CheckBox
+          android:id="@+id/speaking_clock_westminster_checkbox"
+          android:layout_width="match_parent"
+          android:layout_height="wrap_content"
+          android:layout_below="@id/speaking_clock_text_checkbox"
+          android:layout_marginLeft="@dimen/default_font_size"
+          android:layout_marginRight="@dimen/default_font_size"
+          android:layout_marginTop="@dimen/default_font_size_smaller"
+          android:gravity="center_horizontal"
+          android:text="@string/speaking_clock_westminster"
+          android:textSize="@dimen/default_font_size"
+          android:textStyle="bold" />
+   
+     <Button
+         android:id="@+id/speaking_clock_button"
+         style="@style/customButton"
+         android:layout_alignParentBottom="false"
+         android:layout_below="@id/speaking_clock_westminster_checkbox"
+         android:layout_centerHorizontal="true"
+         android:layout_marginBottom="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_font_size_smaller"
+         android:layout_marginEnd="@dimen/default_font_size_smaller"
+         android:layout_marginTop="@dimen/default_font_size"
+         android:text="@string/confirm_details" />
+
+</RelativeLayout>
+</ScrollView>

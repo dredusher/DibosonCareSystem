@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <style name="CustomTitleBarBackground" >    
+        <item name="android:background">@android:color/transparent</item>        
+    </style>
+    
+    <style name="CustomTitleBarTheme" parent="android:Theme">
+        <item name="android:windowTitleSize">@dimen/default_big_font_size</item>
+        <item name="android:windowTitleBackgroundStyle">@style/CustomTitleBarBackground</item>          
+    </style>
+
+</resources>

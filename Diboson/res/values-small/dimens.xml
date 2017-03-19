@@ -1,0 +1,27 @@
+   <resources>
+       
+   <!--
+         Customise dimensions originally defined in res/values/dimens.xml (such as
+         screen margins) for sw300dp devices (e.g. smart phone) here.
+    -->
+   
+  		<dimen name="notes_font_size">10dp</dimen>
+        <dimen name="default_font_size_smaller">14dp</dimen>
+   		<dimen name="default_font_size">16dp</dimen>
+    	<dimen name="default_big_font_size">20dp</dimen>
+    	<dimen name="falls_font">10dp</dimen>
+    	<dimen name="image_width">100dp</dimen>
+    	<dimen name="image_height">100dp</dimen>
+    	<dimen name="startup_title_font">30dp</dimen>
+    	<dimen name="standard_text_font">10dp</dimen>
+    	<dimen name="panic_alarm_font_size">180dp</dimen>
+    	<dimen name="button_width">50dp</dimen>
+    	<dimen name="button_height">25dp</dimen>
+    	<dimen name="clone_font_size">12dp</dimen>
+    	<dimen name="dialogue_font_size">10dp</dimen>
+    	<dimen name="notification_height">60dp</dimen>
+    	<dimen name="notification_width">60dp</dimen>
+    	<dimen name="group_height">30dp</dimen>
+    	<dimen name="group_width">30dp</dimen>
+ 
+    </resources>

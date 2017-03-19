@@ -1,0 +1,65 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".DisplayAMessage" >
+    
+    <TextView
+        android:id="@+id/messageTimeTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="@dimen/default_font_size"
+        android:gravity="center_horizontal"
+        android:text="@string/default_textview"
+        android:textColor="@color/white"
+        android:textSize="@dimen/default_big_font_size" />
+    
+        <ScrollView
+            android:id="@+id/scrollView1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/messageConfirmButton"
+            android:layout_below="@id/messageTimeTextView"
+            android:layout_marginBottom="@dimen/default_font_size"
+            android:orientation="vertical"
+            android:scrollbarAlwaysDrawVerticalTrack="true"
+            android:scrollbarStyle="outsideOverlay"
+            android:scrollbars="vertical" >
+
+            <TextView
+                android:id="@+id/messageTextView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="@dimen/default_big_font_size"
+                android:gravity="start|center_vertical|center_horizontal"
+                android:maxLines="@integer/Number1000"
+                android:scrollbarAlwaysDrawVerticalTrack="true"
+                android:scrollbarStyle="outsideOverlay"
+                android:scrollbars="vertical"
+                android:text="@string/default_textview"
+                android:textColor="@color/black"
+                android:textColorLink="@color/yellow"
+                android:textSize="@dimen/default_font_size_smaller"
+                android:typeface="monospace" />
+
+    </ScrollView> 
+
+    <Button
+        android:id="@+id/messageConfirmButton"
+        style="@style/customButton"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="false"
+        android:layout_marginBottom="@dimen/default_big_font_size"
+        android:hint="@dimen/default_font_size"
+        android:text="@string/press_to_cancel"
+        android:textColor="@color/white"
+        android:textSize="@dimen/default_font_size" />
+
+</RelativeLayout>

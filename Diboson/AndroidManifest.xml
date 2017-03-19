@@ -1,0 +1,2041 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.usher.diboson"
+    android:installLocation="preferExternal"
+    android:versionCode="40202"
+    android:versionName="4.02.02" >
+
+    <!--
+          ============================================================= 
+	      Diboson App                                                   
+	      ===========  
+	      03/06/2014 ECU changed to use versionCode and versionName
+	                     rather than storing as resources  
+	      07/07/2014 ECU changed to 3.02 
+	      29/09/2014 ECU changed to 3.04
+	      11/10/2014 ECU changed to 3.05 
+	                        dynamically change the grid view 
+		  12/10/2014 ECU added minor revision and changed to 3.05.01 
+		  14/10/2014 ECU 3.05.02 changes to grid cell help file 
+		  17/10/2014 ECU 3.05.03 lots of work to do with cloning
+		                         devices   
+		  21/10/2014 ECU 3.05.04 lots of tidying up with tracking 
+		  24/10/2014 ECU 3.05.05 to take account of location and
+		                         compass changes  
+		  26/10/2014 ECU 3.05.06 just set to this level because was
+		                         playing with KitKat version and wanted
+		                         to test this version  
+		  04/11/2014 ECU 3.05.07 not a real revision - just created
+		                         after playing with KitKat and Lollipop
+		                         SDK's  
+		  10/11/2014 ECU 3.05.08 put swiping into GridActivity and the
+		                         associated actions  
+		  15/11/2014 ECU 3.05.09 put in installation checks using
+		                         the contents of the InstallationFile
+		                         in the project folder which contains 
+		                         the InstallationKey object. The
+		                         activation key is :-
+		                              DibosonDDMMYYYYHH
+		                         where DDMMYYYYHH is replaced by the
+		                         actual current time. 
+		  19/11/2014 ECU 3.05.10 after setting up time picker in the
+		                         preferences
+		  21/11/2014 ECU 3.05.11 after many changes to noise monitor
+		                         and associated service  
+		  27/11/2014 ECU 3.05.12 after many changes to the medication
+		                         logic   
+		  31/12/2014 ECU 3.05.13 added in a web server with ability
+		                         to access remotely  
+		  04/01/2015 ECU 3.05.14 enabled hardware acceleration because
+		                         of issues with matrix rotation in
+		                         PointerImageView (see Notes file) 
+		  07/01/2015 ECU 3.05.15 after playing with AsyncTask and Thread
+		                         in RadarActivity and customised
+		                         ImageView's (see Notes)  
+		  13/01/2015 ECU 3.05.16 included the NavigationDrawer
+		                         activity to play with various aspects
+		                         of the DrawerLayout operations.
+		                         Also changed minSDK and targetSDK
+		                         from 9 and 14 to 14 and 17 
+		  18/01/2015 ECU 3.05.17 lots of changes in GridActivity to do
+		                         with sorting, etc..  
+		  20/01/2015 ECU 3.05.18 major changes to the MusicPlayer and
+		                         the way it interacts with the adapters
+		                         to update the images in GridActivity
+		                         with the album art when it is playing
+		                         in the background 
+		  27/01/2015 ECU 3.05.19 changes in GridActivity for long press
+		                         actions on certain item - involved
+		                         changes to numerous data classes 
+		  31/01/2015 ECU 3.05.20 lots of changes to the names of methods
+		                         associated with sending and receiving
+		                         messages on the server socket
+		  03/02/2015 ECU 3.05.21 Lots of tidying up of code - mainly in
+		                         the Utilities class and some issues
+		                         with the MusicPlayer and its data
+		                         which was causing problems if device
+		                         had been cloned
+		  08/02/2015 ECU 3.05.22 lots of changes to do with TimerActivity
+		                         and the general handling of timers, both
+		                         in creating and editing and in actioning.
+		  10/02/2015 ECU 3.05.23 a complete reworking of the VideoRecorder
+		                         to handle various combinations of camera
+		  16/02/2015 ECU 3.05.24 added the Belkin WeMo SDK and added an
+		                         activity to test it out
+		  17/02/2015 ECU 3.05.25 add WeMo service - enabled
+		  22/02/2015 ECU 3.05.26 tidying up of NFC control of the WeMo
+		                         devices. Also after a major, but
+		                         unknown problem on the Nexus 7 which
+		                         seemed to require a factory reset
+		  01/03/2015 ECU 3.05.27 tidying up of WeMo timers and dialogue
+		                         aspects
+		  02/03/2015 ECU 3.05.28 added sensor service
+		  09/03/2015 ECU 3.05.29 major changes in GridItems and
+		                         GridActivity to provide validation of
+		                         an activity to ensure it can run in a
+		                         particular hardware / software
+		                         environment
+		  10/03/2015 ECU 3.05.30 removed all menu handling from
+		                         MainActivity (not longer used) and move
+		                         'developmentMode' and 'debugMode' 
+		                         variables into 'storedData' so that
+		                         they are retained after a restart
+		  16/03/2015 ECU 3.05.31 Lots of tidying up in MusicPlayer and
+		                         TCPActivity as well as additions and
+		                         testing of DialogueUtilities methods
+		  21/03/2015 ECU 3.05.32 Remove the variable socketMessageType
+		  						 from MainActivity and changed all
+		  						 associated code
+		  22/03/2015 ECU 3.05.33 Changed the definition of MainActivity.
+		  						 deviceDetails from 'Devices []' to
+		  						 'List<Devices> and modified all
+		  						 affected code
+		  29/03/2015 ECU 3.05.34 Lots of changes to MusicPlayer
+		  04/04/2015 ECU 3.05.35 addition changes to MusicPlayer
+		  05/04/2015 ECU 3.05.35 Final changes to MusicPlayer
+		  11/04/2015 ECU 3.06.01 Initialisation issues (see Notes)
+		  13/04/2015 ECU 3.06.02 Put in screen capture and more work
+		                         on displaying track information for
+		                         incoming music
+		  21/04/2015 ECU 3.06.03 major rewrite (to tidy up) of the
+		                         MusicPlayer as it 'just grew' rather
+		                         than being designed
+		  25/04/2015 ECU 3.06.04 changes to send email to cater for
+		                         attachments and to enable the use
+		                         of a thread to prevent the calling
+		                         method having to wait
+		  26/04/2015 ECU 3.06.05 tidied up the preference layouts used
+		                         by the settings activity. Added the
+		                         option to sort the displayed cells
+		                         (in GridActivity) alphabetically by
+		                         legend
+		  01/05/2015 ECU 3.06.06 Lots of tidying up (of a minor nature)
+		                         to do with checking the directory
+		                         structure and creating any that do not
+		                         exist. Also included MusicPlayerData
+		                         in the preset objects to be read from
+		                         disk (but not synchronised across
+		                         devices)
+		  02/05/2015 ECU 3.06.07 Put in a 'status' class so that runtime
+		                         details for a device is available for
+		                         passing to/from other devices. Also
+		                         used this to provide better control
+		                         of the remote playing of music with
+		                         timeouts, etc..
+		  03/05/2015 ECU 3.06.08 Rewrote much of the ClonerActivity to
+		                         use the changes made in 3.06.07 and
+		                         dialogue preferences
+		  11/05/2015 ECU 3.06.09 Rewrote much of Television and methods
+		                         so that it can be used in conjunction
+		                         with TelevisionSwipeActivity
+		  22/05/2015 ECU 3.06.10 Changes in GridActivity and SettingsActivity
+		                         to enable the immediate actioning of the
+		                         'user view' sorting options 'usage' and
+		                         'legend'
+		  05/06/2015 ECU 3.06.11 Just some tidying up of 'alarms' and use
+		                         resource strings rather than fixed
+		                         strings
+		  07/06/2015 ECU 3.06.12 Tidied up aspects to do with the deletion
+		                         of 'shopping' items
+		  09/06/2015 ECU 3.06.13 Put in swipe in Selector to delete
+		                         items from a list view - mainly for use
+		                         with shopping
+		  10/06/2015 ECU 3.06.14 Tidied up the deletion of shopping
+		                         items using swipe and include the
+		                         confirmation dialogue
+		  11/07/2015 ECU 3.06.15 Put in a manual send e-mail function
+		  14/07/2015 ECU 3.06.16 Added the 'timed' email message
+		                         option in TimerActivity
+		  15/07/2015 ECU 3.06.17 Add the option to retain the project
+		                         log between application restarts. Also
+		                         display messages in the project log
+		                         when the application starts / finishes.
+		  19/07/2015 ECU 3.06.18 Cloning - delete the installation file
+		                         so that the receiving tablet has to be 
+		                         revalidated
+		  18/08/2015 ECU 3.06.19 Added a tone generator activity
+		  20/08/2015 ECU 3.06.20 Tidied up the Tone class so that notes
+		                         can be identified by a free text string
+		  26/08/2015 ECU 3.06.21 General tidying up of bluetooth 
+		                         utilities
+		  28/08/2015 ECU 3.06.22 Major changes to care system user
+		  						 interface
+		  01/09/2015 ECU 3.06.23 More tidying up of the care system
+		                         bits to make better use of Selector
+		                         methods. Also start using
+		                         StaticData
+		  03/09/2015 ECU 3.06.24 Finished moving all static variables
+		   						 from MainActivity to StaticData
+		  04/09/2015 ECU 3.07.01 Place all public variables into the
+		                         PublicData class - they had been in
+		                         MainActivity
+		  07/09/2015 ECU 3.07.02 Changed VoiceCommands to have multiple
+		                         constructors and remove need for an
+		                         Initialise method
+		  12/09/2015 ECU 3.07.03 Tidying up SettingsActivity
+		  15/09/2015 ECU 3.07.04 More tidying up (and correcting faults)
+		                         of SettingsActivity
+		  16/09/2015 ECU 3.07.05 Start to add TV Channel Guide - like
+		                         an EPG
+		  18/09/2015 ECU 3.07.06 More work on EPG - getting close to
+		  						 final solution
+		  25/09/2015 ECU 3.07.07 More tidying up of EPG - use of fragments
+		                         and tab host
+		  29/09/2015 ECU 3.07.08 EPG - add the alarm handling
+		  02/10/2015 ECU 3.07.09 EPG - more bug fixes and handlers to
+		                         make sure that the view is refreshed
+		  03/10/2015 ECU 3.07.10 Made changes in manifest to have
+		  						 'android:configChanges' for each 
+		  						 activity to try and fix a problem 
+		  						 when the device is rotated.
+		  11/10/2015 ECU 3.07.11 More LifeCycle tests and include
+		                         the 'savedInstanceState' check at the
+		                         start of activities
+		  12/10/2015 ECU 3.07.12 Remove LifeCycle messages
+		  17/10/2015 ECU 3.07.13 Lots of changes to do with EPG activities,
+		                         associated alarms, accessing the remote
+		                         device, etc....
+		  18/10/2015 ECU 3.07.14 More changes to do with EPG activities,
+		                         - mainly to do with reminders at the
+		                         same time and tidying up of code
+		  22/10/2015 ECU 3.08.01 Defined DibosonActivity and changed
+		                         those activities that are started
+		                         from GridActivity to DibosonActivity
+		  24/10/2015 ECU 3.08.02 Put methods into StoredData to set
+		                         values and then write everything to
+		                         disk
+		  28/10/2015 ECU 3.08.03 Doing tests on ADB driver for new hudl2
+		                         devices
+		  01/11/2015 ECU 3.08.04 Played with themes to adjust the title
+		                         bar for the StartUp activity. Also
+		                         declare a TextView that will contain
+		                         copyright information and in the
+		                         activity update the TextView with that
+		                         information.
+		  04/11/2015 ECU 3.08.05 Added the documentation activity which
+		                         is activated when there is a long
+		                         press on the BACK key
+		  06/11/2015 ECU 3.08.06 Added screen orientation to landscape
+		                         for VideoRecorder, VideoRecorderOld
+		                         and VideoViewer (see Notes)
+		  07/11/2015 ECU 3.08.07 Add the screen orientation to each
+		                         activity in this manifest
+		  09/11/2015 ECU 3.08.08 Just prepare for move to Eclipse Luna
+		  11/11/2015 ECU 3.08.09 Added the 'testing_level' metadata
+		  12/11/2015 ECU 3.08.10 Tidied up the manifest - put activities
+		                         in alphabetical order and keep separate
+		                         from receivers and services
+		  15/11/2015 ECU 3.08.11 Added the DatabaseActivity and
+		  						 associated utilities for accessing
+		  						 databases on the device
+		  19/11/2015 ECU 3.08.12 tidied up the layouts with more use of
+		                         values-sw<width in dp>dp folders and
+		                         add dimens.xml	
+		  21/11/2015 ECU 3.08.13 tidied up the bar code activity
+		  22/11/2015 ECU 3.08.14 finished tidying up bar code activity
+		                         that required changes to SelectorUtilities
+		                         and SelectorParameter	
+		  23/11/2015 ECU 3.08.15 Added the manual input of barcodes	
+		  26/11/2015 ECU 3.08.16 Added added panic alarm
+		  28/11/2015 ECU 3.08.17 Try and tidy up panic alarm to provide
+		                         tracking, etc..
+		  29/11/2015 ECU 3.08.18 Put in cancel phone call as voice 
+		                         command and alter server commands to
+		                         process. All added commands into
+		                         StaticData	
+		  01/12/2015 ECU 3.08.19 Start to put 'alarm manager' handling
+		                         into PanicAlarmActivity	
+		  04/12/2015 ECU 3.08.20 Add 'shake' detection into the Panic
+		                         Alarm activity	
+		  05/12/2015 ECU 3.08.21 PanicAlarm - take out all the old code
+		                         when checking was done via TimerService
+		  11/12/2015 ECU 3.08.22 PanicAlarm - include the gForce, etc..
+		                         in the object rather than being static.
+		  14/12/2015 ECU 3.08.23 General tidy up of MedicationInput and
+		                         alarms with use of fileChoice in
+		                         DialogueUtilities. Generalised the
+		                         screen capture.
+		  17/12/2015 ECU 3.08.24 Lots of playing around with the
+		   						 FileArrayAdapter because not working
+		   						 in AlertDialog but is working from
+		   						 FileChoose - see Notes	 
+		  19/12/2015 ECU 3.08.25 Put in a new alarm that can have an
+		  						 associated method definition. Tidy up
+		  						 AppointmentsActivity, and associated
+		  						 classes.
+		  						 
+		  						 Also changed the appointments activity
+		  						 to use the selector mechanism.
+		  21/12/2015 ECU 3.08.26 Tidy up the mechanism for prompts to
+		                         ensure that the user takes action on the
+		                         displayed options.
+		  23/12/2015 ECU 3.08.27 Looked into issues with alarms which
+		                         seemed to be happening before the app
+		                         was in a position to process them (see
+		                         Notes) - basically changed the DailyScheduler
+		                         and AlarmManagerReceiver state to false
+		                         and leave it to the app (in MainActivity)
+		                         to enable them
+		  24/12/2015 ECU 3.08.28 Added Utilities.SetAnExactAlarm which
+		                         determines whether to use 'set' or
+		                         'setExact' based on whether < KitKat
+		                         or not. Changed all alarm setting calls
+		                         to use this new method.
+		  29/12/2015 ECU 3.08.29 Start to tidy up bluetooth discovery
+		                         as part of the detection of a carer's
+		                         visit. Changed to use alarm rather
+		                         than a handler.
+		  01/01/2016 ECU 3.08.30 Tried to tidy up the cancellation of
+		  			 			 alarms.
+		  03/01/2016 ECU 3.08.31 Some tidying up of the carer system
+		                         which are recorded in the appropriate
+		                         activities against this date.
+		  04/01/2016 ECU 3.08.32 Added 'keyboard' to onConfigChanges
+		                         because of issues when using a 
+		                         bluetooth keyboard
+		  06/01/2016 ECU 3.08.33 Lots of corrections to do with SMS and
+		                         incoming server strings to process -
+		                         all logged against this date
+		  07/01/2016 ECU 3.08.34 Cloning to the HTC caused problems so
+		                         modified the device details to include
+		                         the API level and then use this to
+		                         restrict the size of file to send -
+		                         the size can be changed in settings
+		  10/01/2016 ECU 3.08.35 Lots more tidying up with the file
+		                         transfer task - mainly in 
+		                         FileTransferUtilities
+		  18/01/2016 ECU 3.08.36 Rearrange the FTP stuff to have 
+		  						 separate control and data transfer
+		  						 blocks - and test.
+		  =============================================================
+		  19/01/2016 ECU 4.00.00 At this point NO new software is to
+		                         be developed other than to correct
+		                         issues with existing code
+		  20/01/2016 ECU 4.00.01 Changed the network discovery to obtain
+		                         details from 'discovered' devices using
+		                         the 'Devices' object rather than a
+		                         text message which needed to be parsed
+		  22/01/2016 ECU 4.00.02 Put in ActionCommandUtilities to help
+		                         with the creation of individual action
+		                         commands
+		  31/01/2016 ECU 4.00.03 Lots of tidying up with the carer system
+		  						 to take account of deleting items
+		  						 which have related items.
+		  06/02/2016 ECU 4.00.04 Care visit plan - change the order of
+		  						 carer and agency and set a listener on
+		  						 the carer spinner so that the agency
+		  						 position can be changed
+		  08/02/2016 ECU 4.00.05 LocationActivity - provide the option 
+		                         to log the locations to a file (KML 
+		                         format) so that it can be displayed
+		                         by Google Earth
+		  14/02/2016 ECU 4.00.06 MusicPlayer - changed to DibosonActivity
+		                         because was having NPE on being
+		                         restarted after being destroyed by the
+		                         OS
+		  19/02/2016 ECU 4.00.07 ShowEPGActivity - tidy up so that
+		  						 alarms are not generated for programs
+		  						 that are currently showing or have been
+		  						 shown
+		  20/02/2016 ECU 4.00.08 ShowEPGActivity - more changes to
+		  						 determine when the EPG needs refreshing
+		  22/02/2016 ECU 4.00.09 TextPreference - tidying up the display
+		  						 of stored and value and specify the
+		  						 type of text input
+		  26/02/2016 ECU 4.00.10 LocationActivity - use tracking details
+		  						 in public data to enable tracking to
+		  						 file to survive a restart by the Android
+		  						 OS. 
+		  						 General - add a bluetooth remote 
+		  						 controller server
+		  27/02/2016 ECU 4.00.11 Remote controller server - implement and
+		                         test.
+		  28/02/2016 ECU 4.00.12 SystemInfoActivity - tidied up to use
+		  						 resources rather than literals
+		  29/02/2016 ECU 4.00.13 ShoppingActivity - general tidying up
+		  						 to do with the initiali sorting of
+		  						 displayed items and checking whether a
+		  						 shopping list exists before actioning
+		  						 it
+		  01/03/2016 ECU 4.00.14 Shopping ... - major changes (similar
+		                         to those in the Carer System 31/01/16)
+		                         to be able to flag deleted objects and
+		                         then to reuse them. This way the indices
+		                         will be maintained within the system.
+		  03/03/2016 ECU 4.00.15 TVChannel - fixed an indexing error
+		  						 GridActivity - put a 'simple' password
+		  						 check in if the device is not in
+		  						 development mode and the user tries
+		  						 to enter the settings activity
+		  04/03/2016 ECU 4.00.16 Try and sort out issues caused by an
+		  						 alarm being actioned when the app is
+		  						 not running - try and start up the
+		  						 app automatically.
+		  						 TextToSpeechsService - changed from
+		  						 using a thread to process phrases
+		  						 to a handler
+		  05/03/2016 ECU 4.00.17 AlarmActions - remove the use of try/catch
+		  						 and try and anticipate if the app is
+		  						 running by using information stored in
+		  						 'storedData'
+		  06/03/2016 ECU 4.00.18 Tidied up issues associated with the
+		                         AlarmActions changes. Involved mods in
+		                         MainActivity and GridActivity
+		                         DialogueUtilities - specify a minimum
+		                         value on the sliderChoice and alter
+		                         all calls to the new method
+		  07/03/2016 ECU 4.00.19 Panic Alarm - changes made to restart
+		                         the app if an alarm is received by
+		                         AlarmManagerReceiver when the app has
+		                         been stopped. Changes made in 
+		                         AlarmManagerReceiver and StaticData
+		  09/03/2016 ECU 4.00.20 Set the timed medication properly which
+		                         involved changes to TimerActivity, 
+		                         MedicationActivity and Utilities.
+		  11/03/2016 ECU 4.00.21 Add control of the 'vibrate', set the
+		                         permissions in this manifest and enable
+		                         its set up as an 'action command'
+		  16/03/2016 ECU 4.00.22 PanicAlarmActivity - changes to try and
+		                         get the alarm into the correct state
+		                         when the app is restarted either
+		                         manually or by the Android OS - did
+		                         lots of testing but concerned that there
+		                         may still be some 'timing windows' which
+		                         could give errors.
+		                         TextToSpeechService - changed to use
+		                         the notification builder
+		                         DibosonActivity - tidy up screen capture
+		                         ActionCommandUtilities and Utilities -
+		                         check that the vibrator exists
+		  22/03/2016 ECU 4.00.23 Included the handling of the proximity
+		                         sensor. Changes in SensorSevice,
+		                         Utilities and SettingsActivity 
+		  23/03/2016 ECU 4.00.24 SettingsActivity - remove sensor
+		  						 information if that sensor does not
+		  						 exist on the device 
+		  26/03/2016 ECU 4.00.25 Utilities - always use the service
+		                         in SpeakAPhrase and create a method
+		                         SpeakAPhraseWithDelays to build in a
+		                         delay when a full stop is encountered
+		  27/03/2016 ECU 4.00.26 DailyScheduler - put in the check so
+		                         that if an alarm is received when the
+		                         app is not running then it will be started
+		                         after having rescheduled the event
+		                         causing the call.
+		                         StoredData - added alarmsRestartApp
+		                         (settable via SettingsActivity) to
+		                         optionally leave broadcast receivers
+		                         active when the app is destroyed.
+		                         AppointmentsActivity - changed to
+		                         display a message rather than use toast
+		  30/03/2016 ECU 4.00.27 Introduced the use of hashcode's to
+		                         try and detect the change of data to
+		                         try and overcome a synchronisation
+		                         issue (see Notes)
+		  03/04/2016 ECU 4.00.28 Some general tidying up of appointments
+		                         to prevent the buffering of the associated
+		                         reminder alarms when the app is not
+		                         running and the 'restart app on alarm'
+		                         has not been set.
+		  05/04/2016 ECU 4.00.29 Multicast testing because it is used
+		                         by a device when the app starts. Am
+		                         somewhat concerned that multicasts
+		                         seems unreliable 
+		  09/04/2016 ECU 4.00.30 Change all references from 'multicast'
+		                         to 'broadcast' because in reality
+		                         the former was not being used to send
+		                         messages to all devices - this was being
+		                         done with the broadcast address.
+		  16/04/2016 ECU 4.00.31 SystemInfoActivity - because the project
+		                         log can be longer (in the number of lines)
+		                         than the maximum number of lines in
+		                         the TextView then changed to use
+		                         Utilities.readLinesFromEndOfFile so the
+		                         end of the file is read (or the whole
+		                         file if smaller than the display field)  
+		  26/04/2016 ECU 4.00.32 Just put in some code so that a device
+		                         can monitor another - not in a complete
+		                         way but just to receive enough data to
+		                         understand what is happening on that device
+		  28/04/2016 ECU 4.00.33 Tidy up the monitoring code which is
+		                         in ServerThreadForData, MonitorData
+		                         and TCPActivity 
+		  02/05/2016 ECU 4.00.34 Added TIME action and check if a manual
+		  						 email can be sent - not available if
+		  						 no network or not set in settings  
+		  06/05/2016 ECU 4.00.35 AudioStreamActivity - general tidying
+		                         up
+		  18/05/2016 ECU 4.00.36 LiquidActivity added and the option
+		                         added to GridActivity to automatically
+		                         start an activity if the flag set
+		                         in the SettingsActivity
+		  21/05/2016 ECU 4.00.37 Add user defined 'spoken phrases' to
+		                         enhance the voice recognition activity
+		  22/05/2016 ECU 4.00.38 TextToSpeechService - modify so that
+		                         if music is playing then it will be
+		                         paused until the 'utterance' is complete
+		                         at which point the music will be resumed
+		                         from the point at which it was paused
+		  25/05/2016 ECU 4.00.39 VideoRecorder - rewrite so as not to 
+		                         use the CameraPreview class.
+		  29/05/2016 ECU 4.00.40 Manifest and VideoRecorder - change to
+		                         work in portrait mode
+		  31/05/2016 ECU 4.00.41 General tidying up of issues to do 
+		                         with 'liquid' registration and 
+		                         processing - layouts and code.
+		  03/06/2016 ECU 4.01.01 Major changes to 'action' handling to
+		                         use message handling so that it is
+		                         possible to wait for actions to finish
+		  08/06/2016 ECU 4.01.02 AudioAnalyser - investigate a problem
+		                         with the BACK key which was causing
+		                         the activity to hang. Eventually seemed
+		                         to be to do with using an AsyncTask
+		                         that is in a 'long' loop - changed to
+		                         a thread - check the notes in the
+		                         activity.
+		  12/06/2016 ECU 4.01.03 NFC_Activity - lots of mods to do with
+		                         writing NFC tabs and cleaning up the
+		                         code
+		  13/06/2016 ECU 4.01.04 Changes to the bar code system to enable
+		                         'actions' to be associated with a
+		                         particular bar code and to enable them
+		                         to be processed when a valid bar code
+		                         is read.
+		  15/06/2016 ECU 4.01.05 NFC_Activity and SereverThreadForData
+		                         - provide facility for routing actions
+		                         to a remote device for processing
+		  17/06/2016 ECU 4.01.06 NFC_Activity - check that remote device
+		                         can be communicated with before setting
+		                         it as the remote processor
+		  23/06/2016 ECU 4.01.07 With the closure of the Radio Times
+		                         XMLTV service (provided by Metabroadcast)
+		                         the code has to be changed to use the
+		                         data supplied in JSON format from
+		                         Metabroadcast's atlas system
+		                         
+		                         24/06/2016 ECU more tidying up
+		  24/06/2016 ECU 4.01.08 TV EPG - got a version working using
+		                         JSON instead of XMLTV
+		  27/06/2016 ECU 4.01.09 TV EPG - lots more tidying up and error
+		                         handling
+		  28/06/2016 ECU 4.01.10 TV EPG - provide the facility, by long
+		                         clicking the 'search button' to select
+		                         a particular TV channel is to be 
+		                         displayed
+		  05/07/2016 ECU 4.01.11 TV EPG - have been investigating the
+		                         fault detailed in the KnownBugs file
+		                         and seem to have resolved it. Important
+		                         that the KnownBugs file is read.
+		                         
+		                         05/07/2016 ECU modified the actions_
+		                                        preference layout for
+		                                        scrolling - problem on
+		                                        the Samsung Tablet
+		  06/07/2016 ECU 4.01.12 TV EPG - put in a 'timer' button to
+		                         show any 'outstanding' alarms
+		  09/07/2016 ECU 4.01.13 TV EPG - make the MetaBroadcast 
+		                         parameters configurable through the
+		                         normal settings activity.
+		  13/07/2016 ECU 4.01.14 Notifications - put in a local notification
+		                         mechanism
+		  21/07/2016 ECU 4.01.15 EPG - made changes to interface to
+		                         the Schedules Direct system
+		  22/07/2016 ECU 4.01.16 EPG - major tidying up of the Schedules
+		                         Direct code
+		  24/07/2016 ECU 4.01.17 More tidying up of known issues
+		  28/07/2016 ECU 4.01.18 Marshmallow - started looking at the
+		                         the changes prior to using it as the
+		                         development environment. Main areas
+		                          1) returns fake MAC address (02:00:00:00:00:00)
+		                             so get via another means
+		                          2) the 'setLatestEventInfo' no longer
+		                             exists in Notification so change
+		                             the code (TimerService and ServerService)
+		                             to use NotificationCompat.Builder
+		                          3) the Apache HTTP classes have been
+		                             removed so either rewrite the code
+		                             or add the Apache library as a 
+		                             dependency - will do the later
+		                         At the moment leave with Lollipop 
+		  29/07/2016 ECU 4.01.19 Changed to use Marshmallow and set
+		                         Apache as a dependency
+		  04/08/2016 ECU 4.01.20 NamedActions (started on 02/08 and
+		                         03/08) implemented the code and test
+		  15/08/2016 ECU 4.01.21 Selector - changed to use onBackPressed
+		                         rather than onKeyDown (notes in the
+		                         class)
+		  20/08/2016 ECU 4.01.22 AudioRecorder - general tidying up
+		  07/09/2016 ECU 4.01.23 UPnP_Activity - created to play around
+		                         with cybergarage
+		  20/09/2016 ECU 4.01.24 General tidying up
+		  13/09/2016 ECU 4.01.25 More tidying up and investing any 
+		                         remaining errors
+		  05/10/2016 ECU 4.01.26 Seattle trip - changes to carer handling
+		                         mainly
+		  11/10/2016 ECU 4.01.27 Lots of tidying up with Groups and
+		                         Appointments
+		  18/10/2016 ECU 4.01.28 Documents activity added
+		  23/10/2016 ECU 4.01.29 Appointments - add recorded notes
+		  27/10/2016 ECU 4.01.30 Start looking at different locales
+		                         eg. US versus GB - date format
+		  31/10/2016 ECU 4.01.31 AppointmentsActivity - major tidy up
+		                         to put some of the data into resources
+		                         rather than being held locally
+		  01/11/2016 ECU 4.01.32 General tidying up of the buttons used
+		                         in selector row layout
+		                           use button_height / width 
+		                            instead of 40dp / 80dp
+		                           and shape of row_button
+		                            instead of button_shape 
+		  03/11/2016 ECU 4.01.33 1) create an alarmManager in PublicData
+		                            and remove all local managers that
+		                            used to be local
+		                         2) when cancelling an alarm then
+		                            also, optionally, cancel the pending 
+		                            intent (see Utilities.cancelAnAlarm)
+		  09/11/2016 ECU 4.01.34 Because of the change in the handling
+		                         of runtime permissions that came in at
+		                         API 23 (Marshmallow) was necessary to
+		                         check for the required permissions
+		                         (via the RuntimePermissions class)
+		                         and prompt the user to ensure that
+		                         the permissions set via the 'Settings'
+		                         app, and the 'Apps' option is correct. 
+		  11/11/2016 ECU 4.01.35 Did a rewrite of the network discovery
+		                         - i.e. the code in DiscoverActivity
+		                         and DiscoverThread  
+		  12/11/2016 ECU 4.01.36 DialogueUtilities - add method for getting
+		                         a valid IP address  
+		  14/11/2016 ECU 4.01.37 AudioRecorder - do a rewrite to use
+		                         random access files rather than a
+		                         temporary file  
+		  18/11/2016 ECU 4.01.38 AudioAnalyser - tidy up because there
+		                         was a scaling error in DibosonView
+		                         which was highlighted when using Android
+		                         6 devices
+		  20/11/2016 ECU 4.01.39 AudioAnalyser and DibosonView - changed
+		                         to use a 'handler' rather than threads
+		                         to clean the code and make it easier
+		                         to understand 
+		  24/11/2016 ECU 4.01.40 Investigating some issues with bluetooth
+		                         discovery when used for changing the
+		                         status of carers when they arrive/depart.
+		                         A few problems were detected mainly due
+		                         to tasks trying to access the screen when
+		                         they are not on the UI - hopefully these
+		                         have been resolved.  
+		  27/11/2016 ECU 4.01.41 CarerActivity highlighted a clash 
+		                         between MessageHandler and TextToSpeech
+		                         service - notes are in the classes.
+		                         Also tidied up the bluetooth versus
+		                         manual notification of visits. 
+		  28/11/2016 ECU 4.01.42 Utilities.SetUpActivity tidied up
+		                         and went through all activities to
+		                         set up the screen because on the Sony XA
+		                         the status bar was always being shown 
+		  29/11/2016 ECU 4.01.43 AppointmentsActivity - change to have
+		                         a true 'display only' mode. Changed
+		                         GridActivity so that this is displayed
+		                         when the item selected - a long press
+		                         is required to enter the edit / add
+		                         mode 
+		  07/12/2016 ECU 4.01.44 Tidied up the Care visits so that the
+		                         list of 'tasks to do' can be edited 
+		  08/12/2016 ECU 4.01.45 Care visits - more checking of the
+		                         associated alarms and survival over
+		                         a restart of the app 
+		  11/12/2016 ECU 4.01.46 MedicationActivity - provide the facility
+		                         to email medication details sorted by
+		                         day of dose or by the medication itself  
+		             ECU 4.01.47 MainActivity - created SetVariablesFromResources
+		                         and tidied up the way 'day of the week'
+		                         is handled  
+		  14/12/2016 ECU 4.01.48 Tidy up some of the cloning and file
+		                         transfer methods  
+		  18/12/2016 ECU 4.01.49 GameTwo - provide a facility to change
+		                         the background using the mew
+		                         Utilities.scaleBitmap method
+		  22/12/2016 ECU 4.01.50 DibosonActivity - decide whether
+		                         changing testing notes or capturing the
+		                         screen by displaying a yes/no dialogue.
+		                         General tidying up.  
+		  23/12/2016 ECU 4.01.51 DisplayDrawableActivity - changed from
+		  						 DibosonActivity to Activity - see the
+		  						 notes in that activity. 
+		  29/12/2016 ECU 4.01.52 Torch facilities - change image icon
+		                         when the torch is on
+		                         Moved all of the flashlight methods
+		                         from Utilities into a new FlashLight
+		                         class.
+		  30/12/2016 ECU 4.01.53 GridActivity - add 'long press' on
+		                         torch to do delayed operations
+		  31/12/2016 ECU 4.01.54 UserInterface added to try and tidy up
+		                         the way the displayed details of an
+		                         activity, in the user interface, are
+		                         displayed
+		  01/01/2017 ECU 4.01.55 GridActivity - change ImageAdapter to
+		                         be more of a customised form so that
+		                         text can be displayed
+		  21/01/2017 ECU 4.01.56 ShowEPGActivity and MessageHandler -
+		                         add display of current date/time on
+		                         the currently selected tab
+		  22/01/2017 ECU 4.01.57 ShowEPGActivity - make sure the display
+		                         of selected TV programs is maintained
+		                         following a rebuild of the EPG data
+		  25/01/2017 ECU 4.01.58 ShowEPGActivity - tidy up the display
+		                         and update of the current date and
+		                         time
+		  26/01/2017 ECU 4.01.59 TimerActivity and AlarmData - general
+		                         tidy up to give more readable alarm
+		                         summaries
+		  29/01/2017 ECU 4.01.60 AlarmData and MainActivity - make
+		                         sure that all stored alarms are cancelled
+		                         when the app is destroyed unless the
+		                         flag to 'restart app on timer' is set
+		  31/01/2017 ECU 4.01.61 MessageHandler and Utilities - change
+		                         the way that a drawable is displayed
+		                         so that it uses Toast rather than an
+		                         activity. Use this when giving warnings
+		                         about the light level.
+		  01/02/2017 ECU 4.01.62 SpeakingClock - provide mechanism to
+		  						 optionally show the time as well as
+		  						 speak in
+		  12/02/2017 ECU 4.01.63 TVChannelsActivity - general tidying
+		                         up of way selected channels are
+		                         displayed. Needed to modify 'channels_row'
+		                         layout
+		  12/02/2017 ECU 4.01.64 TVChannelsActivity and SchedulesDirect
+		                         - change the visibility of buttons
+		                         depending on the data that is available
+		  14/02/2017 ECU 4.01.65 TVChannelsActivity - more tidying up
+		                         and more use of string resources
+		  16/02/2017 ECU 4.01.66 TV Schedules- more investigating of
+		                         scrolling data to the same time
+		  17/02/2017 ECU 4.01.67 TV Schedules - finish off the alignment
+		                         of programs to the last scrolled
+		                         program. Make this optional on
+		                         'tvChannelsPositioning' in stored data
+		  19/02/2017 ECU 4.01.68 Track - put in the buttons to record a
+		                         note or video
+		  20/02/2017 ECU 4.01.69 Track add the taking of a photo using
+		                         the inbuilt camera - using an intent
+		                         which has the destination file
+		  25/02/2017 ECU 4.01.70 Added butt'customButtonRound' style
+		                         to have text on a round 'drawable'
+		                         background - tested using TestActivity
+		  27/02/2017 ECU 4.01.71 DailySummaryActivity added
+		  02/03/2017 ECU 4.01.72 DailySummaryActivity - tidy up with
+		                         better layouts. Add shared preference
+		                         handling within MainActivity to check
+		                         if the app is already running
+		  04/03/2017 ECU 4.01.73 Alarm problem (see KnownBugs file) -
+		                         change AlarmService to AlarmReceiver
+		                         because NOT a service
+	      05/03/2017 ECU 4.01.74 Have a general tidy up up- remove all
+	                             calls to TestLogUtilities.Log. Did more
+	                             testing of the Alarm problem but the
+	                             issue still remains.
+	      06/03/2017 ECU 4.01.75 SchedulesDirect - a problem was highlighted
+	                             yesterday which meant that the encoding
+	                             of incoming data was not being handled
+	                             correctly - this has been corrected.
+	      10/03/2017 ECU 4.01.76 WebUtilities - store some of the HTML
+	                             files in 'raw' so that a meaningful 
+	                             web server can work if there are no pages
+	                             in 'htdocs'.
+	                             SpeakingClock - added Westminster chimes
+	                             which are stored as 'raw' resources
+	      11/03/2017 ECU 4.01.77 SystemInfoActivity - added the display
+	                             of 'known bugs' and 'notes' which have
+	                             been placed in 'raw'
+	      12/03/2017 ECU 4.01.78 MessageHandler - add PLAY_RAW which is
+	                             primarily used by the speaking clock
+	                             methods
+	      17/03/2017 ECU 4.01.79 SystemInfoActivity - tidy up and use
+	                             resources rather than literal strings
+	      18/03/2017 ECU 4.01.80 Remove all unused 'menus' and reduce
+	                             the number of Log.i calls
+	      =============================================================
+	      18/03/2017 ECU 4.02.01 First version where a signed exportable
+	                             package was generated and tested 
+	                             (see  documentation_notes in raw) for
+	                             details
+	      19/03/2017 ECU 4.02.02 Tidying up of SystemInfoActivity and
+	                             include documentation on 'strict mode'
+	      =============================================================
+	      
+    -->
+
+    <uses-sdk
+        android:minSdkVersion="11"
+        android:targetSdkVersion="23" />
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.CALL_PHONE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+
+    <uses-feature android:name="android.hardware.camera" />
+
+    <uses-permission android:name="android.permission.RECEIVE_SMS" />
+    <uses-permission android:name="android.permission.SEND_SMS" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+    <uses-permission android:name="android.permission.NFC" />
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+    <uses-permission android:name="android.permission.GET_TASKS" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!--
+    	===========================================================
+    	19/03/2016 ECU added the following permission because was
+    	               getting an exception when trying to change
+    	               the wallpaper. Seems to be an issue from
+    	               5.1.1 (Lenovo Tablet) as was not getting
+    	               the permission error on 5.1
+    	27/11/2016 ECU this note related to WRITE_SETTINGS which
+    	               has been moved into the main body above
+    	               but leave this comment for historical
+    	               reasons.
+    	===========================================================
+    -->
+
+
+    <!--
+      	===========================================================
+      	===========================================================
+      	11/11/2015 ECU METADATA
+    	               ======== the following are metadata definitions
+    	                        which may be associated with an
+    	                        activity.
+    	               testing_level	the level of testing that
+    	                                the activity has reached.
+    	                                It is an integer which
+    	                                relates to the element in
+    	                                testing_levels string array
+        ===========================================================
+        ===========================================================
+    -->
+
+
+    <!--
+      	===========================================================
+    	03/11/2015 ECU added the theme line to avoid a blank white
+                       screen being displayed when the app is run
+        12/01/2016 ECU added largeHeap option
+        31/01/2016 ECU added the launchMode option - singleTask
+              Notes from Android documentation
+              ================================
+              The "singleTask" and "singleInstance" modes also differ 
+              from each other in only one respect: A "singleTask" 
+              activity allows other activities to be part of its task. 
+              It's always at the root of its task, but other activities 
+              (necessarily "standard" and "singleTop" activities) can 
+              be launched into that task. A "singleInstance" activity, 
+              on the other hand, permits no other activities to be
+              part of its task. It's the only activity in the task.
+              If it starts another activity, that activity is 
+              assigned to a different task — as if FLAG_ACTIVITY_NEW_TASK 
+              was in the intent.
+        ===========================================================
+    -->
+    <uses-permission android:name="android.permission.READ_SMS" />
+
+    <application
+        android:allowBackup="true"
+        android:description="@string/app_description"
+        android:hardwareAccelerated="true"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:largeHeap="true"
+        android:launchMode="singleTask"
+        android:theme="@style/AppTheme" >
+
+        <!-- =========================================================== -->
+        <activity
+            android:name=".MainActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/app_name"
+            android:screenOrientation="portrait"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!-- =========================================================== -->
+
+
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Accelerometer"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_accelerometer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ActivationActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_activation"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AgencyActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_agency"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AlarmActions"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_alarm_actions"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AppointmentsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_appointments"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AppointmentSwipeActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_appointment_swipe"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AudioAnalyser"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_audio_analyser"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AudioRecorder"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_audio_recorder"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".AudioStreamActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_audio_stream"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".BarCodeActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_bar_code"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="1" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".BarCodeEntry"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_bar_code_entry"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".BlueToothActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_blue_tooth"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".BlueToothCommunicationActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_blue_tooth_communication"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".BondedDevicesActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_blue_tooth_discovery"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".CarerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_carer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".CarePlanVisitActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_care_plan_visit"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".CarerSystemActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_carer_system"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ClockActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_child_"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".CloneActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_clone"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ClonerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_disk_handling"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+         <activity
+            android:name=".DailySummaryActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_daily_summary"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Dialogue"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_dialogue"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DisplayAMessage"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_display_amessage"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".CompassActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_compass"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="3" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DatabaseActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_database"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DiscoverNetwork"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_discover_network"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DibosonViewActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_diboson_view"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DisplayDrawableActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_help"
+            android:screenOrientation="portrait"
+            android:theme="@style/Transparent" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DisplayURL"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:label="@string/title_activity_display_url"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DocumentationActivity"
+            android:label="@string/title_activity_documentation"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DocumentsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_documents" >
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DoseActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_dose"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".DoseDaysActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_dose_days"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".EMailActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_email"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".EmailDetailsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_email_details"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ExerciseActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:label="@string/title_activity_exercise"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".FallsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_falls"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".FileChooser"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_file_choser"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GameOne"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_game_one"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GameTwo"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_game_two"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GetMessage"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_get_message"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GridActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_grid"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GraphicsActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:label="@string/title_activity_graphics"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".GroupActivity"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:label="@string/title_activity_group"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".InvadeActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_invade"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".LiquidActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_liquid"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".LocationActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_location"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".MapActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_map"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Medication"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_medication"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".MedicationActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_medication"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".MedicationInput"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_medication_input"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".MusicPlayer"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_music_player"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NamedActionsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_named_actions"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NavigationDrawer"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_navigation_drawer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NavigationDrawerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_navigation_drawer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NewSystemInfoActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_new_settings"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!--
+        	 ===========================================================
+        	 12/06/2016 ECU added single top as launch mode
+             =========================================================== 
+        -->
+        <activity
+            android:name=".NFC_Activity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_nfc_"
+            android:launchMode="singleTop"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.nfc.action.NDEF_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.nfc.action.TAG_DISCOVERED" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.nfc.action.TECH_DISCOVERED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.nfc.action.TECH_DISCOVERED"
+                android:resource="@xml/nfc_tech_filter" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NFCActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_nfc"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".NotificationsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_notifications" >
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".PanicAlarmActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_panic_alarm"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".RadarActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_radar"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".RemotePlayerDetails"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_remote_player_details"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".RunActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_run"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ScreenCaptureActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_screen_capture"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Selector"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_selector"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ServerCommands"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_server_commands"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!--
+             ===========================================================
+        	 23/02/2016 ECU added the theme to try and make the display
+        	                more readable.
+        	 24/03/2016 ECU played around with the theme but does not
+        	                look correct for some of the dialogues where
+        	                am getting a black background so decided to
+        	                remove it until it is understood better
+        	  			ECU put the theme back because put a 'bodge' in
+        	  			    the multiline_input layout (commented there)              
+        	                to try and remove some black background 
+        	                which looked wrong
+        	 ===========================================================
+        -->
+        <activity
+            android:name=".SettingsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_settings"
+            android:screenOrientation="portrait"
+            android:theme="@style/PreferenceTheme.Custom" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ShoppingActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_shopping"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ShoppingInputActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_shopping_product"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ShowEPGActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_show_epg"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".SlideShowActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_slide_show"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".SpeakingClockActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_speaking_clock"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".StartUpActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_start_up"
+            android:screenOrientation="portrait"
+            android:theme="@style/CustomTitleBarTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".SystemInfoActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_system_info"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".SwipeActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_swipe"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TCPActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_tcp"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Television"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_television"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+
+                <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
+            </intent-filter>
+
+            <meta-data
+                android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
+                android:resource="@xml/device_filter" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TelevisionSwipeActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_television_swipe"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TestActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_test"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TimerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_timer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TimerEventActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_timer_event"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".ToneGeneratorActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_tone_generator"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".Track"
+            android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
+            android:label="@string/title_activity_track"
+            android:screenOrientation="portrait"
+            android:theme="@style/FullscreenTheme" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".TVChannelsActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_tvchannels"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".UPnPActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_upn_p"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- ========================================================== -->
+        <activity
+            android:name=".UPnP_Activity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_upn_p_"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <!--
+            ============================================================
+        	29/05/2016 ECU changed to portrait orientation
+        	============================================================
+        -->
+        <activity
+            android:name=".VideoRecorder"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_video_recorder"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <!--
+            ============================================================
+        	29/05/2016 ECU changed to portrait orientation
+        	============================================================
+        -->
+        <activity
+            android:name=".VideoViewer"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_video_viewer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".VoiceRecognition"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_voice_recognition"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".VideoRecorderOld"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_video_recorder_old"
+            android:screenOrientation="landscape" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".WaitActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_wait"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".WeMoActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_we_mo"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".WeMoDeviceTimerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_we_mo_device_timer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+        <activity
+            android:name=".WeMoTimerActivity"
+            android:configChanges="keyboardHidden|orientation|keyboard"
+            android:label="@string/title_activity_we_mo_timer"
+            android:screenOrientation="portrait" >
+            <meta-data
+                android:name="testing_level"
+                android:value="0" />
+        </activity>
+        <!-- =========================================================== -->
+
+
+        <!--
+        	 ===========================================================
+        	 ===========================================================
+        	 R E C E I V E R S
+        	 ===========================================================
+        	 =========================================================== 
+        -->
+  
+        <!--
+             ===========================================================
+             23/12/2015 ECU changed to be disabled
+             ===========================================================
+        -->
+        <receiver
+            android:name=".AlarmManagerReceiver"
+            android:enabled="false"
+            android:label="@string/title_activity_alarm_service" >
+        </receiver>
+        
+          
+        <!-- ===========================================================
+             04/03/2017 ECU changed name from AlarmService because it
+                            is a broadcast receiver rather than a
+                            service
+             ===========================================================
+         -->
+        <receiver
+            android:name=".AlarmReceiver"
+            android:label="@string/title_activity_alarm_service" >
+        </receiver>
+        
+        
+        <!--
+             ===========================================================
+          	 23/12/2015 ECU changed to be disabled
+             ===========================================================
+        -->
+        <receiver
+            android:name=".DailyScheduler"
+            android:enabled="false"
+            android:label="@string/title_daily_scheduler" >
+        </receiver>
+        <!-- =========================================================== -->
+        <receiver
+            android:name=".DeviceAdministrator"
+            android:permission="android.permission.BIND_DEVICE_ADMIN" >
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/policies" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
+        <!-- =========================================================== -->
+        <receiver android:name=".Shutdown" >
+            <intent-filter>
+                <action android:name="android.intent.action.ACTION_SHUTDOWN" />
+            </intent-filter>
+        </receiver>
+        <!--
+             ===========================================================
+             06/01/2016 ECU when the name was just .SMSHandler then was
+                            getting an error to say could not find the
+                            class - so changed to full name and all is
+                            well
+             ===========================================================
+        -->
+        <receiver
+            android:name=".SMSHandler"
+            android:enabled="true"
+            android:label="@string/title_activity_smshandler" >
+            <intent-filter>
+                <action android:name="android.provider.Telephony.SMS_RECEIVED" />
+            </intent-filter>
+        </receiver>
+        <!-- =========================================================== -->
+
+
+        <!--
+        	 ===========================================================
+        	 ===========================================================
+        	 S E R V I C E S
+        	 ===========================================================
+        	 =========================================================== 
+        -->
+        <!-- =========================================================== -->
+        <service
+            android:name=".BlueToothService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".TimerService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".TestService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".ServerService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".WebServerService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".MonitorService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".TextToSpeechService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".UPnPService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".WeMoService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".SensorService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+        <service
+            android:name=".ArduinoCommunicatorService"
+            android:enabled="true" />
+        <!-- =========================================================== -->
+    </application>
+
+</manifest>

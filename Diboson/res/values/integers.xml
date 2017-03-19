@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <integer name="Number_3">3</integer>
+    <integer name="Number_4">4</integer>
+    <integer name="Number_5">5</integer>
+    <integer name="days_per_week">7</integer>
+    <integer name="start_up_delay">10000</integer>
+    <integer name="TCP_port_number">8012</integer>
+    <integer name="TCP_data_port_number">8013</integer>
+    <integer name="TCP_web_port_number">8338</integer>
+    <integer name="TCP_ftp_port_number">8014</integer>
+    <integer name="Number30">30</integer>
+    <integer name="Number10">10</integer>
+    <integer name="Number1000">1000</integer>
+    <integer name="Number20">20</integer>
+    <integer name="Number_7">7</integer>
+    <integer name="Integer_1">1</integer>
+    <integer name="Number15">15</integer>
+    <integer name="Number_2">2</integer>
+    <integer name="Number25">25</integer>  
+    <integer name="TextInput_Cap_First">0x00002001</integer>
+    <integer name="TextInput_Phone">0x00002003</integer>
+    <integer name="TextInput_Email_Address">0x00002020</integer>
+    <integer name="number_27">27</integer>
+</resources>

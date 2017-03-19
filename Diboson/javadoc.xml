@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="javadoc">
+    <target name="javadoc">
+        <javadoc access="package" additionalparam="-bootclasspath /path/to/sdk/platforms/android-##/android.jar " author="true" classpath="libs/wemosdk.jar;libs/mail.jar;libs/usb-serial-for-android-v010.jar;libs/activation.jar;libs/android-support-v4.jar;libs/additionnal.jar" destdir="F:\DibosonDocumentation" doctitle="Diboson Project" nodeprecated="false" nodeprecatedlist="false" noindex="false" nonavbar="false" notree="false" packagenames="com.usher.diboson.util,com.usher.diboson" source="1.6" sourcepath="gen;src" splitindex="true" use="true" version="true"/>
+    </target>
+</project>

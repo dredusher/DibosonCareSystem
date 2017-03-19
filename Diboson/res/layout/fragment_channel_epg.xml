@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_grey"
+    android:orientation="vertical" >
+
+    <Button
+        android:id="@+id/epg_details"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/epg_details"
+        android:textSize="@dimen/standard_text_font" />
+
+    <Button
+        android:id="@+id/epg_search"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentTop="true"
+        android:text="@string/epg_search"
+        android:textSize="@dimen/standard_text_font" />
+
+    <ListView
+        android:id="@+id/epg_listview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_below="@id/epg_details" >
+
+    </ListView>
+
+    <ImageButton
+        android:id="@+id/epg_timer_button"
+        android:layout_width="@dimen/image_width"
+        android:layout_height="@dimen/image_height"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="false"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginEnd="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:background="@color/transparent"
+        android:contentDescription="@string/dummy_content"
+        android:scaleType="fitCenter"
+        android:src="@drawable/epg_timer" />
+
+</RelativeLayout>

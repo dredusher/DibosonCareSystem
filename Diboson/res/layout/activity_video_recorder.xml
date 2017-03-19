@@ -1,0 +1,47 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/camera_preview"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:orientation="vertical" >
+
+    <SurfaceView
+        android:id="@+id/camera_surface_view"
+        android:layout_width="fill_parent"
+        android:layout_height="fill_parent"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true" />
+
+    <ImageButton
+        android:id="@+id/video_record_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="false"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentRight="false"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="false"
+        android:layout_centerHorizontal="true"
+        android:layout_centerInParent="false"
+        android:layout_centerVertical="false"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:background="@color/background_transparent"
+        android:contentDescription="@string/help_icon"
+        android:scaleType="fitCenter"
+        android:src="@drawable/video_record" />
+
+    <ImageButton
+        android:id="@+id/video_camera"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentStart="false"
+        android:layout_alignParentTop="true"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:background="@color/background_transparent"
+        android:contentDescription="@string/help_icon"
+        android:src="@drawable/video_camera" />
+ 
+</RelativeLayout>

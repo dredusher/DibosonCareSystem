@@ -1,0 +1,112 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center_vertical|center"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".MedicationActivity" >
+
+     <TextView
+         android:id="@+id/medication_date"
+         style="@style/customTextView"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:layout_marginTop="@dimen/default_font_size"
+         android:text="@string/medication_date"
+         android:textColor="@color/gray"
+         android:textSize="@dimen/default_font_size"
+         android:textStyle="bold" />
+     
+     <TextView
+         android:id="@+id/medication_day"
+         style="@style/customTextView"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:text="@string/medication_day"
+         android:textColor="@color/gray"
+         android:textSize="@dimen/default_font_size"
+         android:textStyle="bold" />
+     
+     <TextView
+         android:id="@+id/medication_time"
+         style="@style/customTextView"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:text="@string/medication_time"
+         android:textColor="@color/gray"
+         android:textSize="@dimen/default_font_size"
+         android:textStyle="bold" />
+     
+    <TextView
+        android:id="@+id/medication_namex"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/default_textview"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/medication_amountx"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="@string/default_textview"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+    
+     <TextView
+         android:id="@+id/medication_descriptionx"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:text="@string/default_textview"
+         android:textSize="@dimen/default_font_size_smaller"
+         android:textStyle="bold" />
+    
+    <TextView
+        android:id="@+id/medication_notesx"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="@dimen/Font_12dp"
+        android:text="@string/default_textview"
+        android:textSize="@dimen/default_font_size_smaller"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/medicationImageView2"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_gravity="center"
+        android:contentDescription="@string/default_description"
+        android:src="@drawable/diboson_front" />
+
+    <Button
+        android:id="@+id/dose_confirm"
+        style="@style/customButton"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/confirm_dose"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+
+    <Button
+        android:id="@+id/dose_reject"
+        style="@style/customButton"
+        android:layout_gravity="center"
+        android:text="@string/reject_dose"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" />
+
+</LinearLayout>

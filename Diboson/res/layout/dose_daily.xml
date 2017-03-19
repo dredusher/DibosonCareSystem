@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/days_title"
+        style="@style/customTextView"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/select_days_doses" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_monday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/monday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_tuesday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/tuesday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_wednesday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/wednesday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_thursday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/thursday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_friday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/friday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_saturday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/saturday"
+        android:textSize="@dimen/default_font_size" />
+
+    <CheckBox
+        android:id="@+id/dose_daily_sunday"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:text="@string/sunday"
+        android:textSize="@dimen/default_font_size" />
+
+    <Button
+        android:id="@+id/dose_daily_enter"
+        style="@style/customButton"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:text="@string/enter_information" />
+
+</LinearLayout>

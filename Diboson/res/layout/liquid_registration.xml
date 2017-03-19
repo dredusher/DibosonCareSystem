@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical" >
+
+     <Button
+         android:id="@+id/liquid_register_button"
+         style="@style/customButton"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignParentLeft="true"
+         android:layout_alignParentStart="true"
+         android:layout_margin="@dimen/default_font_size"
+         android:text="@string/register_this_liquid" />
+     
+      <Button
+        android:id="@+id/liquid_actions_button"
+        style="@style/customButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/liquid_register_button"
+        android:layout_alignParentBottom="false"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="false"
+        android:layout_alignParentEnd="false"
+        android:layout_marginTop="@dimen/default_big_font_size"
+        android:text="@string/press_to_define_actions" />
+     
+     <EditText
+        android:id="@+id/liquid_actions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/liquid_actions_button"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_big_font_size"
+        android:ems="10"
+        android:hint="@string/liquid_actions_message"
+        android:textSize="@dimen/default_font_size" />
+
+    <EditText
+        android:id="@+id/liquid_name"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/liquid_actions"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_big_font_size"
+        android:ems="10"
+        android:hint="@string/enter_liquid_name"
+        android:textSize="@dimen/default_font_size" />
+    
+    <TextView
+        android:id="@+id/ambient_light_value_textview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/liquid_name"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="false"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:gravity="center_horizontal"
+        android:text="@string/ambient_light_value"
+        android:textSize="@dimen/default_big_font_size" />
+
+    <ImageButton
+        android:id="@+id/liquid_photo_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/ambient_light_value_textview"
+        android:layout_alignEnd="@+id/liquid_name"
+        android:layout_alignLeft="@+id/liquid_name"
+        android:layout_alignRight="@+id/liquid_name"
+        android:layout_alignStart="@+id/liquid_name"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@color/background_transparent"
+        android:contentDescription="@string/default_description"
+        android:scaleType="fitCenter"
+        android:src="@drawable/liquid" />
+
+</RelativeLayout>

@@ -1,0 +1,18 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/carer"
+    tools:context=".TimerEventActivity" >
+
+    <DigitalClock
+        android:id="@+id/digitalClock1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="@dimen/default_big_font_size"
+        android:gravity="center_horizontal"
+        android:text="@string/digital_clock"
+        android:textSize="@dimen/default_big_font_size" />
+</RelativeLayout>

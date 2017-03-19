@@ -1,0 +1,45 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/burnt_toast_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/shape"
+    android:orientation="vertical"
+    android:padding="8dp" >
+    
+    <!-- 	===========================================================================
+    		01/01/2014 ECU changed from @color/blue_background to use shape which gives
+                        rounded corners 
+            =========================================================================== -->
+            
+    <ImageView
+        android:id="@+id/burnt_toast_image"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="center"
+        android:contentDescription="@string/hello_world"
+        android:src="@drawable/burnt_toast_image" />
+
+    <TextView
+        android:id="@+id/burnt_toast_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/Font_12dp"
+        android:contentDescription="@string/hello_world"
+        android:maxLines="@integer/Number10"
+        android:textColor="#FFF"
+        android:textIsSelectable="false"
+        android:textSize="@dimen/toast_font_size" />
+
+    <TextView
+        android:id="@+id/burnt_toast_copyright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/Font_28dp"
+        android:contentDescription="@string/hello_world"
+        android:textColor="#FFF"
+        android:textIsSelectable="false"
+        android:textSize="@dimen/Font_8dp" />
+
+</LinearLayout>

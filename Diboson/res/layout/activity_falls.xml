@@ -1,0 +1,126 @@
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/TableLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0099cc"
+    tools:context=".FallsActivity" >
+
+    <TableRow android:layout_marginTop="@dimen/default_font_size" >
+
+		<TextView
+		    android:id="@+id/xcoor"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:paddingLeft="@dimen/Font_20dp"
+		    android:paddingRight="@dimen/Font_20dp"
+		    android:paddingStart="@dimen/Font_20dp"
+		    android:paddingEnd="@dimen/Font_20dp"
+		    android:text="@string/x_coordinate_label"
+		    android:textSize="@dimen/falls_font"
+		    android:textStyle="bold"
+		    android:typeface="monospace" />
+
+	</TableRow>
+	
+	<TableRow>
+
+		<TextView
+		    android:id="@+id/ycoor"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:paddingLeft="@dimen/Font_20dp"
+		    android:paddingRight="@dimen/Font_20dp"
+		    android:paddingStart="@dimen/Font_20dp"
+		    android:paddingEnd="@dimen/Font_20dp"
+		    android:text="@string/y_coordinate_label"
+		    android:textSize="@dimen/falls_font"
+		    android:textStyle="bold"
+		    android:typeface="monospace" />
+
+	</TableRow>
+	
+	<TableRow>
+
+		<TextView
+		    android:id="@+id/zcoor"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:paddingLeft="@dimen/Font_20dp"
+		    android:paddingRight="@dimen/Font_20dp"
+		    android:paddingStart="@dimen/Font_20dp"
+		    android:paddingEnd="@dimen/Font_20dp"
+		    android:text="@string/z_coordinate_label"
+		   	android:textSize="@dimen/falls_font"
+		    android:textStyle="bold"
+		    android:typeface="monospace" />
+
+	</TableRow>
+	
+	<TableRow>
+
+		<TextView
+		    android:id="@+id/falls_status"
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:layout_marginBottom="@dimen/default_font_size"
+		    android:paddingEnd="@dimen/Font_20dp"
+		    android:paddingLeft="@dimen/Font_20dp"
+		    android:paddingRight="@dimen/Font_20dp"
+		    android:paddingStart="@dimen/Font_20dp"
+		    android:text="@string/status"
+		    android:textSize="@dimen/falls_font"
+		    android:textStyle="bold" />
+	</TableRow>
+	
+	<View
+		android:layout_width="fill_parent"
+		android:layout_height="1dip"
+		android:background="#FFE6E6E6"
+		/>
+		
+	<TableRow>
+	
+	<ImageView
+	    android:id="@+id/graphics_image"
+	    android:layout_gravity="center"
+	    android:layout_marginLeft="5dp"
+	    android:layout_marginStart="5dp"
+	    android:contentDescription="@string/dummy_content"
+	    android:padding="5dp" />
+
+	</TableRow>
+		
+	<View
+		android:layout_width="fill_parent"
+		android:layout_height="1dip"
+		android:background="#FFE6E6E6"
+		/>
+		
+	<TableRow>
+	
+	<ImageView
+	    android:id="@+id/graph_image"
+	    android:layout_gravity="center"
+	    android:layout_marginLeft="5dp"
+	    android:layout_marginStart="5dp"
+	    android:contentDescription="@string/dummy_content"
+	    android:padding="5dp" />
+
+	</TableRow>
+		
+	<View
+		android:layout_width="fill_parent"
+		android:layout_height="1dip"
+		android:background="#FFE6E6E6"
+		/>
+
+	<Button
+	    android:id="@+id/falls_action_command"
+	    style="@style/customButton"
+	    android:layout_width="wrap_content"
+	    android:layout_height="wrap_content"
+	    android:layout_marginTop="@dimen/default_font_size"
+	    android:text="@string/actions_when_fall_occurs" />
+   
+</TableLayout>

@@ -1,0 +1,7 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item 
+        android:id="@+id/request_a_refresh" 
+        android:title="@string/request_a_refresh" 
+        android:titleCondensed="@string/request_a_refresh"/>
+    <item android:id="@+id/reset_all_timers" android:titleCondensed="@string/reset_all_timers" android:title="@string/reset_all_timers"></item>
+</menu>

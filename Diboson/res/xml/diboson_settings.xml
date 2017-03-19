@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen 
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:diboson="http://schemas.android.com/apk/res/com.usher.diboson"
+	android:summary="@string/summary_settings_screen" 
+	android:title="@string/title_settings_screen">
+    
+	<PreferenceCategory 
+      	android:title="@string/category_patient" 
+     	android:key="patient_category" 
+      	android:summary="@string/summary_patient_category">
+      	
+    	<com.usher.diboson.TextPreference
+            	android:key="patient_name"
+            	android:showDefault="true"
+            	android:summary="@string/summary_patient_name"
+            	android:title="@string/title_patient_name" 
+            	diboson:textInput="@integer/TextInput_Cap_First"
+            	diboson:textSubTitle="@string/summary_patient_name"/>  
+    	<com.usher.diboson.TextPreference
+            	android:key="patient_preferred_name"
+            	android:showDefault="true"
+            	android:summary="@string/summary_patient_preferred_name"
+            	android:title="@string/title_patient_preferred_name" 
+            	diboson:textInput="@integer/TextInput_Cap_First"
+            	diboson:textSubTitle="@string/summary_patient_preferred_name"/>  
+    	<com.usher.diboson.DatePreference
+            	android:key="patient_dob"
+           		android:showDefault="true"
+            	android:summary="@string/summary_patient_dob"
+            	android:title="@string/title_patient_dob" 
+            	diboson:dateSubTitle="@string/subtitle_patient_dob"/>  
+        <com.usher.diboson.TextPreference
+            	android:key="patient_address"
+            	android:showDefault="true"
+            	android:summary="@string/summary_patient_address"
+            	android:title="@string/title_patient_address" 
+            	diboson:textSubTitle="@string/summary_patient_address"
+            	diboson:textInput="@integer/TextInput_Cap_First"
+            	diboson:textLines="5"/>  
+		<com.usher.diboson.TextPreference
+            	android:key="patient_phone_number"
+            	android:showDefault="true"
+            	android:summary="@string/summary_patient_phone_number"
+            	android:title="@string/title_patient_phone_number" 
+            	android:numeric="integer"
+            	diboson:textInput="@integer/TextInput_Phone"
+            	diboson:textSubTitle="@string/summary_patient_phone_number"/>  
+      	<com.usher.diboson.TextPreference
+            	android:key="patient_nhs_number"
+            	android:showDefault="true"
+            	android:summary="@string/summary_patient_nhs_number"
+            	android:title="@string/title_patient_nhs_number" 
+            	diboson:textSubTitle="@string/summary_patient_nhs_number"/>  
+    	               
+    </PreferenceCategory> 
+
+    <PreferenceCategory 
+        android:title="@string/category_project_flags" 
+        android:key="project_category" android:summary="@string/summary_project_flags">
+      	<CheckBoxPreference android:title="@string/title_bluetooth_discovery"
+      	    	android:key="bluetooth_discovery" 
+      	    	android:summary="@string/summary_bluetooth_discovery"/>  
+    	<CheckBoxPreference android:title="@string/title_debug_flag" 
+    		    android:key="debug_flag" 
+    		    android:summary="@string/summary_debug_flag"/>
+    	<CheckBoxPreference android:title="@string/title_development_flag" 
+    		    android:key="development_flag" 
+    		    android:summary="@string/summary_development_flag"/>
+    	<com.usher.diboson.TextPreference
+            	android:key="default_developer_name"
+            	android:showDefault="true"
+            	android:summary="@string/summary_default_developer_name"
+            	android:title="@string/title_default_developer_name" 
+            	diboson:textSubTitle="@string/summary_default_developer_name"/>  
+    	<CheckBoxPreference android:title="@string/title_email_flag" 
+    		    android:key="email_flag" 
+    		    android:summary="@string/summary_email_flag"/>
+    	<CheckBoxPreference android:key="user_view" 
+    		    android:title="@string/title_user_view" 
+    		    android:summary="@string/summary_user_view"/>
+    	<CheckBoxPreference android:key="group_activities" 
+    		    android:title="@string/title_group_activities" 
+    		    android:summary="@string/summary_group_activities"/>
+    	<CheckBoxPreference android:title="@string/title_project_log_enable" 
+    		    android:summary="@string/summary_project_log_enable" 
+    		    android:key="project_log_enable"/>
+    	<CheckBoxPreference android:title="@string/title_project_log_clear" 
+    		    android:summary="@string/summary_project_log_clear" 
+    		    android:key="project_log_clear"/>
+    	<com.usher.diboson.TimePreference
+            	android:key="scheduler_time"
+            	android:showDefault="true"
+            	android:summary="@string/summary_scheduler_time"
+            	android:title="@string/title_scheduler_time"
+            	diboson:timeSubTitle="@string/subtitle_scheduler_time"/>
+    	<CheckBoxPreference android:key="announce_flag" 
+    		    android:title="@string/title_announce_device" 
+    		    android:summary="@string/summary_announce_device"/>
+    	<CheckBoxPreference android:key="acquire_statistics" 
+    		    android:title="@string/title_acquire_statistics" 
+    		    android:summary="@string/summary_acquire_statistics"/>
+    	<com.usher.diboson.TextPreference
+            	android:key="dynamic_IP_address"
+            	android:showDefault="true"
+            	android:summary="@string/summary_dynamic_IP_address"
+            	android:title="@string/title_dynamic_IP_address" 
+            	diboson:textSubTitle="@string/summary_dynamic_IP_address"
+            	diboson:defaultText="@string/ddns_ip_address"/>  
+    	<CheckBoxPreference android:title="@string/title_wemo_handling" 
+    		    android:summary="@string/summary_wemo_handling" 
+    		    android:key="wemo_handling"/> 	
+    	<com.usher.diboson.SeekBarPreference
+				android:key="drawable_opacity"
+				android:title="@string/title_drawable_opacity"
+				android:summary="@string/summary_drawable_opacity"
+				diboson:minimumValue="0"
+				diboson:maximumValue="255"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_drawable_opacity"/>
+    	<com.usher.diboson.SeekBarPreference
+				android:key="clone_file_size"
+				android:title="@string/title_clone_file_size" 
+				android:summary="@string/summary_clone_file_size"
+				diboson:minimumValue="10000"
+				diboson:maximumValue="10000000"
+				diboson:stepSize="10000"
+				diboson:subTitle="@string/summary_clone_file_size"/>
+    	<com.usher.diboson.SeekBarPreference
+				android:key="click_counter"
+				android:title="@string/title_click_counter"
+				android:summary="@string/summary_click_counter"
+				diboson:minimumValue="1"
+				diboson:maximumValue="5"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_click_counter"/>
+    	<CheckBoxPreference android:title="@string/title_alarms_restart_app" 
+    		    android:summary="@string/summary_alarms_restart_app" 
+    		    android:key="alarms_restart_app"/>
+    	<CheckBoxPreference android:title="@string/title_start_activity_auto" 
+    		    android:summary="@string/summary_start_activity_auto" 
+    		    android:key="start_activity_auto"/>
+    </PreferenceCategory>
+    
+     <PreferenceCategory 
+        android:title="@string/title_sorting_category" 
+        android:key="sorting_category" >
+    	
+    	<CheckBoxPreference android:key="sort_by_usage" 
+    		    android:summary="@string/summary_sort_by_usage" 
+    		    android:title="@string/title_sort_by_usage"/>	
+    	<CheckBoxPreference android:key="sort_by_legend" 
+    		    android:summary="@string/summary_sort_by_legend" 
+    		    android:title="@string/title_sort_by_legend"/>	
+     </PreferenceCategory>
+    	
+    
+    <PreferenceCategory 
+        android:title="@string/title_ambient_light_category" 
+        android:key="ambient_light_category" >
+    	
+       	<com.usher.diboson.SeekBarPreference
+				android:key="ambient_light_trigger"
+				android:title="@string/title_ambient_light_trigger"
+				android:summary="@string/summary_ambient_light_trigger"
+				diboson:minimumValue="0"
+				diboson:maximumValue="500"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_ambient_light_trigger"
+				diboson:update="@string/current_light_level"/>
+    	<com.usher.diboson.SeekBarPreference
+				android:key="ambient_light_rearm"
+				android:title="@string/title_ambient_light_rearm"
+				android:summary="@string/summary_ambient_light_rearm"
+				diboson:minimumValue="0"
+				diboson:maximumValue="500"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_ambient_light_rearm"
+				diboson:update="@string/current_light_level"/>/>
+    	<com.usher.diboson.SeekBarPreference
+				android:key="ambient_light_period"
+				android:title="@string/title_ambient_light_period"
+				android:summary="@string/summary_ambient_light_period"
+				diboson:minimumValue="0"
+				diboson:maximumValue="300"
+				diboson:stepSize="1"
+				diboson:units="seconds" 
+				diboson:subTitle="@string/summary_ambient_light_period"/>
+    	<com.usher.diboson.ActionsPreference
+            	android:key="darkness_on_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_darkness_on_actions"
+            	android:title="@string/title_darkness_on_actions" 
+            	diboson:textSubTitle="@string/summary_darkness_on_actions"
+            	diboson:textLines="3"/>  
+        <com.usher.diboson.ActionsPreference
+            	android:key="darkness_off_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_darkness_off_actions"
+            	android:title="@string/title_darkness_off_actions" 
+            	diboson:textSubTitle="@string/summary_darkness_off_actions"
+            	diboson:textLines="3"/>    
+	</PreferenceCategory>
+	
+	<PreferenceCategory 
+        android:title="@string/title_battery_category" 
+        android:key="battery_category" 
+        android:summary="@string/summary_battery_category">
+        
+    	<com.usher.diboson.SeekBarPreference
+				android:key="battery_lower_trigger"
+				android:title="@string/title_battery_lower_trigger"
+				android:summary="@string/summary_battery_lower_trigger"
+				diboson:minimumValue="1"
+				diboson:maximumValue="99"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_battery_lower_trigger" />
+    	<com.usher.diboson.SeekBarPreference
+				android:key="battery_upper_trigger"
+				android:title="@string/title_battery_upper_trigger"
+				android:summary="@string/summary_battery_upper_trigger"
+				diboson:minimumValue="1"
+				diboson:maximumValue="99"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_battery_upper_trigger" />
+    	<com.usher.diboson.ActionsPreference
+            	android:key="battery_lower_trigger_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_battery_lower_trigger_actions"
+            	android:title="@string/title_battery_lower_trigger_actions" 
+            	diboson:textSubTitle="@string/summary_battery_lower_trigger_actions"
+            	diboson:textLines="3"/>    
+        <com.usher.diboson.ActionsPreference
+            	android:key="battery_upper_trigger_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_battery_upper_trigger_actions"
+            	android:title="@string/title_battery_upper_trigger_actions" 
+            	diboson:textSubTitle="@string/summary_battery_upper_trigger_actions"
+            	diboson:textLines="3"/>    
+	</PreferenceCategory>
+	
+    <PreferenceCategory 
+        android:key="email_category" 
+        android:title="@string/category_emails" 
+        android:summary="@string/summary_emails_category">
+        
+        <EditTextPreference 
+        	    android:summary="@string/summary_email_signature" 
+            	android:key="email_signature" 
+            	android:title="@string/title_email_signature" 
+            	android:enabled="true" 
+            	android:selectable="true"/>
+        <EditTextPreference 
+            	android:title="@string/title_email_recipients" 
+            	android:key="email_recipients"/>
+    </PreferenceCategory>
+    
+     <PreferenceCategory 
+         android:key="remote_controller" 
+         android:title="@string/title_remote_controller" 
+         android:summary="@string/summary_remote_controller">
+        
+         <com.usher.diboson.TextPreference
+            	android:key="remote_MAC_address"
+            	android:showDefault="true"
+            	android:summary="@string/summary_remote_MAC_address"
+            	android:title="@string/title_remote_MAC_address" 
+            	diboson:textSubTitle="@string/summary_remote_MAC_address" />  
+         <CheckBoxPreference 
+             	android:title="@string/title_remote_always" 
+             	android:key="remote_always" 
+             	android:summary="@string/summary_remote_always"/>
+     </PreferenceCategory>
+     
+     <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="monitor_service" 
+         android:summary="@string/summary_monitor_service" 
+         android:title="@string/title_monitor_service">
+         
+         <Preference android:summary="@string/summary_monitor_service" /> 
+           
+         <CheckBoxPreference android:summary="@string/summary_monitor_enable" 
+             	android:key="monitor_enable" 
+             	android:title="@string/title_monitor_enable"/>
+         <com.usher.diboson.SeekBarPreference
+				android:key="monitor_trigger"
+				android:title="@string/title_monitor_trigger"
+				android:summary="@string/summary_monitor_trigger"
+				diboson:minimumValue="0"
+				diboson:maximumValue="25000"
+				diboson:stepSize="1000" 
+				diboson:subTitle="@string/subtitle_monitor_trigger"/>
+         <com.usher.diboson.TimePreference
+            	android:key="monitor_start_time"
+            	android:showDefault="true"
+            	android:summary="@string/summary_monitor_start_time"
+            	android:title="@string/title_monitor_start_time"
+            	diboson:timeSubTitle="@string/subtitle_monitor_start_time"/>
+         <com.usher.diboson.TimePreference
+            	android:key="monitor_stop_time"
+            	android:showDefault="true"
+            	android:summary="@string/summary_monitor_stop_time"
+            	android:title="@string/title_monitor_stop_time" 
+            	diboson:timeSubTitle="@string/subtitle_monitor_stop_time"/>  
+         <com.usher.diboson.SeekBarPreference
+				android:key="monitor_inactive_period"
+				android:title="@string/title_monitor_inactive_period"
+				android:summary="@string/summary_monitor_inactive_period"
+				diboson:minimumValue="0"
+				diboson:maximumValue="120"
+				diboson:stepSize="1"
+				diboson:units="minutes" 
+				diboson:subTitle="@string/summary_monitor_inactive_period"/>
+         <CheckBoxPreference android:title="@string/title_monitor_timed" 
+            	android:summary="@string/summary_monitor_timed" 
+            	android:key="monitor_timed"/>
+         <com.usher.diboson.SeekBarPreference
+				android:key="monitor_duration"
+				android:title="@string/title_monitor_duration"
+				android:summary="@string/summary_monitor_duration"
+				diboson:minimumValue="1"
+				diboson:maximumValue="10"
+				diboson:stepSize="1"
+				diboson:units="minutes" 
+				diboson:subTitle="@string/summary_monitor_duration"/>  
+		<CheckBoxPreference android:title="@string/title_monitor_email" 
+            	android:summary="@string/summary_monitor_email" 
+            	android:key="monitor_email"/>
+     </PreferenceCategory>
+     
+     <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="panic_alarm_shake" 
+         android:summary="@string/summary_panic_alarm_shake" 
+         android:title="@string/title_panic_alarm_shake">
+		
+          <com.usher.diboson.SeekBarPreference
+				android:key="panic_alarm_shake_number"
+				android:title="@string/title_panic_alarm_shake_number"
+				android:summary="@string/summary_panic_alarm_shake_number"
+				diboson:minimumValue="1"
+				diboson:maximumValue="10"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_panic_alarm_shake_number"/>
+          
+          <com.usher.diboson.SeekBarPreference
+				android:key="panic_alarm_shake_ignore_period"
+				android:title="@string/title_panic_alarm_shake_ignore_period"
+				android:summary="@string/summary_panic_alarm_shake_ignore_period"
+				diboson:minimumValue="50"
+				diboson:maximumValue="500"
+				diboson:units="milliseconds" 
+				diboson:stepSize="50"
+				diboson:subTitle="@string/summary_panic_alarm_shake_ignore_period"/>
+          
+           <com.usher.diboson.SeekBarPreference
+				android:key="panic_alarm_shake_reset_period"
+				android:title="@string/title_panic_alarm_shake_reset_period"
+				android:summary="@string/summary_panic_alarm_shake_reset_period"
+				diboson:minimumValue="1"
+				diboson:maximumValue="10"
+				diboson:units="seconds" 
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_panic_alarm_shake_reset_period"/>
+           
+           <com.usher.diboson.SeekBarPreference
+				android:key="panic_alarm_shake_threshold"
+				android:title="@string/title_panic_alarm_shake_threshold"
+				android:summary="@string/summary_panic_alarm_shake_threshold"
+				diboson:minimumValue="10"
+				diboson:maximumValue="30"
+				diboson:scale="10" 
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_panic_alarm_shake_threshold"/>
+		
+     </PreferenceCategory> 
+     
+      <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="carer_visit" 
+         android:summary="@string/summary_carer_visit" 
+         android:title="@string/title_carer_visit">
+		
+          <com.usher.diboson.SeekBarPreference
+				android:key="carer_visit_end"
+				android:title="@string/title_carer_visit_end"
+				android:summary="@string/summary_carer_visit_end"
+				diboson:minimumValue="1"
+				diboson:maximumValue="30"
+				diboson:units="minutes" 
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_carer_visit_end"/>
+          
+          <com.usher.diboson.ActionsPreference
+            	android:key="visit_start_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_visit_start_actions"
+            	android:title="@string/title_visit_start_actions" 
+            	diboson:textSubTitle="@string/summary_visit_start_actions"
+            	diboson:textLines="3"/>    
+            	
+          <com.usher.diboson.ActionsPreference
+            	android:key="visit_end_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_visit_end_actions"
+            	android:title="@string/title_visit_end_actions" 
+            	diboson:textSubTitle="@string/summary_visit_end_actions"
+            	diboson:textLines="3"/>  
+            	
+           <com.usher.diboson.ActionsPreference
+            	android:key="visit_start_warning_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_visit_start_warning_actions"
+            	android:title="@string/title_visit_start_warning_actions" 
+            	diboson:textSubTitle="@string/summary_visit_start_warning_actions"
+            	diboson:textLines="3"/>    
+            	
+          <com.usher.diboson.ActionsPreference
+            	android:key="visit_end_warning_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_visit_end_warning_actions"
+            	android:title="@string/title_visit_end_warning_actions" 
+            	diboson:textSubTitle="@string/summary_visit_end_warning_actions"
+            	diboson:textLines="3"/>  
+		
+     </PreferenceCategory> 
+     
+       <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="package_names" 
+         android:summary="@string/summary_package_names" 
+         android:title="@string/title_package_names">
+          
+           <ListPreference
+            	android:key="contacts_package_name"
+            	android:summary="@string/summary_contacts_package_name"
+            	android:title="@string/title_contacts_package_name" />
+          
+           <ListPreference
+            	android:key="mail_package_name"
+            	android:summary="@string/summary_mail_package_name"
+            	android:title="@string/title_mail_package_name" />	  	
+   
+     </PreferenceCategory> 
+     
+      <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="sensors" 
+         android:summary="@string/summary_sensors" 
+         android:title="@string/title_sensors">
+          
+         <com.usher.diboson.SeekBarPreference
+				android:key="accelerometer_sample_rate"
+				android:title="@string/title_accelerometer_sample_rate"
+				android:summary="@string/summary_accelerometer_sample_rate"
+				diboson:minimumValue="0"
+				diboson:maximumValue="50"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_accelerometer_sample_rate"/>
+         
+         <com.usher.diboson.ActionsPreference
+            	android:key="proximity_near_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_proximity_near_actions"
+            	android:title="@string/title_proximity_near_actions" 
+            	diboson:textSubTitle="@string/summary_proximity_near_actions"
+            	diboson:textLines="3"/>    
+          
+          <com.usher.diboson.ActionsPreference
+            	android:key="proximity_far_actions"
+            	android:showDefault="true"
+            	android:summary="@string/summary_proximity_far_actions"
+            	android:title="@string/title_proximity_far_actions" 
+            	diboson:textSubTitle="@string/summary_proximity_far_actions"
+            	diboson:textLines="3"/> 
+            	
+     </PreferenceCategory> 
+     
+      
+     <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="metabroadcast" 
+         android:summary="@string/summary_metabroadcast" 
+         android:title="@string/title_metabroadcast">
+          
+      	<com.usher.diboson.TextPreference
+            	android:key="metabroadcast_api_key"
+            	android:showDefault="true"
+            	android:summary="@string/summary_metabroadcast_api_key"
+            	android:title="@string/title_metabroadcast_api_key" 
+            	diboson:textSubTitle="@string/summary_metabroadcast_api_key"
+            	diboson:defaultText="@string/api_key"/>    
+            	
+      	<com.usher.diboson.TextPreference
+            	android:key="metabroadcast_channel_groups_URL"
+            	android:showDefault="true"
+            	android:summary="@string/summary_metabroadcast_channel_groups_URL"
+            	android:title="@string/title_metabroadcast_channel_groups_URL" 
+            	diboson:textSubTitle="@string/summary_metabroadcast_channel_groups_URL"
+            	diboson:defaultText="@string/channel_groups_url"
+            	diboson:textLines="5"/>   
+            	
+      	<com.usher.diboson.TextPreference
+            	android:key="metabroadcast_channel_URL"
+            	android:showDefault="true"
+            	android:summary="@string/summary_metabroadcast_channel_URL"
+            	android:title="@string/title_metabroadcast_channel_URL" 
+            	diboson:textSubTitle="@string/summary_metabroadcast_channel_URL"
+            	diboson:defaultText="@string/channel_url"
+            	diboson:textLines="5"/>  
+            	
+     </PreferenceCategory> 
+     
+      <PreferenceCategory xmlns:android="http://schemas.android.com/apk/res/android" 
+         android:key="schedules_direct" 
+         android:summary="@string/summary_schedules_direct" 
+         android:title="@string/title_schedules_direct">
+          
+      	<com.usher.diboson.TextPreference
+            	android:key="schedules_direct_username"
+            	android:showDefault="false"
+            	android:summary="@string/summary_schedules_direct_username"
+            	android:title="@string/title_schedules_direct_username" 
+            	diboson:textSubTitle="@string/summary_schedules_direct_username" />    
+          
+      	<com.usher.diboson.TextPreference
+            	android:key="schedules_direct_password"
+            	android:showDefault="false"
+            	android:summary="@string/summary_schedules_direct_password"
+            	android:title="@string/title_schedules_direct_password" 
+            	diboson:textSubTitle="@string/summary_schedules_direct_password" />    	
+   
+      	 <com.usher.diboson.SeekBarPreference
+				android:key="schedules_direct_days"
+				android:title="@string/title_schedules_direct_days"
+				android:summary="@string/summary_schedules_direct_days"
+				diboson:minimumValue="1"
+				diboson:maximumValue="14"
+				diboson:stepSize="1"
+				diboson:subTitle="@string/summary_schedules_direct_days"/>
+      	 
+      	 <com.usher.diboson.TextPreference
+            	android:key="schedules_direct_url"
+            	android:showDefault="true"
+            	android:summary="@string/summary_schedules_direct_url"
+            	android:title="@string/title_schedules_direct_url" 
+            	diboson:textSubTitle="@string/summary_schedules_direct_url" 
+            	diboson:defaultText="@string/schedules_direct_base_url"/> 
+
+      	 <com.usher.diboson.TextPreference
+            	android:key="schedules_direct_lineup"
+            	android:showDefault="true"
+            	android:summary="@string/summary_schedules_direct_lineup"
+            	android:title="@string/title_schedules_direct_lineup" 
+            	diboson:textSubTitle="@string/summary_schedules_direct_lineup" 
+            	diboson:defaultText="@string/schedules_direct_lineup_default"/>  	
+            	
+     </PreferenceCategory> 
+     
+</PreferenceScreen>

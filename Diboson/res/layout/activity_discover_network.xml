@@ -1,0 +1,100 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/LinearLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context=".DiscoverNetwork" >
+    
+     
+    <ScrollView
+        android:id="@+id/discover_network_scroll_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_weight="0.15" >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical" >
+            
+            <TextView
+                android:id="@+id/title_appointment_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/default_font_size"
+                android:layout_marginTop="@dimen/default_font_size"
+                android:gravity="center"
+                android:text="@string/please_be_patient_label"
+                android:textSize="@dimen/default_big_font_size" />
+
+            <TextView
+                android:id="@+id/textView2"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/default_font_size"
+                android:gravity="center"
+                android:text="@string/network_being_discovered_label"
+                android:textSize="@dimen/default_big_font_size"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/discover_address_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="@string/IP_address_label"
+                android:textColor="@color/green_background"
+                android:textSize="@dimen/default_big_font_size"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/threads_number_view"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:layout_marginTop="@dimen/default_font_size_smaller"
+                android:text="@string/number_of_threads_running_label"
+                android:textColor="@color/black_overlay"
+                android:textSize="@dimen/default_font_size" />
+
+            <TextView
+                android:id="@+id/discovered_address_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/default_font_size_smaller"
+                android:gravity="center"
+                android:paddingTop="@dimen/Font_20dp"
+                android:text="@string/discovered_addresses"
+                android:textColor="@color/dark_blue_background_66"
+                android:textSize="@dimen/default_big_font_size" />
+            
+            <TextView
+                android:id="@+id/working_address"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/default_font_size_smaller"
+                android:gravity="center"
+                android:text="@string/generating_address_file"
+                android:textColor="@color/light_green"
+                android:textSize="@dimen/default_font_size_smaller" />
+            
+             <TextView
+                 android:id="@+id/discovered_address_view"
+                 android:layout_width="match_parent"
+                 android:layout_height="wrap_content"
+                 android:gravity="center"
+                 android:text="@string/blank_textview"
+                 android:textColor="@color/dark_blue_background_66"
+                 android:textSize="@dimen/default_big_font_size" />
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

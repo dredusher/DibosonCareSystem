@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/album_search_layout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <TextView
+        android:id="@+id/promptTextView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:ems="10"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold" >
+
+    </TextView>
+ 
+</RelativeLayout>

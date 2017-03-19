@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/carer" >
+
+     <TextView
+         android:id="@+id/appointment_active"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentTop="true"
+         android:layout_marginLeft="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_font_size"
+         android:layout_marginTop="@dimen/default_font_size"
+         android:gravity="center_horizontal"
+         android:text="@string/default_textview"
+         android:textSize="@dimen/default_font_size"
+         android:textStyle="bold" />
+     
+     <Button
+        android:id="@+id/notes_speak_button"
+        style="@style/customButtonSmaller"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginLeft="@dimen/default_font_size_smaller"
+        android:layout_marginStart="@dimen/default_font_size_smaller"
+        android:text="@string/notes_speak"
+        android:textSize="@dimen/default_font_size_smaller" />
+
+    <Button
+        android:id="@+id/notes_play_button"
+        style="@style/customButtonSmaller"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size_smaller"
+        android:layout_marginEnd="@dimen/default_font_size_smaller"
+        android:text="@string/notes_play"
+        android:textSize="@dimen/default_font_size_smaller" />
+    
+    <Button
+        android:id="@+id/notes_finish_button"
+        style="@style/customButtonSmaller"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:text="@string/notes_finish"
+        android:textSize="@dimen/default_font_size_smaller" />
+     
+    <TextView
+        android:id="@+id/appointment_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/notes_play_button"
+        android:layout_below="@id/appointment_active"
+        android:layout_marginBottom="@dimen/default_font_size_smaller"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size_smaller"
+        android:maxLines="@integer/Number1000"
+        android:scrollbarAlwaysDrawVerticalTrack="true"
+        android:scrollbars="vertical"
+        android:text="@string/default_textview"
+        android:textSize="@dimen/default_font_size_smaller"
+        android:textStyle="bold"
+        android:typeface="monospace" />
+    
+    <RelativeLayout
+        android:id="@+id/seekbar_layout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:background="@drawable/group_status"
+        android:visibility="invisible" >
+
+    	    <TextView
+    	        android:id="@+id/seekbar_textview"
+    	        style="@style/customButtonSmaller"
+    	        android:layout_width="wrap_content"
+    	        android:layout_height="wrap_content"
+    	        android:layout_centerHorizontal="true"
+    	        android:layout_marginBottom="@dimen/default_font_size_smaller"
+    	        android:layout_marginLeft="@dimen/default_font_size"
+    	        android:layout_marginRight="@dimen/default_font_size"
+    	        android:layout_marginTop="@dimen/default_font_size_smaller"
+    	        android:text="@string/progress_of_notes"
+    	        android:textColor="@color/white"
+    	        android:textSize="@dimen/default_font_size_smaller"
+    	        android:visibility="visible" />
+    	    
+    	    <SeekBar
+    	        android:id="@+id/play_file_seekbar"
+    	        android:layout_width="match_parent"
+    	        android:layout_height="wrap_content"
+    	        android:layout_alignParentLeft="true"
+    	        android:layout_alignParentStart="true"
+    	        android:layout_below="@+id/seekbar_textview"
+    	        android:layout_centerHorizontal="true"
+    	        android:layout_marginBottom="@dimen/default_font_size_smaller"
+    	        android:layout_marginLeft="@dimen/default_font_size"
+    	        android:layout_marginRight="@dimen/default_font_size"
+    	        android:visibility="visible" />
+    	    
+    	    <ImageButton
+    	   		android:id="@+id/seekbar_pause"
+    	    	android:layout_width="@dimen/help_icon_size"
+    	    	android:layout_height="@dimen/help_icon_size"
+    	    	android:layout_below="@+id/play_file_seekbar"
+    	    	android:background="@color/background_transparent"
+    	    	android:layout_centerHorizontal="true"
+    	    	android:layout_centerVertical="true"
+    	    	android:layout_marginBottom="@dimen/default_font_size"
+    	    	android:contentDescription="@string/default_description"
+    	    	android:scaleType="fitCenter"
+    	    	android:src="@drawable/music_pause"
+    	    	android:visibility="visible" />
+
+    	</RelativeLayout>
+  
+
+</RelativeLayout>

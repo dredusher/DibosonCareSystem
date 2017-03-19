@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="genres">
+		<item>Blues</item>
+		<item>Classic Rock</item>
+		<item>Country</item>
+		<item>Dance</item>
+		<item>Disco</item>
+		<item>Funk</item>
+		<item>Grunge</item>
+		<item>Hip-Hop</item>
+		<item>Jazz</item>
+		<item>Metal</item>
+		<item>New Age</item>
+		<item>Oldies</item>
+		<item>Other</item>
+		<item>Pop</item>
+		<item>R and B</item>
+		<item>Rap</item>
+		<item>Reggae</item>
+		<item>Rock</item>
+		<item>Techno</item>
+		<item>Industrial</item>
+		<item>Alternative</item>
+		<item>Ska</item>
+		<item>Death Metal</item>
+		<item>Pranks</item>
+		<item>Soundtrack</item>
+		<item>Euro-Techno</item>
+		<item>Ambient</item>
+		<item>Trip-Hop</item>
+		<item>Vocal</item>
+		<item>Jazz+Funk</item>
+		<item>Fusion</item>
+		<item>Trance</item>
+		<item>Classical</item>
+		<item>Instrumental</item>
+		<item>Acid</item>
+		<item>House</item>
+		<item>Game</item>
+		<item>Sound Clip</item>
+		<item>Gospel</item>
+		<item>Noise</item>
+		<item>AlternRock</item>
+		<item>Bass</item>
+		<item>Soul</item>
+		<item>Punk</item>
+		<item>Space</item>
+		<item>Meditative</item>
+		<item>Instrumental Pop</item>
+		<item>Instrumental Rock</item>
+		<item>Ethnic</item>
+		<item>Gothic</item>
+		<item>Darkwave</item>
+		<item>Techno-Industrial</item>
+		<item>Electronic</item>
+		<item>Pop-Folk</item>
+		<item>Eurodance</item>
+		<item>Dream</item>
+		<item>Southern Rock</item>
+		<item>Comedy</item>
+		<item>Cult</item>
+		<item>Gangsta</item>
+		<item>Top 40</item>
+		<item>Christian Rap</item>
+		<item>Pop/Funk</item>
+		<item>Jungle</item>
+		<item>Native American</item>
+		<item>Cabaret</item>
+		<item>New Wave</item>
+		<item>Psychadelic</item>
+		<item>Rave</item>
+		<item>Showtunes</item>
+		<item>Trailer</item>
+		<item>Lo-Fi</item>
+		<item>Tribal</item>
+		<item>Acid Punk</item>
+		<item>Acid Jazz</item>
+		<item>Polka</item>
+		<item>Retro</item>
+		<item>Musical</item>
+		<item>Rock and Roll</item>
+		<item>Hard Rock</item>
+		<item>Folk</item>
+		<item>Folk-Rock</item>
+		<item>National Folk</item>
+		<item>Swing</item>
+		<item>Fast Fusion</item>
+		<item>Bebob</item>
+		<item>Latin</item>
+		<item>Revival</item>
+		<item>Celtic</item>
+		<item>Bluegrass</item>
+		<item>Avantgarde</item>
+		<item>Gothic Rock</item>
+		<item>Progressive Rock</item>
+		<item>Psychedelic Rock</item>
+		<item>Symphonic Rock</item>
+		<item>Slow Rock</item>
+		<item>Big Band</item>
+		<item>Chorus</item>
+		<item>Easy Listening</item>
+		<item>Acoustic</item>
+		<item>Humour</item>
+		<item>Speech</item>
+		<item>Chanson</item>
+		<item>Opera</item>
+		<item>Chamber Music</item>
+		<item>Sonata</item>
+		<item>Symphony</item>
+		<item>Booty Bass</item>
+		<item>Primus</item>
+		<item>Porn Groove</item>
+		<item>Satire</item>
+		<item>Slow Jam</item>
+		<item>Club</item>
+		<item>Tango</item>
+		<item>Samba</item>
+		<item>Folklore</item>
+		<item>Ballad</item>
+		<item>Power Ballad</item>
+		<item>Rhythmic Soul</item>
+		<item>Freestyle</item>
+		<item>Duet</item>
+		<item>Punk Rock</item>
+		<item>Drum Solo</item>
+		<item>Acapella</item>
+		<item>Euro-House</item>
+		<item>Dance Hall</item>
+	 </string-array>   
+</resources>

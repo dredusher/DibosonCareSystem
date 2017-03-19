@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="wemo_device_command">WeMo Device Command</string>
+    <string name="on_off_arguments">The command only has \'on\' and \'off\' as arguments</string>
+    <string name="delay_before_speaking">Select the Delay before speaking</string>
+    <string name="initial_interval">Please set the interval, which is in seconds, before the phrase that you enter is spoken</string>
+    <string name="click_to_set_delay">Click to set delay</string>
+    <string name="phrase_to_be_spoken">Phrase to be Spoken</string>
+    <string name="enter_phrase_to_be_spoken">Enter the phrase that is to be spoken</string>
+    <string name="type_in_phrase_to_be_spoken">Type in the phrase to be spoken</string>
+    <string name="sms_message">SMS Message</string>
+    <string name="enter_message_to_send">Enter the message that is to be sent&quot;</string>
+    <string name="type_in_sms_message">Type in the SMS message</string>
+    <string name="select_action_command">Select Action Command</string>
+    <string name="email_subject">Email Subject</string>
+    <string name="enter_email_subject">Enter the email subject</string>
+    <string name="type_in_email_subject">Type in the email subject</string>
+    <string name="enter_email_message">Enter the email message</string>
+    <string name="type_in_email_message">Type in the email message</string>
+    <string name="enter_tasks_to_do_message">Enter the tasks that can be performed during a care visit.\n\nEnter each task on a separate line.\n\nEnter PATIENT when the patient\'s preferred name is to be displayed.\n\nBe aware that you may need to edit existing visits to reflect the changes.</string>
+    <string name="tasks_to_do_message">Care Visit Tasks</string>
+    <string name="email_addresses">Email Addresses</string>
+    <string name="enter_email_addresses">Enter the email address</string>
+    <string name="type_in_email_addresses">Type in the email addresses</string>
+    <string name="phone_number">Phone Number</string>
+    <string name="enter_phone_number">Enter the number that is to be phoned</string>
+    <string name="type_in_phone_number">Type in the phone number</string>
+    <string name="screen_command">Screen Command</string>
+    <string name="sms_phone_number">SMS Phone Number</string>
+    <string name="select_speak_option">Select Speak Option</string>
+    <string name="tracking_command">Tracking Command</string>
+    <string name="wemo_device_to_control">WeMo Device to be Controlled</string>
+    <string name="wemo_friendly_name">Enter the friendly name of the WeMo device to be switched</string>
+    <string name="type_in_wemo_friendly_name">Type in the friendly name</string>
+    <string name="press_to_define_command">Press to define a Command</string>
+    <string name="action_command_summary"> Please enter the actions that are to be taken when the user responds to the prompt.\n\nEach command is separated by a semi-colon and is of the form (Handler):(argument), e.g. Phone:123456;Play:Siren.mp3</string>
+    <string name="action_command_complete">Action Command is Complete</string>
+    <string name="another_action_command">Do you want to create another action command ?</string>
+    <string name="vibrate_duration">Vibrate Duration</string>
+    <string name="vibrate_duration_summary">Please specify the time, in seconds, that you want the device to vibrate. The entered time will be converted to milliSeconds which will be stored in the command and which can be edited if necessary.</string>
+    <string name="vibrate_duration_click">Click to set Duration</string>
+</resources>

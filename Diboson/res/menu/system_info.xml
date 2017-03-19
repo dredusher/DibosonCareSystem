@@ -1,0 +1,19 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/menu_system_info" android:titleCondensed="@string/menu_system_info_condensed" android:title="@string/menu_system_info"></item>
+    <item android:id="@+id/menu_project_log" android:titleCondensed="@string/menu_project_log_condensed" android:title="@string/menu_project_log"></item><item android:id="@+id/menu_logcat" android:titleCondensed="@string/menu_logcat_condensed" android:title="@string/menu_logcat"></item>
+    
+    <item android:id="@+id/menu_logcat_latest" android:title="@string/menu_logcat_latest" android:titleCondensed="@string/menu_logcat_latest_condensed"></item>
+     <item android:id="@+id/menu_logcat_write" android:title="@string/menu_logcat_write" android:titleCondensed="@string/menu_logcat_write_condensed"></item>
+    <item android:id="@+id/menu_logcat_filter" android:title="@string/menu_logcat_filter" android:titleCondensed="@string/menu_logcat_filter_condensed"></item><item android:id="@+id/menu_logcat_clear" 
+        android:title="@string/menu_logcat_clear" 
+        android:titleCondensed="@string/menu_logcat_clear_condensed"></item>
+    <item android:id="@+id/menu_project_log_clear" 
+        android:title="@string/menu_project_log_clear" 
+        android:titleCondensed="@string/menu_project_log_clear_condensed"></item>
+    <item android:id="@+id/menu_auto_scroll" 
+        android:title="@string/auto_scroll_enable" 
+        android:titleCondensed="@string/auto_scroll_enable"></item>
+    <item android:id="@+id/menu_alarm_data" android:title="@string/menu_alarm_data" android:titleCondensed="@string/menu_alarm_data"></item>
+    <item android:id="@+id/menu_notes" android:titleCondensed="@string/menu_notes" android:title="@string/menu_notes"></item>     
+    <item android:id="@+id/menu_bugs" android:titleCondensed="@string/menu_bugs" android:title="@string/menu_bugs"></item>         
+</menu>

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:orientation="vertical"
+    android:padding="6dip" >
+
+    <TextView
+        android:id="@+id/multiline_subtitle"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@color/white"
+        android:ems="10"
+        android:text="@string/blank_textview"
+        android:textColor="@color/black"
+        android:textSize="@dimen/dialogue_font_size"
+        android:textStyle="normal"
+        android:visibility="visible" />
+
+    <EditText
+        android:id="@+id/ip_address_input"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/default_font_size"
+        android:layout_marginLeft="@dimen/default_big_font_size"
+        android:layout_marginRight="@dimen/default_big_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@color/white"
+        android:ems="10"
+        android:inputType="text"
+        android:textColor="@color/black"
+        android:textSize="@dimen/dialogue_font_size" />
+    
+     <Button
+         android:id="@+id/multiline_help_button"
+         style="@style/customButton"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center_horizontal"
+         android:layout_marginTop="@dimen/default_font_size"
+         android:text="@string/press_for_help"
+         android:textColor="#FFFFFF"
+         android:textSize="@dimen/dialogue_font_size"
+         android:visibility="gone" />
+
+     <!--
+     	 ===========================================================================
+     	 24/03/2016 ECU created the following field to fill the layout with white.
+     	                Problem caused in SettingsActivity which uses a custom theme
+     	                and when a multiline dialogue was called then some of the
+     	                background was shown as 'black' and could not find a way
+     	                of changing it 
+     	  ==========================================================================
+      -->
+     <TextView
+         android:id="@+id/dummy_textview"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center_horizontal"
+         android:background="@color/white"
+         android:maxLength="@integer/Number25"
+         android:text="@string/default_textview"
+         android:textColor="@color/white" />
+
+</LinearLayout>

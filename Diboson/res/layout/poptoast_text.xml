@@ -1,0 +1,20 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/poptoast_text_layout"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/button_shape"
+    android:orientation="vertical"
+    android:padding="8dp" >
+    
+    <TextView
+        android:id="@+id/poptoast_textview"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:contentDescription="@string/hello_world"
+        android:maxLines="@integer/Number10"
+        android:textColor="@color/black"
+        android:textIsSelectable="false"
+        android:textSize="@dimen/large_font" />
+
+</LinearLayout>

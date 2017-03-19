@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical" >
+ 
+  	<TextView
+  	    android:id="@+id/title_item_name"
+  	    style="@style/customTextView"
+  	    android:layout_marginTop="@dimen/default_font_size"
+  	    android:text="@string/title_item_name" />
+        
+    <Spinner
+        android:id="@+id/item_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@drawable/appointment" />
+		 
+    <TextView
+  	    android:id="@+id/title_shop_name"
+  	    style="@style/customTextView"
+  	    android:layout_marginTop="@dimen/default_font_size"
+  	    android:text="@string/title_shop_name" />
+        
+    <Spinner
+        android:id="@+id/shop_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@drawable/appointment" />
+		    
+	<Button
+	     android:id="@+id/confirm_button"
+	     style="@style/customButton"
+	     android:layout_marginTop="@dimen/default_font_size"
+	     android:text="@string/confirm_button" />
+	
+	<Button
+	    android:id="@+id/delete_button"
+	    style="@style/customButton"
+	    android:layout_marginTop="@dimen/default_font_size"
+	    android:text="@string/delete_button" />
+         
+         
+</LinearLayout>

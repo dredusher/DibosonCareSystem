@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:layout_gravity="center_vertical|center"
+    android:background="@drawable/shape"
+    android:orientation="vertical" >
+
+     <ImageView
+        android:id="@+id/popup_image"
+        android:layout_width="66dp"
+        android:layout_height="66dp"
+        android:layout_gravity="center"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:contentDescription="@string/hello_world"
+        android:src="@drawable/burnt_toast_image" />
+
+    <TextView
+        android:id="@+id/popup_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/Font_12dp"
+        android:contentDescription="@string/hello_world"
+        android:text="@string/hello_world"
+        android:textColor="@color/black"
+        android:textSize="@dimen/toast_font_size" />
+
+    <Button
+        android:id="@+id/popup_button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:background="@drawable/popup_button"
+        android:text="@string/popup_dismiss" />
+    
+     <TextView
+         android:id="@+id/popup_timeout"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_gravity="center"
+         android:contentDescription="@string/hello_world"
+         android:text="@string/hello_world"
+         android:textColor="@color/yellow"
+         android:visibility="gone" />
+    
+    <TextView
+        android:id="@+id/popup_copyright"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:contentDescription="@string/hello_world"
+        android:text="@string/hello_world"
+        android:textColor="@color/black"
+        android:textSize="@dimen/Font_8dp" />
+      
+</LinearLayout>

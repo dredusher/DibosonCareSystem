@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:orientation="vertical" >
+    
+     <ImageButton
+         android:id="@+id/document_photo_button"
+         android:layout_width="@dimen/image_width"
+         android:layout_height="@dimen/image_height"
+         android:layout_alignParentTop="false"
+         android:layout_centerHorizontal="true"
+         android:layout_marginTop="@dimen/default_font_size"
+         android:background="@color/background_transparent"
+         android:contentDescription="@string/default_description"
+         android:maxHeight="@dimen/image_height"
+         android:maxWidth="@dimen/image_width"
+         android:scaleType="fitCenter"
+         android:src="@drawable/documents" />
+     
+ 	<TextView
+        android:id="@+id/document_registration"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="false"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentTop="false"
+        android:layout_below="@id/document_photo_button"
+        android:layout_marginTop="@dimen/default_font_size"
+        android:gravity="center_horizontal"
+        android:text="@string/document_registration"
+        android:textSize="@dimen/default_big_font_size" />
+
+     <Button
+         android:id="@+id/document_register_button"
+         style="@style/customButton"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_alignParentLeft="true"
+         android:layout_alignParentStart="true"
+         android:layout_margin="@dimen/default_font_size"
+         android:text="@string/document_register" />
+     
+    <EditText
+        android:id="@+id/document_title_edittext"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/document_registration"
+        android:layout_marginLeft="@dimen/default_font_size"
+        android:layout_marginRight="@dimen/default_font_size"
+        android:layout_marginTop="@dimen/default_big_font_size"
+        android:ems="10"
+        android:hint="@string/document_enter_title"
+        android:textSize="@dimen/default_font_size" />
+    
+     <EditText
+         android:id="@+id/document_path_edittext"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_below="@id/document_title_edittext"
+         android:layout_marginLeft="@dimen/default_font_size"
+         android:layout_marginRight="@dimen/default_font_size"
+         android:layout_marginTop="@dimen/default_big_font_size"
+         android:ems="10"
+         android:hint="@string/document_path"
+         android:textSize="@dimen/default_font_size" />
+          
+      <Button
+          android:id="@+id/document_browse_button"
+          style="@style/customButton"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_below="@id/document_path_edittext"
+          android:layout_centerHorizontal="true"
+          android:layout_marginTop="@dimen/default_big_font_size"
+          android:text="@string/document_browse" />
+
+</RelativeLayout>

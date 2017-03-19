@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.usher.diboson.DibosonView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/DibosonViewMain"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/diboson_bw_edge"
+    android:clickable="true" >
+
+</com.usher.diboson.DibosonView>

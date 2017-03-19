@@ -1,0 +1,67 @@
+
+    <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/RelativeLayout1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="true"
+        android:background="@drawable/diboson_bw_edge"
+        android:orientation="vertical" >
+
+        <Button
+            android:id="@+id/liquid_display"
+            style="@style/customButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_alignParentTop="true"
+            android:layout_marginBottom="@dimen/default_font_size"
+            android:layout_marginTop="@dimen/default_font_size"
+            android:text="@string/liquid_display" />
+        
+        <Button
+            android:id="@+id/liquid_clear"
+            style="@style/customButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_below="@id/liquid_display"
+            android:layout_marginBottom="@dimen/default_font_size"
+            android:text="@string/liquid_clear" />
+        
+       <Button
+           android:id="@+id/liquid_tolerance"
+           style="@style/customButton"
+           android:layout_width="match_parent"
+           android:layout_height="wrap_content"
+           android:layout_alignParentLeft="false"
+           android:layout_alignParentStart="false"
+           android:layout_below="@id/liquid_clear"
+           android:layout_marginBottom="@dimen/default_font_size"
+           android:text="@string/liquid_tolerance" />
+        
+        <Button
+            android:id="@+id/liquid_process"
+            style="@style/customButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_marginBottom="@dimen/default_font_size"
+            android:text="@string/liquid_process" />
+        
+        <Button
+            android:id="@+id/liquid_register"
+            style="@style/customButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/liquid_process"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentStart="true"
+            android:layout_marginBottom="@dimen/default_big_font_size"
+            android:text="@string/liquid_register" />
+
+    </RelativeLayout>
+

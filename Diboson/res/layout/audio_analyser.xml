@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+    
+    <!-- 20/11/2016 ECU the layout will not render with the DibosonView - get null point exception -->
+    <com.usher.diboson.DibosonView
+    	android:id="@+id/DibosonViewMain"
+   		android:layout_width="match_parent"
+   		android:layout_height="match_parent"
+    	android:background="@drawable/diboson_bw_edge"
+    	android:clickable="true" />
+    
+     <TextView
+         android:id="@+id/maximum_volume_frequency"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_alignParentBottom="true"
+         android:layout_marginBottom="@dimen/default_big_font_size"
+         android:gravity="center_horizontal"
+         android:text="@string/blank_textview"
+         android:textColor="@color/white"
+         android:textSize="@dimen/default_big_font_size" />
+     
+     <TextView
+         android:id="@+id/maximum_volume_frequency_title"
+         android:layout_width="match_parent"
+         android:layout_height="wrap_content"
+         android:layout_above="@id/maximum_volume_frequency"
+         android:gravity="center_horizontal"
+         android:text="@string/maximum_volume_frequency"
+         android:textColor="@color/gray"
+         android:textSize="@dimen/default_big_font_size" />
+      
+    <TextView
+        android:id="@+id/maximum_volume"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/maximum_volume_frequency_title"
+        android:layout_marginBottom="@dimen/Font_10p"
+        android:gravity="center_horizontal"
+        android:text="@string/blank_textview"
+        android:textColor="@color/white"
+        android:textSize="@dimen/default_big_font_size" />
+     
+    <TextView
+        android:id="@+id/maximum_volume_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/maximum_volume"
+        android:gravity="center_horizontal"
+        android:text="@string/maximum_volume_title"
+        android:textColor="@color/gray"
+        android:textSize="@dimen/default_big_font_size" />
+     
+</RelativeLayout>

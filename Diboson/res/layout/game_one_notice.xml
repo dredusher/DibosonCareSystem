@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical" >
+
+    <EditText
+        android:id="@+id/dose_time_amount"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal|center"
+        android:ems="10"
+        android:gravity="center_vertical|center"
+        android:text="Unfortunately\nyou did not\nselect the\nrequired letter"
+        android:textSize="@dimen/Font_40dp" >
+
+        <requestFocus />
+    </EditText>
+
+        <TextView
+            android:id="@+id/requiredLetterview"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_alignParentEnd="true"
+            android:layout_alignParentStart="true"
+            android:gravity="center_vertical|center_horizontal"
+            android:text="A"
+            android:textColorLink="@color/blue_background"
+            android:textSize="@dimen/Font_200dp" />
+
+</LinearLayout>

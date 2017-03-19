@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/diboson_bw_edge" >
+
+	<RelativeLayout
+	    android:layout_width="fill_parent"
+	    android:layout_height="fill_parent" >
+
+    	<Button
+        	android:id="@+id/medication_button"
+        	style="@style/customButton"
+        	android:layout_width="match_parent"
+        	android:layout_height="wrap_content"
+        	android:layout_alignParentTop="true"
+        	android:layout_marginTop="@dimen/default_font_size"
+        	android:text="@string/medication_details"
+        	android:textSize="@dimen/default_big_font_size" />
+
+    	<TextView
+    	    android:id="@+id/medication_textview"
+    	    android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:layout_below="@id/medication_button"
+    	    android:layout_marginLeft="@dimen/default_font_size"
+    	    android:layout_marginRight="@dimen/default_font_size"
+    	    android:text="@string/blank_textview"
+    	    android:typeface="monospace" />
+
+    	<Button
+        	android:id="@+id/carer_visits_button"
+        	style="@style/customButton"
+        	android:layout_width="match_parent"
+        	android:layout_height="wrap_content"
+        	android:layout_below="@id/medication_textview"
+        	android:layout_marginTop="@dimen/default_font_size"
+        	android:text="@string/carer_visits"
+        	android:textSize="@dimen/default_big_font_size" />
+
+    	<TextView
+    	    android:id="@+id/carer_visits_textview"
+    	    android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:layout_below="@id/carer_visits_button"
+    	    android:layout_marginLeft="@dimen/default_font_size"
+    	    android:layout_marginRight="@dimen/default_font_size"
+    	    android:text="@string/blank_textview"
+    	    android:typeface="monospace" />
+
+    	<Button
+        	android:id="@+id/appointments_button"
+        	style="@style/customButton"
+        	android:layout_width="match_parent"
+        	android:layout_height="wrap_content"
+        	android:layout_below="@id/carer_visits_textview"
+        	android:layout_marginTop="@dimen/default_font_size"
+        	android:text="@string/appointments"
+        	android:textSize="@dimen/default_big_font_size" />
+
+   	 	<TextView
+   	 	    android:id="@+id/appointments_textview"
+   	 	    android:layout_width="match_parent"
+   	 	    android:layout_height="wrap_content"
+   	 	    android:layout_below="@id/appointments_button"
+   	 	    android:layout_marginLeft="@dimen/default_font_size"
+   	 	    android:layout_marginRight="@dimen/default_font_size"
+   	 	    android:text="@string/blank_textview"
+   	 	    android:typeface="monospace" />
+
+    	<Button
+        	android:id="@+id/timer_alarms_button"
+        	style="@style/customButton"
+        	android:layout_width="match_parent"
+        	android:layout_height="wrap_content"
+        	android:layout_below="@id/appointments_textview"
+        	android:layout_marginTop="@dimen/default_font_size"
+        	android:text="@string/timer_alarms"
+        	android:textSize="@dimen/default_big_font_size" />
+
+    	<TextView
+    	    android:id="@+id/timer_alarms_textview"
+    	    android:layout_width="match_parent"
+    	    android:layout_height="wrap_content"
+    	    android:layout_below="@+id/timer_alarms_button"
+    	    android:layout_marginLeft="@dimen/default_font_size"
+    	    android:layout_marginRight="@dimen/default_font_size"
+    	    android:text="@string/blank_textview"
+    	    android:typeface="monospace" />
+
+	</RelativeLayout>
+
+</ScrollView>

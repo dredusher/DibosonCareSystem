@@ -1,0 +1,15 @@
+<resources>
+       <!-- WeMo ACTIVITY -->
+    <string name="notification_add">Add device&#160;</string>
+    <string name="notification_remove">Remove device&#160;</string>
+    <string name="refresh">Refresh</string>
+    
+    <!-- LIST ITEM -->
+	<string name="state_on">On</string>	
+	<string name="state_off">Off</string>
+	<string name="state_wait">No motion</string>
+	<string name="state_motion">Sense motion</string>
+	<string name="state_load">Load</string>
+	<string name="state_stand_by">Stand by</string>
+	<string name="refreshDevices">Refresh</string>	
+</resources>

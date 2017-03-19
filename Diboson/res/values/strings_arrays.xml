@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <string-array name="months">
+        <item>January</item>
+        <item >February</item>
+        <item >March</item>
+        <item >April</item>
+        <item >May</item>
+        <item >June</item>
+        <item >July</item>
+        <item >August</item>
+        <item >September</item>
+        <item >October</item>
+        <item >November</item>
+        <item >December</item>
+        
+    </string-array>
+    
+    <string-array name="testing_levels">
+        <item>Formal Testing not Started</item>
+        <item>Basic Logic Tests Completed</item>
+        <item>User Interface Tests Completed</item>
+        <item>Debugging Complete</item>
+        <item>Formal Testing Completed</item>
+    </string-array>
+    
+    <string-array name="alarm_activities">
+        <item>phone call</item>
+        <item>tablet reminder</item>
+       	<item>slideshow</item>
+        <item>activity</item>
+        <item>message</item>
+        <item>email message</item>
+        <item>TV program start</item>
+        <item>TV program reminder</item>
+    </string-array>
+    
+     <string-array name="care_visit_tasks">
+    	<item>assist PATIENT get out of bed</item>,
+		<item>assist PATIENT in getting dressed</item>,
+		<item>help PATIENT with personal washing</item>,
+		<item>provide PATIENT with food and water</item>,
+		<item>administer any medication</item>,
+		<item>wash any utensils and cutlery</item>,
+		<item>empty the commode</item>,
+		<item>assist PATIENT go to bed</item>,
+		<item>get shopping</item>,
+		<item>do any housework requested by PATIENT</item>        
+    </string-array>
+    
+</resources>

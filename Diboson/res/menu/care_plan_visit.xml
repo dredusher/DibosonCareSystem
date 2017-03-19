@@ -1,0 +1,4 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+    <item android:id="@+id/tasks_to_do" android:titleCondensed="@string/tasks_to_do" android:title="@string/tasks_to_do"></item>
+
+</menu>

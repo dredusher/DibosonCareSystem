@@ -1,0 +1,120 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/user_background"
+    android:padding="5dp"
+    android:descendantFocusability="blocksDescendants" 
+    tools:context=".MainActivity" >
+
+     <ImageView
+         android:id="@+id/list_button_entry_imageview"
+         android:layout_width="200dp"
+         android:layout_height="200dp"
+         android:layout_alignParentLeft="true"
+         android:layout_alignParentStart="true"
+         android:layout_alignParentTop="true"
+         android:layout_margin="@dimen/default_font_size"
+         android:contentDescription="@string/grid_content_description"
+         android:gravity="center_vertical"
+         android:src="@drawable/no_photo"
+         android:visibility="gone" />
+
+      <TextView
+          android:id="@+id/list_button_entry_textview"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_alignParentTop="true"
+          android:layout_marginLeft="@dimen/default_big_font_size"
+          android:layout_marginStart="@dimen/default_big_font_size"
+          android:layout_toRightOf="@id/list_button_entry_imageview"
+          android:layout_toEndOf="@id/list_button_entry_imageview"
+          android:text="@string/carer_name"
+          android:textAppearance="?android:attr/textAppearanceLarge"
+          android:textColor="@color/blue_background"
+          android:textSize="@dimen/default_big_font_size"
+          android:visibility="visible" />
+   
+     <TextView
+         android:id="@+id/list_button_entry_textview2"
+         android:layout_width="wrap_content"
+         android:layout_height="wrap_content"
+         android:layout_alignLeft="@+id/list_button_entry_textview"
+         android:layout_alignStart="@+id/list_button_entry_textview"
+         android:layout_below="@+id/list_button_entry_textview"
+         android:text="@string/carer_phone"
+         android:textAppearance="?android:attr/textAppearanceLarge"
+         android:textSize="@dimen/default_font_size_smaller"
+         android:textStyle="italic"
+         android:visibility="visible" />
+    
+    <TextView
+        android:id="@+id/list_button_entry_textview3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/list_button_entry_textview"
+        android:layout_alignStart="@+id/list_button_entry_textview"
+        android:layout_below="@+id/list_button_entry_textview2"
+        android:text="@string/carer_agency"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="@dimen/default_font_size_smaller"
+        android:textStyle="italic"
+        android:visibility="visible" />
+    
+     <ImageButton
+         android:id="@+id/list_button_help"
+         android:layout_width="@dimen/help_icon_size"
+         android:layout_height="@dimen/help_icon_size"
+         android:layout_alignParentBottom="true"
+         android:layout_alignParentRight="true"
+         android:layout_alignParentEnd="true"
+         android:background="@drawable/round_button"
+         android:contentDescription="@string/help_icon"
+         android:scaleType="fitCenter"
+         android:src="@drawable/help_icon"
+         android:visibility="gone" />
+    
+    <Button
+        android:id="@+id/list_button_custom"
+        style="android:buttonStyle"
+        android:layout_width="@dimen/button_width"
+        android:layout_height="@dimen/button_height"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentRight="true"
+        android:layout_below="@id/list_button_entry_textview3"
+        android:layout_margin="@dimen/font2dp"
+        android:layout_toLeftOf="@id/list_button_help"
+        android:layout_toStartOf="@id/list_button_help"
+        android:background="@drawable/row_button"
+        android:focusable="false"
+        android:focusableInTouchMode="false"
+        android:text="@string/custom"
+        android:textColor="@color/gray"
+        android:textSize="@dimen/default_font_size"
+        android:textStyle="bold"
+        android:visibility="visible" />
+   
+   <Button
+       android:id="@+id/list_button_phone"
+       style="@style/customButton"
+       android:layout_width="@dimen/button_width"
+       android:layout_height="@dimen/button_height"
+       android:layout_alignParentBottom="true"
+       android:layout_alignParentEnd="false"
+       android:layout_alignParentRight="false"
+       android:layout_alignParentTop="false"
+       android:layout_below="@id/list_button_entry_textview3"
+       android:layout_margin="@dimen/font2dp"
+       android:layout_toLeftOf="@id/list_button_custom"
+       android:layout_toStartOf="@id/list_button_custom"
+       android:background="@drawable/row_button"
+       android:focusable="false"
+       android:focusableInTouchMode="false"
+       android:text="@string/test"
+       android:textColor="@color/gray"
+       android:textSize="@dimen/default_font_size"
+       android:textStyle="bold"
+       android:visibility="gone" />
+
+</RelativeLayout>

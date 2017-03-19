@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="channel_groups_url">http://atlas.metabroadcast.com/4/channel_groups/hk2n.json?type=region&amp;annotations=channels&amp;key=%s</string>
+    <string name="channel_url" formatted="false">http://atlas.metabroadcast.com/4/schedules/%s.json?source=pressassociation.com&amp;from=%s&amp;to=%s&amp;annotations=content.description&amp;key=%s</string>
+    <string name="api_key">e8b79450ae4f4dd78e4493471be0e192</string>
+    <string name="title_metabroadcast_api_key">API Key</string>
+    <string name="summary_metabroadcast_api_key">Enter the API key that has been assigned to this app by MetaBroadcast.</string>
+    <string name="title_metabroadcast_channel_groups_URL">Channel Groups URL Format</string>
+    <string name="summary_metabroadcast_channel_groups_URL">Enter the string format that will be used to generate the URL to obtain channel group information.</string>
+    <string name="title_metabroadcast_channel_URL">Channel URL Format</string>
+    <string name="summary_metabroadcast_channel_URL">Enter the string format that will be used to generate the URL to obtain the information for a channel.</string>
+    <string name="title_metabroadcast">MetaBroadcast Parameters</string>
+    <string name="summary_metabroadcast">Enables parameters associated with accessing MetaBroadcast\'s Atlas system to be set.</string>
+    
+</resources>

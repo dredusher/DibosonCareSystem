@@ -1,0 +1,65 @@
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/RelativeLayout1"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:background="@drawable/diboson_bw_edge"
+    tools:context=".LocationActivity" >
+
+
+<TableLayout 
+    android:id="@+id/TableLayout1"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    tools:context=".LocationActivity" >
+
+    <ImageView
+        android:id="@+id/location_image"
+        android:layout_width="wrap_content"
+        android:layout_height="99dp"
+        android:layout_marginBottom="@dimen/Font_10p"
+        android:layout_marginTop="@dimen/Font_18dp"
+        android:contentDescription="@string/default_description"
+        android:src="@drawable/burnt_toast_image" />
+
+    <TextView
+        android:id="@+id/location_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/location_details"
+        android:textSize="@dimen/track_font_size" />
+
+    <TextView
+        android:id="@+id/updated"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:lines="@integer/Number_5"
+        android:maxLines="@integer/Number_5"
+        android:minLines="@integer/Number_5"
+        android:text="@string/last_updated"
+        android:textSize="@dimen/track_font_size" />
+
+    <DigitalClock
+        android:id="@+id/digitalClock1"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_weight="0.04"
+        android:gravity="center"
+        android:text="@string/digital_clock"
+        android:textSize="@dimen/track_font_size"
+        android:textStyle="bold" />
+
+</TableLayout>
+
+<ImageView
+    android:id="@+id/trackingPhoto"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:contentDescription="@string/default_description"
+    android:src="@drawable/alright"
+    android:visibility="invisible" />
+
+</RelativeLayout>

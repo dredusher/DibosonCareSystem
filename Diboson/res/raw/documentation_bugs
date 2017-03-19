@@ -1,0 +1,96 @@
+13/12/2015 ECU MedicationActivity get an 'index out of bounds' exception when a medication dose is actioned
+ F I X E D ?   when the app is being restarted. No investigation has been performed - just added a try/catch
+               and log the exception.
+               27/03/2016 ECU a lot of changes were made to the handling of interrupts so that if one occurs
+                              when the app is not running then it will be restarted automatically.
+                          ECU TimerActivity - set of a 'tablet' reminder seems to work OK
+                          ECU Setting a dose to occur when the app is not running does not automatically
+                              cause the app to be restarted.
+31/12/2015 ECU problem occurs when the Maplin bluetooth keyboard is switched on. Seems to activate the app
+ F I X E D     in a strange, and unwanted, way. Suspect the issue is in the manifest or the ArduinoCommunicationService
+               because I suspect the keyboard is being seen as a USB device. 
+               04/01/2016 ECU problem arises because when the keyboard is switched on it generates a 'configuration 
+               				  change' which will cause the activity to be restarted - changed to include 'keyboard' 
+               				  in onConfigChanges in the manifest
+08/06/2016 ECU AudioAnalyser - when this is declared as an 'extend DibosonActivity' then seems to be an issue with
+               the BACK key and it appears that the activity is not terminating correctly and the whole app seems to
+               'hang'. If change to 'extend Activity' then do not appear to have an issue. Added onBackPressed and
+               returned to 'extend DibosonActivity' (also removed onKeyDown which was used used to detect BACK
+               in old versions of android) but problem persisted until the 'super.onBackPressed' call was
+               removed - have left it this way but still do not understand why.
+ F I X E D ECU Further investigation (and looking on the internet) seems to imply that there are memory leak issues
+               when an AsyncTask is run for a long time such that it continues running even after the activity
+               has been 'finished' - see notes in AudioAnalyser.java
+28/06/2016 ECU ShowEPGActivity - having put in the option to display a particular channel (or to show all) then
+               testing shows that the logic works but occasionally the app is stopping with the following logged
+               entry             
+           
+           			06-30 14:23:58.645 E/AndroidRuntime(14517): java.lang.IllegalStateException: The application's PagerAdapter changed 
+           					the adapter's contents without calling PagerAdapter#notifyDataSetChanged! Expected adapter item count: 7,
+           					found: 1 Pager id: com.usher.diboson:id/viewPager Pager class: class android.support.v4.view.ViewPager 
+           					Problematic adapter: class com.usher.diboson.TVChannelFragment$TVChannelAdapter
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.support.v4.view.ViewPager.populate(ViewPager.java:961)
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.support.v4.view.ViewPager.populate(ViewPager.java:913)
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.support.v4.view.ViewPager.onMeasure(ViewPager.java:1435)
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.view.View.measure(View.java:17565)
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.widget.RelativeLayout.measureChildHorizontal(RelativeLayout.java:727)
+					06-30 14:23:58.645 E/AndroidRuntime(14517): 	at android.widget.RelativeLayout.onMeasure(RelativeLayout.java:463)
+ 
+               looks very much like a timing issue because it is happening randomly but at this stage not clear where the problem is.
+               30/06/2016 ECU I thought the problem was to do with the display between refreshed after the DialogueUtilities dialogue
+                              has been dismissed. Have put in this code to build a delay before finishing and then restarting the 
+                              activity (using a handler) but even with a delay of 10 seconds the problem still persists
+                          ECU in TVEPGFragment at the AdapterHandler when handling MESSAGE_FINISH then use
+                          			this.removeMessages (StaticData.MESSAGE_SLEEP);
+                          	   to delete any pending 'sleeps' - this seems to have improved the situation but still not sure.
+                          ECU further investigation shows that the problem still persists but less frequently. There certainly
+                              seems to be a window when the data is changing in size.
+               02/07/2016 ECU Wonder if the problem is caused by the handler that exists in TVEPGFragment and is responsible for
+                              causing a 'screen update' on a timed basis - this may be the 'window' which I suspect is causing
+                              the problem because when the 'select channel' dialogue is started then want to stop updating
+                              the display because the data set is being changed. Declared a variable in ShowEPGActivity called
+                              'updateAdapter' so that the adapter is only updated in the variable is true. The variable is
+                              set to 'false' when the dialogue starts. Unfortunately this seemed like a good idea but although
+                              it seemed to reduce the number of times the problem occurred it did not solve the problem so removed
+                              the 'updateAdapter' variable and the code relating to it.
+               04/07/2016 ECU because TVChannelsSelected is a static variable then, when the ShowEPGAcrivity is restarted,
+                              there is a window when it will retain the previous value until bein reset to the new value.
+                              Therefore at the start of the activity then reset the variable to 'null. Initial tests seem to
+                              show an improvement but am 'holding my breath' 
+   F I X E D   05/07/2016 ECU since making the 04/07/2016 mod then have done a lot of testing and the problem has not surfaced.
+                              MORAL - when using 'static' variables make sure that they are initialised correctly. 
+               23/09/2016 ECU When starting the app then occasionally get
+               
+                                Performing stop of activity that is not resumed: {com.usher.diboson/com.usher.diboson.MainActivity}
+                                  java.lang.RuntimeException: Performing stop of activity that is not resumed: {com.usher.diboson/com.usher.diboson.MainActivity}
+                                        at android.app.ActivityThread.performStopActivityInner(ActivityThread.java:3429)
+ 	                                    at android.app.ActivityThread.handleStopActivity(ActivityThread.java:3510)
+ 	                                    at android.app.ActivityThread.access$1100(ActivityThread.java:155)
+	                                    at android.app.ActivityThread$H.handleMessage(ActivityThread.java:1346)
+ 	                                    at android.os.Handler.dispatchMessage(Handler.java:102)
+	                                    at android.os.Looper.loop(Looper.java:135)
+ 	                                    at android.app.ActivityThread.main(ActivityThread.java:5343)
+ 	                                    at java.lang.reflect.Method.invoke(Native Method)
+                                    	at java.lang.reflect.Method.invoke(Method.java:372)
+ 	                                    at com.android.internal.os.ZygoteInit$MethodAndArgsCaller.run(ZygoteInit.java:905)
+ 	                                    at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:700)
+                              
+                              This seems to happen mainly when a new version of the app is downloaded from the PC and not
+                              when the app is restarted on the device. Need to investigate but probably as a lower
+                              priority. I believe the problem is to do with starting another activity from within MainActivity
+                              - the StartUpActivity.  
+                              
+                              Further investigation seems to confirm that this only seems to occur on 'load from PC'
+                              so not as important as first thought - but still need to understand.                 
+               28/11/2016 ECU Problem with trying to set the speaker phone on when making a phone call on the Sony XA.
+                              This is detailed in the Notes file.
+               03/03/2017 ECU I M P O R T A N T
+                              =================
+                              If the app is started up normally and then selected again from 'home' or 'recent apps'
+                              button then everything seems to work fine, but if :-
+                                  1) set the 'restart app on alarm' bit to 'true'
+                                  2) set up a 'timer alarm' to occur a little in the future (for tests always used a
+                                     'timer alarm' to display a 'free text message'
+                                  3) close the app and wait for the alarm to occur
+                                  4) when the 'alarm' occurs it seems to be processed properly
+                                  5) PROBLEM - everytime the app is started from 'home' then appear to get a new instance.
