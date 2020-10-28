@@ -76,7 +76,7 @@ public class EPGAlarm implements Serializable
 		// -------------------------------------------------------------------------
 		// 17/10/2015 ECU created to print the summary
 		// -------------------------------------------------------------------------
-		return "Channel : " + TVChannelName + "\n" + 
+		return "Channel : " + TVChannelName + StaticData.NEWLINE + 
 			   "Program : " + EPGEntry.PrintProgram();
 		// -------------------------------------------------------------------------
 	}

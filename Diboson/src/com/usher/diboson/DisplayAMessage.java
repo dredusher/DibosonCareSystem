@@ -23,11 +23,11 @@ public class DisplayAMessage extends DibosonActivity
 	int			layoutID				= R.layout.activity_display_a_message;
 														// 27/03/2016 ECU added
 	TextView	messageTextView;
-	String 		messageToDisplay		= "";
+	String 		messageToDisplay		= StaticData.BLANK_STRING;
 	boolean		speakTheMessage			= false;
 	int			speakTimer				= 1000 * 60;
 	String		spokenPhrase			= null;				// 27/03/2016 ECU added
-	String		time					= "";
+	String		time					= StaticData.BLANK_STRING;
 	TextView	timeTextView;
 	// =============================================================================	
 	@Override
@@ -91,7 +91,7 @@ public class DisplayAMessage extends DibosonActivity
 			// 09/02/2015 ECU start speaking the message if requested
 			// ---------------------------------------------------------------------
 			if (speakTheMessage)
-				speakTheMessageThread.start();
+				speakTheMessageThread.start ();
 			// ---------------------------------------------------------------------
 		}
 		else

@@ -183,7 +183,11 @@ public class FileArrayAdapter extends ArrayAdapter<FileOptions>
 			// 15/12/2015 ECU get the bitmap from disk
 			// ---------------------------------------------------------------------
 			ItemHolder itemHolder  = params [0];
-			itemHolder.imageBitmap = BitmapFactory.decodeFile (itemHolder.fileOptions.getPath(),options);
+			// ---------------------------------------------------------------------
+			// 22/11/2017 ECU changed to use 'getBitMap' which will take account of 
+			//                any Exif tags
+			// ---------------------------------------------------------------------
+			itemHolder.imageBitmap = Utilities.getBitMap (itemHolder.fileOptions.getPath(),options);
 			// ---------------------------------------------------------------------
 			// 15/12/2015 ECU return the updated item holder on completion
 			// ---------------------------------------------------------------------

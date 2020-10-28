@@ -4,7 +4,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
@@ -17,21 +16,23 @@ public class DailySummaryActivity extends DibosonActivity
 	// =============================================================================
 	// 27/02/2017 ECU created to provide the user with a summary of tasks that are
 	//                to be performed on particular days of the week
+	// 20/04/2018 ECU changed to use ListViewSelector and remove the need for 'statics'
 	// =============================================================================
 	
 	// =============================================================================
-	static  Activity			activity;
-	static  TextView 			appointmentsTextView;
-	static  TextView 			carerVisitsTextView; 
-	static 	Context				context;
-	static  long				dateStart;
-	static  long []				dates = new long [StaticData.DAYS_PER_WEEK];
-	static  SimpleDateFormat	dayFormatter;
-	static  SimpleDateFormat	dateFormatter;
-	static  TextView			medicationTextView; 
-	static 	TextView 			timerAlarmsTextView;
-	// -----------------------------------------------------------------------------
-			boolean				dateSelect	= false;
+	Activity			activity;
+	TextView 			appointmentsTextView;
+	TextView 			carerVisitsTextView; 
+	Context				context;
+	boolean				dailyDetails;
+	boolean				dateSelect	= false;
+	long				dateStart;
+	long []				dates = new long [StaticData.DAYS_PER_WEEK];
+	SimpleDateFormat	dayFormatter;
+	SimpleDateFormat	dateFormatter;
+	ListViewSelector	listViewSelector;
+	TextView			medicationTextView; 
+	TextView 			timerAlarmsTextView;
 	// =============================================================================
 	
 	// =============================================================================
@@ -64,7 +65,7 @@ public class DailySummaryActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 27/02/2017 ECU check if a parameter has been passed through
 			// ---------------------------------------------------------------------
-			Bundle extras = getIntent().getExtras();
+			Bundle extras = getIntent ().getExtras();
 			if (extras !=null) 
 			{
 				// -----------------------------------------------------------------
@@ -74,10 +75,6 @@ public class DailySummaryActivity extends DibosonActivity
 				// -----------------------------------------------------------------			
 			}
 			// ---------------------------------------------------------------------
-			// 27/02/2017 ECU initialise the stored data
-			// ---------------------------------------------------------------------
-			SelectorUtilities.Initialise ();
-			// ---------------------------------------------------------------------
 			// 27/02/2017 ECU now decide the action to take
 			// ---------------------------------------------------------------------
 			if (dateSelect)
@@ -85,25 +82,27 @@ public class DailySummaryActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 27/02/2017 ECU request the date from which the summaries will be 
 				//                generated
+				// 22/05/2017 ECU added the 'cancel' method
 				// -----------------------------------------------------------------
-				DialogueUtilities.getDate(this, 
-										  getString (R.string.date_picker_title), 
-										  getString (R.string.date_picker_subtitle), 
-										  getString (R.string.select),
-										  Utilities.createAMethod (DailySummaryActivity.class,"GetDateMethod",
-												  								(Object) null));
+				DialogueUtilitiesNonStatic.getDate(this,
+												   activity,
+												   getString (R.string.date_picker_title), 
+												   getString (R.string.date_picker_subtitle), 
+												   getString (R.string.select),
+												   Utilities.createAMethod (DailySummaryActivity.class,"GetDateMethod",
+												  								(Object) null),
+												   getString (R.string.today),
+												   Utilities.createAMethod (DailySummaryActivity.class,"CancelDateMethod",
+														  								(Object) null)												  								);
 				// -----------------------------------------------------------------
 			}
 			else
 			{
 				// -----------------------------------------------------------------
 				// 27/02/2017 ECU use 'today' as the start day
+				// 22/05/2017 ECU changed to use the method
 				// -----------------------------------------------------------------
-				dateStart = Utilities.getAdjustedTime (false);
-				// -----------------------------------------------------------------
-				// 27/02/2017 ECU start up the initial display
-				// -----------------------------------------------------------------
-				showTheDays (this);
+				displayCurrentDate (this);
 				// -----------------------------------------------------------------
 			}
 		}
@@ -118,46 +117,38 @@ public class DailySummaryActivity extends DibosonActivity
 		}
 	}
 	// =============================================================================
-
-	// =============================================================================
-	public static void BackAction (int theDummyArgument)
+	@Override
+	public void onBackPressed () 
 	{
 		// -------------------------------------------------------------------------
-		// 27/02/2017 ECU called from Selector when the 'back' key is presed
+		// 20/04/2018 ECU check which layout is being displayed
 		// -------------------------------------------------------------------------
-		// 27/02/2017 ECU just finish the activity
-		// -------------------------------------------------------------------------
-		((Activity)context).finish ();
-		//--------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static ArrayList<ListItem> BuildTheDaysList ()
-	{
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem>();
-		// -------------------------------------------------------------------------
-		// 27/02/2017 ECU build up the list of days
-		// -------------------------------------------------------------------------
-		for (int theDay = 0; theDay < StaticData.DAYS_PER_WEEK; theDay++)
+		if (dailyDetails)
 		{
-			ListItem localListItem = new ListItem (
-					R.drawable.daily_summary,
-					dayFormatter.format (dates [theDay]),
-					dateFormatter.format (dates [theDay]),
-					"",
-					theDay);
-			// -------------------------------------------------------------
-			// 04/10/2016 ECU Note - add the new record to the list
-			// -------------------------------------------------------------
-			SelectorUtilities.selectorParameter.listItems.add (localListItem);
-			// -------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 20/04/2018 ECU currently displaying the details for a particular day
+			//                so just return to the summary screen
+			// ---------------------------------------------------------------------
+			initialiseDisplay (activity);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 18/09/2016 ECU terminate this activity
+			// ---------------------------------------------------------------------
+			finish ();
+			// ---------------------------------------------------------------------
+			// 18/09/2016 ECU now call the super for this method
+			// ---------------------------------------------------------------------
+			super.onBackPressed();
 		}
 		// -------------------------------------------------------------------------
-		return SelectorUtilities.selectorParameter.listItems;
-		// -------------------------------------------------------------------------
-	} 
+	}
 	// =============================================================================
-	private static View.OnClickListener buttonListener = new View.OnClickListener() 
+
+	// =============================================================================
+	private View.OnClickListener buttonListener = new View.OnClickListener() 
 	{
 		@Override
 		public void onClick(View view) 
@@ -214,7 +205,29 @@ public class DailySummaryActivity extends DibosonActivity
 		}
 	};
 	// =============================================================================
-	static void generateSummaries (long theDate)
+	public void CancelDateMethod (Object theObject)
+	{
+		// -------------------------------------------------------------------------
+		// 22/05/2017 ECU created to handle the 'cancel' date option
+		// -------------------------------------------------------------------------
+		displayCurrentDate (context);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void displayCurrentDate (Context theContext)
+	{
+		// -------------------------------------------------------------------------
+		// 27/02/2017 ECU use 'today' as the start day
+		// -------------------------------------------------------------------------
+		dateStart = Utilities.getAdjustedTime (false);
+		// -------------------------------------------------------------------------
+		// 27/02/2017 ECU start up the initial display
+		// -------------------------------------------------------------------------
+		showTheDays (theContext);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void generateSummaries (long theDate)
 	{
 		// -------------------------------------------------------------------------
 		// 28/02/2017 ECU created to generate summaries for the specified date
@@ -256,10 +269,6 @@ public class DailySummaryActivity extends DibosonActivity
 			(appointments.size () > 0) || (alarms.size () > 0))
 		{
 			// ---------------------------------------------------------------------
-			// 01/03/2017 ECU close the 'selector' activity
-			// ---------------------------------------------------------------------
-			Selector.Finish ();
-			// ---------------------------------------------------------------------
 			// 01/03/2017 ECU now display the summary
 			// ---------------------------------------------------------------------
 			activity.setContentView (R.layout.daily_summary);
@@ -289,7 +298,7 @@ public class DailySummaryActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			if (medication.size() > 0)
 			{
-				medicationTextView.setText(MedicationDetails.printSelected(medication, Utilities.DayOfWeek (theDate)));
+				medicationTextView.setText (MedicationDetails.printSelected (medication,Utilities.DayOfWeek (theDate)));
 			}
 			else
 			{
@@ -309,7 +318,7 @@ public class DailySummaryActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			if (alarms.size() > 0)
 			{
-				timerAlarmsTextView.setText(AlarmData.printSelected (context,alarms));
+				timerAlarmsTextView.setText (AlarmData.printSelected (context,alarms));
 			}
 			else
 			{
@@ -319,13 +328,17 @@ public class DailySummaryActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			if (appointments.size() > 0)
 			{
-				appointmentsTextView.setText(AppointmentDetails.printSelected(context, appointments));
+				appointmentsTextView.setText (AppointmentDetails.printSelected (context, appointments));
 			}
 			else
 			{
 				appointmentsButton.setVisibility  (View.GONE);
 				appointmentsTextView.setVisibility (View.GONE);
 			}
+			// ---------------------------------------------------------------------
+			// 20/04/2018 ECU indicate that daily details are being displayed
+			// ---------------------------------------------------------------------
+			dailyDetails = true;
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -339,7 +352,7 @@ public class DailySummaryActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void GetDateMethod (Object theObject)
+	public void GetDateMethod (Object theObject)
 	{
 		// -------------------------------------------------------------------------
 		// 27/02/2017 ECU created to handle the 'selected' date
@@ -356,7 +369,7 @@ public class DailySummaryActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void setDates ()
+	void setDates ()
 	{
 		// -------------------------------------------------------------------------
 		// 27/02/2017 ECU set up the array of working days
@@ -368,7 +381,7 @@ public class DailySummaryActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void showTheDays (Context theContext)
+	void showTheDays (Context theContext)
 	{
 		// -------------------------------------------------------------------------
 		// 27/02/2017 ECU build the array of dates to be used
@@ -377,29 +390,13 @@ public class DailySummaryActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 27/02/2017 ECU created to set up the initial display of days
 		// -------------------------------------------------------------------------
-		BuildTheDaysList ();
-		// -------------------------------------------------------------------------
-		// 27/02/2017 ECU set the variables which dictate how the display responds
-		//                to user input
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.backMethodDefinition 	
-				= new MethodDefinition<DailySummaryActivity> (DailySummaryActivity.class,"BackAction");
-		SelectorUtilities.selectorParameter.finishOnSelect			= false;
-		SelectorUtilities.selectorParameter.rowLayout 				= R.layout.daily_summary_row;
-		SelectorUtilities.selectorParameter.sort 					= false;
-		// -------------------------------------------------------------------------
-		// 27/02/2017 ECU now display the days
-		// 02/03/2017 ECU changed to use _DAILY_....
-		// -------------------------------------------------------------------------
-		SelectorUtilities.StartSelector (theContext,
-				new MethodDefinition<DailySummaryActivity> (DailySummaryActivity.class,"SelectDay"),
-				StaticData.OBJECT_DAILY_SUMMARIES);
+		initialiseDisplay (activity);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	
     // ============================================================================= 
-    public static void SelectDay (int theDay)
+    public void SelectDay (int theDay)
     {
     	// -------------------------------------------------------------------------
     	// 27/02/2017 ECU created to handle the selection of a day
@@ -409,4 +406,68 @@ public class DailySummaryActivity extends DibosonActivity
     	// -------------------------------------------------------------------------   
     }
     // =============================================================================
+    
+    
+  	// =============================================================================
+  	// =============================================================================
+  	// ListViewSelector
+  	// ================
+  	//
+  	//		Declare methods associated with the use of ListViewSelector
+  	//
+  	// ============================================================================
+  	// ============================================================================
+  	
+	// =============================================================================
+	void initialiseDisplay (Activity theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU created to generate the display of stored documents
+		// -------------------------------------------------------------------------
+		listViewSelector = new ListViewSelector (theActivity,
+												 R.layout.daily_summary_row,
+				   								 "PopulateTheList",
+				   								 false,
+				   								 "SelectDay",
+				   								 null,
+				   								 null,
+				   								 null,
+				   								 null,
+				   								 null,
+				   								 null
+				   								);
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU indicate that not showing the daily details
+		// -------------------------------------------------------------------------
+		dailyDetails = false;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public ArrayList<ListItem> PopulateTheList ()
+	{
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU created to build the list of items that are to be displayed
+		// -------------------------------------------------------------------------
+		ArrayList<ListItem> listItems = new ArrayList<ListItem>();
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU build up the list of days
+		// -------------------------------------------------------------------------
+		for (int theDay = 0; theDay < StaticData.DAYS_PER_WEEK; theDay++)
+		{
+			ListItem localListItem = new ListItem (R.drawable.daily_summary,
+												   dayFormatter.format (dates [theDay]),
+												   dateFormatter.format (dates [theDay]),
+												   StaticData.BLANK_STRING,
+												   theDay);
+			// -------------------------------------------------------------
+			// 04/10/2016 ECU Note - add the new record to the list
+			// -------------------------------------------------------------
+			listItems.add (localListItem);
+			// -------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		return listItems;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 }

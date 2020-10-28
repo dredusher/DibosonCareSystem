@@ -21,6 +21,7 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.GestureDetector.OnGestureListener;
 import android.view.View;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -45,6 +46,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	// 26/02/2016 ECU changed to use the 'trackingDetails' that is stored on disk
 	// 20/02/2017 ECU added the use of the TrackingDetails class to store data
 	//                that has previously been written to disk
+	// 23/11/2017 ECU include a button to switch trcking on/off
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -93,8 +95,10 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	// -----------------------------------------------------------------------------
 	// 20/02/2017 ECU the next two string must NOT be initialised to null
 	// -----------------------------------------------------------------------------
-	public static   String				lastImageActioned	= "";	// 20/02/2017 ECU added
-	public static   String				lastNoteActioned	= "";	// 20/02/2017 ECU added
+	public static   String				lastImageActioned	= StaticData.BLANK_STRING;	
+																	// 20/02/2017 ECU added
+	public static   String				lastNoteActioned	= StaticData.BLANK_STRING;	
+																	// 20/02/2017 ECU added
 	// -----------------------------------------------------------------------------
 	public static	double         		previousLongitude 	= 0;
 	public static 	double          	previousLatitude 	= 0;
@@ -122,6 +126,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		         	boolean				remoteMode = false;			// 21/10/2014 ECU added
 		   static   String				senderDeviceDetails;		// 20/10/2014 ECU added
 		   static	SimpleDateFormat	timestampFormat;			// 09/02/2016 ECU added
+		   			Button				trackingButton;				// 23/11/2017 ECU added
 		   static   TextView        	updatedCoordinate;
 	/* ============================================================================= */
 		   static   TimerHandler 		timerHandler	= new TimerHandler();
@@ -157,6 +162,25 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// 20/02/2017 ECU set up the imageview for displaying photographs
 			// ---------------------------------------------------------------------
 			imageView = (ImageView) findViewById (R.id.trackingPhoto);
+			// ---------------------------------------------------------------------
+			// 23/11/2017 ECU declare the button that switches tracking on/off
+			// ---------------------------------------------------------------------
+			trackingButton = (Button) findViewById (R.id.tracking_on_off);
+			// ---------------------------------------------------------------------
+			// 23/11/2017 ECU set up the listener
+			// ---------------------------------------------------------------------
+			trackingButton.setOnClickListener (new View.OnClickListener ()
+			{
+		   		@Override
+		   		public void onClick (View view) 
+		   		{	
+		   			// -----------------------------------------------------------------
+		   			// 23/11/2017 ECU called to toggle tracking
+		   			// -----------------------------------------------------------------
+		   			toggleTrackingMode ();
+		   			// -----------------------------------------------------------------
+				}
+			});
 			// ---------------------------------------------------------------------
 			// 20/02/2017 ECU set up the click listener for the imageview
 			// ---------------------------------------------------------------------
@@ -240,6 +264,11 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 					// -------------------------------------------------------------
 					remoteMode = true;
 					// -------------------------------------------------------------
+					// 23/11/2017 ECU tracking mode is not applicable to remote mode
+					//                so hide the button
+					// -------------------------------------------------------------
+					trackingButton.setVisibility (View.INVISIBLE);
+					// -------------------------------------------------------------
 					// 20/10/2014 ECU initialise without checking for location services
 					// -------------------------------------------------------------
 					InitialiseGPS (false);
@@ -256,6 +285,16 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 					timerHandler.sleep (StaticData.MESSAGE_REMOTE_MONITOR,10000);
 					// -------------------------------------------------------------
 				}
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 23/11/2017 ECU the location services are enabled
+				// -----------------------------------------------------------------
+				// 23/11/2017 ECU tell the user about long press on the screen
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.tracking_record),true);
+				// -----------------------------------------------------------------
 			}
 		}
 		else
@@ -383,7 +422,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		// -------------------------------------------------------------------------
 		// 05/06/2013 ECU used the method to build menu
 		// -------------------------------------------------------------------------	
-		return onCreateOptionsMenu(menu);
+		return onCreateOptionsMenu (menu);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -417,7 +456,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		   					 context.getString (R.string.track_file),
 		   					 context.getString (R.string.enter_track_file),
 		   					 StaticData.HINT + context.getString (R.string.type_in_track_file_name),
-		   					 Utilities.createAMethod (LocationActivity.class,"SetFileNameMethod",""),
+		   					 Utilities.createAMethod (LocationActivity.class,"SetFileNameMethod",StaticData.BLANK_STRING),
 		   					 null);
 					// -------------------------------------------------------------
 				}
@@ -443,18 +482,10 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			case MENU_TRACK_MODE:
 				// -----------------------------------------------------------------
 				// 03/01/2014 ECU toggle the tracking mode
+				// 23/11/2017 ECU changed to use the method
 				// -----------------------------------------------------------------
-				PublicData.trackingMode = !PublicData.trackingMode;
-				
-				if (PublicData.trackingMode)
-				{
-					// -------------------------------------------------------------
-					// 22/09/2013 ECU build up location details from the
-					//                files in the tracking folder
-					// -------------------------------------------------------------
-					Utilities.scanFilesInFolder (getBaseContext(),PublicData.trackFolder);
-					// -------------------------------------------------------------
-				}
+				toggleTrackingMode ();
+				// -----------------------------------------------------------------
 				return true;
 		}
 		// -------------------------------------------------------------------------
@@ -483,24 +514,6 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	@Override
 	public void onLongPress (MotionEvent motionEvent) 
 	{
-	
-	}
-	/* ============================================================================= */
-	@Override
-	public boolean onScroll (MotionEvent theMotionEvent1, MotionEvent theMotionEvent2,
-							 float distanceX,float distanceY) 
-	{	
-		return false;
-	}
-	/* ============================================================================= */
-	@Override
-	public void onShowPress (MotionEvent motionEvent) 
-	{
-	}
-	/* ============================================================================= */
-	@Override
-	public boolean onSingleTapUp (MotionEvent motionEvent) 
-	{
 		// -------------------------------------------------------------------------
 		// 21/10/2014 ECU can only start tracking if the device has location
 		//                services enabled
@@ -523,6 +536,23 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			Utilities.SpeakAPhrase (getBaseContext(),getString (R.string.cannot_start_tracking));
 			// ---------------------------------------------------------------------
 		}
+	}
+	/* ============================================================================= */
+	@Override
+	public boolean onScroll (MotionEvent theMotionEvent1, MotionEvent theMotionEvent2,
+							 float distanceX,float distanceY) 
+	{	
+		return false;
+	}
+	/* ============================================================================= */
+	@Override
+	public void onShowPress (MotionEvent motionEvent) 
+	{
+	}
+	/* ============================================================================= */
+	@Override
+	public boolean onSingleTapUp (MotionEvent motionEvent) 
+	{
 		return false;
 	}
 	// =============================================================================
@@ -549,7 +579,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			Utilities.AppendToFile(PublicData.storedData.trackingDetails.fileName, "<when>" + timestampFormat.format(adjustedTime) +  "</when>\n");
 			// ----------------------------------------------------------------------
 			Utilities.AppendToFile (PublicData.storedData.trackingDetails.fileName,
-					"<gx:coord>" + theLongitude + " " + theLatitude + ((theAltitude == StaticData.NO_RESULT) ? "" : (" " + theAltitude)) + "</gx:coord>\n");
+					"<gx:coord>" + theLongitude + " " + theLatitude + ((theAltitude == StaticData.NO_RESULT) ? StaticData.BLANK_STRING : (" " + theAltitude)) + "</gx:coord>\n");
 			// ---------------------------------------------------------------------
 			// 11/02/2016 ECU work out the distance since the last update
 			// ---------------------------------------------------------------------
@@ -746,13 +776,17 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// ---------------------------------------------------------------------
 			// 28/11/2015 ECU check whether the tracking information is to be
 			//                send as part of the panic alarm process
+			// 04/03/2018 ECU only do if the panic alarm is enabled
 			// ---------------------------------------------------------------------
-			if ((PublicData.storedData.panicAlarm != null) && PublicData.storedData.panicAlarm.tracking)
+			if ((PublicData.storedData.panicAlarm != null) && 
+					PublicData.storedData.panicAlarm.enabled && 
+						PublicData.storedData.panicAlarm.tracking)
 			{
 				// -----------------------------------------------------------------
 				// 28/11/2018 ECU call up the handler
+				// 05/02/2018 ECU added the context as an argument
 				// -----------------------------------------------------------------
-				PanicAlarmActivity.locationUpdate (location);
+				PanicAlarmActivity.locationUpdate (context,location);
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
@@ -973,21 +1007,21 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	// =============================================================================
 	public static void showPhotograph (ImageView theImageView,String thePhotoPath)
 	{
-			// ---------------------------------------------------------------------
-			// 20/02/2017 ECU set the imageview to the specified photo and make it visible
-			// ---------------------------------------------------------------------
-			Utilities.displayAnImage (theImageView, thePhotoPath);
-			imageView.setVisibility (View.VISIBLE);
-			// ---------------------------------------------------------------------
-			// 20/02/2017 ECU tell the user how to remove the photograph
-			// 21/02/2017 ECU speak a longer phrase which is in effect a number of
-			//                phrases separated by '.' - each '.' will cause a delay
-			// ---------------------------------------------------------------------
-			Utilities.SpeakAPhraseWithDelays (context,
-					                          context.getString (R.string.photo_location),
-					                          false);
-			// ---------------------------------------------------------------------
-	}
+		// -------------------------------------------------------------------------
+		// 20/02/2017 ECU set the imageview to the specified photo and make it visible
+		// -------------------------------------------------------------------------
+		Utilities.displayAnImage (theImageView, thePhotoPath);
+		imageView.setVisibility (View.VISIBLE);
+		// -------------------------------------------------------------------------
+		// 20/02/2017 ECU tell the user how to remove the photograph
+		// 21/02/2017 ECU speak a longer phrase which is in effect a number of
+		//                phrases separated by '.' - each '.' will cause a delay
+		// -------------------------------------------------------------------------
+		Utilities.SpeakAPhraseWithDelays (context,
+										  context.getString (R.string.photo_location),
+										  false);
+		// -------------------------------------------------------------------------
+	}	
 	// =============================================================================
 	static class TimerHandler extends Handler
 	{
@@ -1093,5 +1127,30 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	    }
 		// -------------------------------------------------------------------------
 	};
-	/* ============================================================================= */
+	// =============================================================================
+	void toggleTrackingMode ()
+	{
+		// -------------------------------------------------------------------------
+		// 23/11/2017 ECU created to toggle the tracking mode
+		// -------------------------------------------------------------------------
+		PublicData.trackingMode = !PublicData.trackingMode;
+		// -------------------------------------------------------------------------
+		// 23/11/2017 ECU change the button's legend
+		// -------------------------------------------------------------------------
+		trackingButton.setText (PublicData.trackingMode ? R.string.tracking_mode_off : R.string.tracking_mode_on);
+		// -------------------------------------------------------------------------
+		// 23/11/2017 ECU Note - take the action when tracking is switched on
+		// -------------------------------------------------------------------------
+		if (PublicData.trackingMode)
+		{
+			// ---------------------------------------------------------------------
+			// 22/09/2013 ECU build up location details from the
+			//                files in the tracking folder
+			// ---------------------------------------------------------------------
+			Utilities.scanFilesInFolder (getBaseContext(),PublicData.trackFolder);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 }

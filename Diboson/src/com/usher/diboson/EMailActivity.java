@@ -76,8 +76,8 @@ public class EMailActivity extends DibosonActivity
 			DialogueUtilities.textInput (context,"Email Recipients",
 	    		   "Please enter the address(es) that are to receive the email that you are entering",
 	    		   PublicData.emailDetails.recipients,
-	    		   Utilities.createAMethod (EMailActivity.class,"EmailRecipients",""),
-	    		   Utilities.createAMethod (EMailActivity.class,"Cancel",""));
+	    		   Utilities.createAMethod (EMailActivity.class,"EmailRecipients",StaticData.BLANK_STRING),
+	    		   Utilities.createAMethod (EMailActivity.class,"Cancel",StaticData.BLANK_STRING));
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -120,8 +120,8 @@ public class EMailActivity extends DibosonActivity
 		 DialogueUtilities.textInput (context,"Email Subject",
 		    		   "Please enter the subject of this email",
 		    		   StaticData.HINT + "Enter subject",
-		    		   Utilities.createAMethod (EMailActivity.class,"EmailSubject",""),
-		    		   Utilities.createAMethod (EMailActivity.class,"Cancel",""));
+		    		   Utilities.createAMethod (EMailActivity.class,"EmailSubject",StaticData.BLANK_STRING),
+		    		   Utilities.createAMethod (EMailActivity.class,"Cancel",StaticData.BLANK_STRING));
 		 // ------------------------------------------------------------------------
 	 }
 	 // ============================================================================
@@ -141,8 +141,8 @@ public class EMailActivity extends DibosonActivity
 				 							  "Please enter the body of this email",
 				 							  25,
 				 							  StaticData.HINT + "Enter any text that you want to send",
-				 							  Utilities.createAMethod (EMailActivity.class,"EmailMessage",""),
-				 							  Utilities.createAMethod (EMailActivity.class,"Cancel",""));
+				 							  Utilities.createAMethod (EMailActivity.class,"EmailMessage",StaticData.BLANK_STRING),
+				 							  Utilities.createAMethod (EMailActivity.class,"Cancel",StaticData.BLANK_STRING));
 		 // ------------------------------------------------------------------------
 	 }
 	 // ============================================================================

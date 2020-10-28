@@ -35,7 +35,7 @@ public class DoseDaily implements Serializable
 							   (PublicData.medicationDetails.get (medicationIndex).dailyDoseTimes [theIndex] != null) ? 
 									   "Number of doses = " + PublicData.medicationDetails.get (medicationIndex).dailyDoseTimes [theIndex].doseTimes.size() : 
 										   "No doses",
-							   "",
+							   StaticData.BLANK_STRING,
 							   theIndex));
 			}
 		}
@@ -49,19 +49,22 @@ public class DoseDaily implements Serializable
 		return listItems;
 	}
 	/* ============================================================================= */
-	public String Print ()
+	public String Print (String theInset)
 	{
+		// -------------------------------------------------------------------------
 		// 16/01/2014 ECU changed to reflect use of List<>
 		// 17/01/2014 ECU change the layout of the string
-		
-		String theString = "     Number of Doses this day = " + doseTimes.size() + "\n";
+		// 29/11/2017 ECU bit of tidying up
+		//            ECU added theInset as argument
+		// -------------------------------------------------------------------------
+		String theString = "     Number of Doses this day : " + doseTimes.size() + StaticData.NEWLINE;
 	
 		for (int index = 0; index < doseTimes.size(); index++)
 		{
-			theString += "          Dose = " + (index  + 1) + "     " + doseTimes.get(index).Print () + "\n";
+			theString += "          Dose : " + (index  + 1) + "     " + doseTimes.get (index).Print (theInset) + StaticData.NEWLINE;
 		}
-				
+		// -------------------------------------------------------------------------		
 		return theString;
 	}
-	/* ==================================================================== */
+	// =============================================================================
 }

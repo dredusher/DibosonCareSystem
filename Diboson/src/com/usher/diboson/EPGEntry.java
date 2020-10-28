@@ -51,7 +51,8 @@ public class EPGEntry implements Serializable
 	// =============================================================================
 	
 	// =============================================================================
-	public EPGEntry (String theEntryToParse,boolean theSelectionFlag)
+	public EPGEntry (String		theEntryToParse,
+					 boolean 	theSelectionFlag)
 	{
 		fields = theEntryToParse.split ("[~]");
 		// -------------------------------------------------------------------------
@@ -63,7 +64,7 @@ public class EPGEntry implements Serializable
 										     StaticData.EPG_DIRECTOR,
 										     StaticData.EPG_SUB_TITLE})
 			{
-				fields [theField] = "";	
+				fields [theField] = StaticData.BLANK_STRING;	
 			}
 		}
 		// -------------------------------------------------------------------------
@@ -99,10 +100,14 @@ public class EPGEntry implements Serializable
 		// 24/06/2016 ECU created to return an empty EPG array
 		// -------------------------------------------------------------------------
 		String [] localEntries = new String [StaticData.EPG_FIELD_COUNT];
-		
+		// -------------------------------------------------------------------------
+		// 14/02/2019 ECU Note - loop through each field and initialise it to 'blank'
+		// -------------------------------------------------------------------------
 		for (int theIndex = 0; theIndex < StaticData.EPG_FIELD_COUNT; theIndex++)
-			localEntries [theIndex] = "";
-		
+			localEntries [theIndex] = StaticData.BLANK_STRING;
+		// -------------------------------------------------------------------------
+		// 14/02/2019 ECU Note - return the initialised array
+		// -------------------------------------------------------------------------
 		return localEntries;
 		// -------------------------------------------------------------------------
 	}
@@ -198,16 +203,25 @@ public class EPGEntry implements Serializable
 	// =============================================================================
 	public String Print ()
 	{
+		// -------------------------------------------------------------------------
+		// 14/02/2019 ECU Note - return an abbreviated summary of a program
+		// -------------------------------------------------------------------------
 		if ((fields.length == StaticData.EPG_FIELD_COUNT))
 		{
+			// ---------------------------------------------------------------------
 			return String.format("%-35.35s %-10s %-8s %-4s", fields [StaticData.EPG_PROGRAM_TITLE],
 														  	 fields [StaticData.EPG_DATE],
 														  	 fields [StaticData.EPG_START_TIME],
 														  	 fields [StaticData.EPG_DURATION]);
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
+			// ---------------------------------------------------------------------
+			// 14/02/2019 ECU Note - nothing to return
+			// ---------------------------------------------------------------------
 			return null;
+			// ---------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
@@ -240,6 +254,10 @@ public class EPGEntry implements Serializable
 		// -------------------------------------------------------------------------
 		if ((fields.length == StaticData.EPG_FIELD_COUNT))
 		{
+			// ---------------------------------------------------------------------
+			// 14/02/2019 ECU Note - return a 'formatted' summary of the specified
+			//                       EPG entry
+			// ---------------------------------------------------------------------
 			return  StaticData.MONO_SPACED + 
 					"Program     : "    + fields [StaticData.EPG_PROGRAM_TITLE] + StaticData.NEWLINE +
 				    "Date        : "    + fields [StaticData.EPG_DATE] 			+ StaticData.NEWLINE +
@@ -247,10 +265,15 @@ public class EPGEntry implements Serializable
 					"End Time    : "   	+ fields [StaticData.EPG_END_TIME] 		+ StaticData.NEWLINE +
 					"Description : "   	+ fields [StaticData.EPG_DESCRIPTION] 	+ StaticData.NEWLINE +
 					"Genre       : "   	+ fields [StaticData.EPG_GENRE];
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
+			// ---------------------------------------------------------------------
+			// 14/02/2019 ECU Note - there are no values for this EPG entry
+			// ---------------------------------------------------------------------
 			return null;
+			// ---------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
@@ -276,7 +299,7 @@ public class EPGEntry implements Serializable
 		// -------------------------------------------------------------------------
 		for (int field : searchFields)
 		{
-			if (fields[field].toUpperCase(Locale.getDefault()).contains(theSearchString.toUpperCase(Locale.getDefault())))
+			if (fields[field].toUpperCase(Locale.getDefault()).contains (theSearchString.toUpperCase(Locale.getDefault())))
 				return true;
 		}
 		// -------------------------------------------------------------------------
@@ -291,7 +314,7 @@ public class EPGEntry implements Serializable
 		// -------------------------------------------------------------------------
 		// 19/02/2017 ECU create to return the start hour of an entry
 		// -------------------------------------------------------------------------
-		String [] localFields = fields [StaticData.EPG_START_TIME].split(StaticData.ACTION_DELIMITER);
+		String [] localFields = fields [StaticData.EPG_START_TIME].split (StaticData.ACTION_DELIMITER);
 		// -------------------------------------------------------------------------
 		// 19/02/2017 ECU return the hour part of the string
 		// -------------------------------------------------------------------------

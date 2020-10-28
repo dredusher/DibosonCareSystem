@@ -69,11 +69,11 @@ public class EmailDetails implements Serializable
 	    /* ========================================================================= */
 	public String Print ()
 	{
-		return "SMTP Server : " + SMTPServer + "\n" +
-			    "SMTP Port : " + SMTPPort + "\n" +
-				"SMTP User Name : " + SMTPUserName + "\n" +
-			    "SMTP Password : " + SMTPPassword + "\n" +
-				"Recipients : " + recipients + "\n" +
+		return "SMTP Server : " + SMTPServer + StaticData.NEWLINE +
+			    "SMTP Port : " + SMTPPort + StaticData.NEWLINE +
+				"SMTP User Name : " + SMTPUserName + StaticData.NEWLINE +
+			    "SMTP Password : " + SMTPPassword + StaticData.NEWLINE +
+				"Recipients : " + recipients + StaticData.NEWLINE +
 			    "Signature : " + signature;
 	}
 	/* ============================================================================= */
@@ -101,7 +101,7 @@ public class EmailDetails implements Serializable
 		// 27/03/2016 ECU created to return the signature if it has been set or
 		//                to set it if it hasn't
 		// ----------------------------------------------------------------------
-		if (signature == null || signature.equalsIgnoreCase(""))
+		if (signature == null || signature.equalsIgnoreCase (StaticData.BLANK_STRING))
 			signature = theContext.getString(R.string.email_signature);
 		// ----------------------------------------------------------------------
 		return signature;

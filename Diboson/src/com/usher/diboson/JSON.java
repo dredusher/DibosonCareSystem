@@ -145,7 +145,7 @@ public class JSON
 		// 27/06/2016 ECU changed to 'boolean' so that the result of the operation
 		//                can be passed back to the caller
 		// -------------------------------------------------------------------------
-		String	localDate			= "";
+		String	localDate			= StaticData.BLANK_STRING;
 		int		localDateIndex  	= StaticData.NO_RESULT;
 		String 	localDescription;
 		// -------------------------------------------------------------------------
@@ -178,7 +178,7 @@ public class JSON
 				// -----------------------------------------------------------------
 				localDescription = item.getString (JSON_DESCRIPTION);
 				if (localDescription.equalsIgnoreCase (JSON_NULL))
-					localDescription = "";
+					localDescription = StaticData.BLANK_STRING;
 				epgFields [StaticData.EPG_DESCRIPTION] = localDescription;
 				// -----------------------------------------------------------------
 				epgFields [StaticData.EPG_PROGRAM_TITLE] = displayTitle.getString (JSON_TITLE);
@@ -248,7 +248,7 @@ public class JSON
 			{
 				JSONObject channel = (channels.getJSONObject(theChannel)).getJSONObject(JSON_CHANNEL);
 	    	 
-				theTextView.append ("Channel ID : " + channel.getString("id") + "  Name : " + channel.getString("title") + "\n");
+				theTextView.append ("Channel ID : " + channel.getString("id") + "  Name : " + channel.getString("title") + StaticData.NEWLINE);
 				
 				TVChannelsActivity.TVChannelsAvailable.add (new TVChannel (theChannel,channel.getString("title"),channel.getString("id")));
 			}
@@ -269,7 +269,7 @@ public class JSON
 		{
 			String	localInput;
 
-			webPageContents = "";
+			webPageContents = StaticData.BLANK_STRING;
 			
 			for (String url : urls) 
 			{

@@ -114,7 +114,7 @@ public class EmailDetailsActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 04/01/2014 ECU set the values to defaults
 			// ---------------------------------------------------------------------
-			SMTPPasswordView.setText ("");
+			SMTPPasswordView.setText (StaticData.BLANK_STRING);
 			SMTPPortView.setText (R.string.smtp_port_number);
 			SMTPRecipientsView.setText (R.string.smtp_email_receiver);
 			SMTPServerView.setText (R.string.smtp_server);

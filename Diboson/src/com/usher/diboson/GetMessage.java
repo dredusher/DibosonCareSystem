@@ -144,7 +144,7 @@ public class GetMessage extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 09/10/2016 ECU check if there is a default message to display
 			// ---------------------------------------------------------------------
-			if (defaultMessage != null && !defaultMessage.equals(""))
+			if (defaultMessage != null && !defaultMessage.equals(StaticData.BLANK_STRING))
 			{
 				messageView.append (defaultMessage + StaticData.NEWLINE);
 				// -----------------------------------------------------------------
@@ -404,33 +404,37 @@ public class GetMessage extends DibosonActivity
 		//
 		//					theState  =  true ..... set legend to reflect 'play'
 		//                            =  false .... set legend to reflect 'cancel'
+		// 09/01/2018 ECU put in the check for null on 'playRecordedNotesButton'
 		// -------------------------------------------------------------------------
-		if (theState)
-		{ 
-			// ---------------------------------------------------------------------
-			// 26/10/2016 ECU do the check on null
-			// ---------------------------------------------------------------------
-			if (playButtonLegend == null)
-				playRecordedNotesButton.setText (context.getString (R.string.press_to_play_notes));
-			else	
-				playRecordedNotesButton.setText (Utilities.twoLineButtonLegend (context,
-												 context.getString (R.string.press_to_play_notes),playButtonLegend));	
-			// ---------------------------------------------------------------------
-		}
-		else
+		if (playRecordedNotesButton != null)
 		{
-			playRecordedNotesButton.setText (context.getString (R.string.stop_playing_notes));
+			if (theState)
+			{ 
+				// -----------------------------------------------------------------
+				// 26/10/2016 ECU do the check on null
+				// -----------------------------------------------------------------
+				if (playButtonLegend == null)
+					playRecordedNotesButton.setText (context.getString (R.string.press_to_play_notes));
+				else	
+					playRecordedNotesButton.setText (Utilities.twoLineButtonLegend (context,
+														context.getString (R.string.press_to_play_notes),playButtonLegend));	
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				playRecordedNotesButton.setText (context.getString (R.string.stop_playing_notes));
+				// -----------------------------------------------------------------
+				// 24/10/2016 ECU start up a timer to check when everything processed
+				// -----------------------------------------------------------------
+				PublicData.messageHandler.sendEmptyMessage (StaticData.MESSAGE_ANYTHING_PLAYING);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
-	 		// 24/10/2016 ECU start up a timer to check when everything processed
-	 		// ---------------------------------------------------------------------
-	 		PublicData.messageHandler.sendEmptyMessage (StaticData.MESSAGE_ANYTHING_PLAYING);
-	 		// ---------------------------------------------------------------------
+			// 24/10/2016 ECU remember the new state
+			// ---------------------------------------------------------------------
+			playState = theState;
+			// ---------------------------------------------------------------------
 		}
-		// -------------------------------------------------------------------------
-		// 24/10/2016 ECU remember the new state
-		// -------------------------------------------------------------------------
-		playState = theState;
-		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	private View.OnClickListener speakMessage = new View.OnClickListener() 

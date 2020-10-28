@@ -88,12 +88,13 @@ public class FlashLight
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static boolean flashLightCheck ()
+	public static boolean flashLightCheck (boolean theReleaseFlag)
 	{
 		// -------------------------------------------------------------------------
 		// 25/08/2015 ECU created to check whether the device has an LED which is
 		//                used as the camera's flash
 		// 29/12/2016 ECU changed the name from 'localCamera'
+		// 14/06/2019 ECU added the release flag
 		// -------------------------------------------------------------------------
 		backCamera = Camera.open();
 		// -------------------------------------------------------------------------
@@ -132,9 +133,15 @@ public class FlashLight
 	        			return false;
 	        }
 	        // ---------------------------------------------------------------------
+	        // 14/06/2019 ECU release the camera if required
+	        // ---------------------------------------------------------------------
+	        if (theReleaseFlag)
+	        	backCamera.release ();
+	        // ---------------------------------------------------------------------
 	        // 25/08/2015 ECU this device has a 'flash'
 	        // ---------------------------------------------------------------------
 	        return true;
+	        // ---------------------------------------------------------------------
 	    }
 		// -------------------------------------------------------------------------
 	}
@@ -146,7 +153,7 @@ public class FlashLight
 		// -------------------------------------------------------------------------
 		context = theContext;
 		// -------------------------------------------------------------------------
-		// 30/12/2016 ECU request the time thatthe operation, either torch on or off,
+		// 30/12/2016 ECU request the time that the operation, either torch on or off,
 		//                will last
 		// -------------------------------------------------------------------------
 		DialogueUtilities.sliderChoice (context,

@@ -28,10 +28,10 @@ public class DoseTime implements Serializable
 			for (int theIndex = 0; theIndex < PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.size(); theIndex++)
 			{
 				listItems.add (new ListItem (Utilities.AbsoluteFileName(PublicData.medicationDetails.get(medicationIndex).photo),
-					    PublicData.medicationDetails.get(medicationIndex).name + "\n" +
-						   PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).PrintTime(),
-						PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).dose.Print(),
-						PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).PrintNotes(),
+					    PublicData.medicationDetails.get(medicationIndex).name + StaticData.NEWLINE +
+						   PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).PrintTime (),
+						PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).dose.Print (StaticData.INSET),
+						PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes[doseIndex].doseTimes.get(theIndex).PrintNotes (StaticData.INSET),
 						theIndex));
 			}
 		}
@@ -39,28 +39,41 @@ public class DoseTime implements Serializable
 		return listItems;
 	}
 	/* ============================================================================= */
-	public String PrintNotes ()
+	public String PrintNotes (String theInset)
 	{
 		// -------------------------------------------------------------
 		// 25/03/2014 ECU created to return the notes
+		// 29/11/2017 ECU added theInset
 		// -------------------------------------------------------------
-		return "Notes : " + notes;
+		return theInset + "Notes : " + notes;
 	}
 	/* ================================================================= */
 	public String PrintTime ()
 	{
 		// -------------------------------------------------------------
 		// 25/03/2014 ECU created to return the formatted time of dose
-		// -------------------------------------------------------------
-		return String.format("%02d:%02d",hours,minutes);
+		// ------------------------------------------------------------- 
+		return String.format ("Time of Dose : %02d:%02d",hours,minutes);
 	}
 	/* ================================================================= */
-	public String Print ()
+	public String Print (String theInset)
 	{
 		// -------------------------------------------------------------
 		// 27/11/2014 ECU use PrintTime method for formatted time
+		// 28/11/2017 ECU changed to use new PrintD.. method
+		// 29/11/2017 ECU added theInset argument and pass through
 		// -------------------------------------------------------------
-		return PrintTime () + "\n" + dose.Print () + "\n               Notes = " + notes;
+		return PrintTime () + StaticData.NEWLINE + PrintDoseTime (theInset);
+		// -------------------------------------------------------------
+	}
+	// =================================================================
+	public String PrintDoseTime (String theInset)
+	{
+		// -------------------------------------------------------------
+		// 28/11/2017 ECU created to just print dose time without actual
+		//                time
+		// -------------------------------------------------------------
+		return dose.Print (theInset) + StaticData.NEWLINE + theInset + "Notes  : " + notes;
 		// -------------------------------------------------------------
 	}
 	/* ================================================================= */

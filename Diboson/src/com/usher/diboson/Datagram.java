@@ -14,6 +14,7 @@ public class Datagram  implements Serializable
 	//                sending device will never be in the receiver list.
 	//            ECU included 'type' so that the receiver can determine the
 	//                reason for the datagram
+	// 06/06/2017 ECU changed "\n" to StaticData.NEWLINE
 	/* ============================================================================ */
 	private static final long serialVersionUID = 1L;	
 	/* ============================================================================ */	
@@ -36,9 +37,9 @@ public class Datagram  implements Serializable
 		longitude 		= theLongitude;
 		latitude  		= theLatitude;
 		altitude  		= theAltitude;
-		fileName 		= "";
-		sender    	 	= "";
-		message  	 	= "";
+		fileName 		= StaticData.BLANK_STRING;
+		sender    	 	= StaticData.BLANK_STRING;
+		message  	 	= StaticData.BLANK_STRING;
 		
 		broadcastFlag	= false;
 	}
@@ -146,18 +147,18 @@ public class Datagram  implements Serializable
 	/* ============================================================================ */	
 	public String Print ()
 	{
-		String theString = "";
+		String theString = StaticData.BLANK_STRING;
 		// -------------------------------------------------------------------------
 		// 21/10/2014 ECU added in the 'type'
 		// -------------------------------------------------------------------------
-		theString += "Sender    = " + sender + "\n" +
-					 "Type      = " + type + "\n" +
-					 "Longitude = " + longitude + "\n" +
-					 "Latitude  = " + latitude + "\n" +
-					 "Altitude  = " + altitude + "\n" +
-					 "Azimuth   = " + azimuth + "\n" +
-					 "Pitch     = " + pitch + "\n" +
-					 "Roll  	= " + roll + "\n" +
+		theString += "Sender    = " + sender + StaticData.NEWLINE +
+					 "Type      = " + type + StaticData.NEWLINE +
+					 "Longitude = " + longitude + StaticData.NEWLINE +
+					 "Latitude  = " + latitude + StaticData.NEWLINE +
+					 "Altitude  = " + altitude + StaticData.NEWLINE +
+					 "Azimuth   = " + azimuth + StaticData.NEWLINE +
+					 "Pitch     = " + pitch + StaticData.NEWLINE +
+					 "Roll  	= " + roll + StaticData.NEWLINE +
 					 "Message   = " + message;	
 		
 		return theString;

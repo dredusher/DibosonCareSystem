@@ -34,9 +34,11 @@ public class DateTimeTextView implements Serializable
 		// 22/01/2017 ECU added the time adjustment
 		// -------------------------------------------------------------------------
 		// 21/01/2017 ECU set up the date format from the supplied string
+		// 14/04/2017 ECU for some reason the time zone was being set to "UTC"
+		//                changed to "default"
 		// -------------------------------------------------------------------------
 		simpleDateFormat = new SimpleDateFormat (theDateTimeFormat,Locale.getDefault());
-		simpleDateFormat.setTimeZone (TimeZone.getTimeZone ("UTC"));
+		simpleDateFormat.setTimeZone (TimeZone.getDefault()); 
 		// -------------------------------------------------------------------------
 		textView		= theTextView;
 		timeAdjustment	= theTimeAdjustment;

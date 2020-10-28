@@ -47,7 +47,7 @@ public class ExerciseActivity extends DibosonActivity
 			controlsView = findViewById(R.id.fullscreen_content_controls);
 			contentView  = (TextView)findViewById(R.id.fullscreen_content);
 		
-			contentView.setText ("");
+			contentView.setText (StaticData.BLANK_STRING);
 			// ---------------------------------------------------------------------
 			// 21/03/2014 ECU set up the listeners for the buttons
 			// ---------------------------------------------------------------------
@@ -111,7 +111,7 @@ public class ExerciseActivity extends DibosonActivity
 						// ---------------------------------------------------------
 						// 21/03/2014 ECU remove the text with a bit of animation
 						// ---------------------------------------------------------
-						Utilities.AnimateATextView (contentView,"",FADE_TIME,false);
+						Utilities.AnimateATextView (contentView,StaticData.BLANK_STRING,FADE_TIME,false);
 					}
 				}
 			});

@@ -30,6 +30,8 @@ public class FileChooser extends ListActivity
 	//                the Android OS
 	// 31/10/2015 ECU put in the option to read a file
 	// 18/12/2015 ECU general tidy up
+	// 23/05/2017 ECU changed to allow multiple extensions to be specified in the
+	//                extensions
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -45,7 +47,7 @@ public class FileChooser extends ListActivity
 	private FileArrayAdapter 	adapter;
 	private File			 	currentDir;
 	private	boolean	 			displayImage 		= false;		// 01/01/2014 ECU added
-	private String			 	extensionWanted 	= null;
+	private String []		 	extensionWanted 	= null;			// 23/05/2017 ECU changed from String
 	private String			 	folder;
 	private boolean			 	immediateResponse 	= false;		// 17/03/2015 ECU added
 	private boolean   		 	readTheFile 		= false;		// 31/10/2015 ECU added
@@ -55,7 +57,7 @@ public class FileChooser extends ListActivity
 	protected void onCreate(Bundle savedInstanceState) 
 	{
 		// -------------------------------------------------------------------------
-		super.onCreate(savedInstanceState);
+		super.onCreate (savedInstanceState);
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null)
 		{
@@ -83,9 +85,31 @@ public class FileChooser extends ListActivity
 				// 06/12/2013 ECU get the filter which will be used for file selection.
 				//                At the moment it will filter on the file's extension
 				// -----------------------------------------------------------------
-				if (extras.getString (StaticData.PARAMETER_FILTER) != null)
+				Object extensionWantedObject = extras.getSerializable (StaticData.PARAMETER_FILTER);
+				// -----------------------------------------------------------------
+				// 23/05/2017 ECU check if an object was obtained
+				// ------------------------------------------------------------------
+				if (extensionWantedObject != null)
 				{
-					extensionWanted = extras.getString (StaticData.PARAMETER_FILTER);
+					// --------------------------------------------------------------
+					// 11/04/2018 ECU Note - check if a single 'extension' has been 
+					//                       specified
+					// --------------------------------------------------------------
+					if (extensionWantedObject instanceof String) 
+					{
+						extensionWanted 	= new String [1];
+						extensionWanted [0] = (String) extensionWantedObject;
+					}
+					// -------------------------------------------------------------
+					// 11/04/2018 ECU Note - check if a number of 'extensions' have
+					//                       been specified
+					// -------------------------------------------------------------
+					else
+					if (extensionWantedObject instanceof String [])
+					{
+						extensionWanted = (String []) extensionWantedObject;
+					}
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 				// 17/03/2015 ECU handle the immediate flag
@@ -101,12 +125,17 @@ public class FileChooser extends ListActivity
  	   			// -----------------------------------------------------------------
 				// 17/12/2015 ECU if the definition is supplied that create a
 				//                method which has a string argument
+				// 11/04/2018 ECU changed to use BLANK...
 				// -----------------------------------------------------------------
  	   			if (selectMethodDefinition != null)
- 	   				selectMethod	= selectMethodDefinition.ReturnMethod ("");
+ 	   				selectMethod	= selectMethodDefinition.ReturnMethod (StaticData.BLANK_STRING);
  	   			else
  	   				selectMethod	= null;
 				// -----------------------------------------------------------------
+ 	   			// 23/06/2017 ECU check if display parameter has been specified
+ 	   			//------------------------------------------------------------------
+ 	   			displayImage = extras.getBoolean (StaticData.PARAMETER_DISPLAY,false);
+ 	   			// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 09/12/2013 ECU now build the screen started at the specified folder
@@ -164,12 +193,12 @@ public class FileChooser extends ListActivity
     	// -------------------------------------------------------------------------
 		super.onListItemClick (theListView,theView, thePosition, theId);
 		// -------------------------------------------------------------------------
-		FileOptions fileOptions = adapter.getItem(thePosition);
+		FileOptions fileOptions = adapter.getItem (thePosition);
 		// -------------------------------------------------------------------------
 		// 09/12/2013 ECU if the path exists and it points to a directory or the
 		//                parent then want to display its contents
 		// -------------------------------------------------------------------------
-		if((fileOptions.isDirectory() || fileOptions.isParent()) 
+		if ((fileOptions.isDirectory() || fileOptions.isParent()) 
 					&& fileOptions.getPath() != null)
 		{
 			// ---------------------------------------------------------------------
@@ -249,16 +278,35 @@ public class FileChooser extends ListActivity
 			// 09/12/2013 ECU created to handle the filtering - if the path is of
 			//                a directory then always include. If a file then 
 			//                only include if it has the required extension
+			// 23/05/2017 ECU changed the extension to be 'String []' from 'String'
 			// ---------------------------------------------------------------------
 			if (thePathName.isDirectory())
+			{
 				return true;
+			}
 			else
 			{
 				// -----------------------------------------------------------------
 				// 10/11/2014 ECU added the Locale to the method call
 				//            ECU changed to use Locale.getDefault instead of Locale.UK
+				// 23/05/2017 ECU loop for all of the extensions that have been 
+				//                supplied
 				// -----------------------------------------------------------------
-				return thePathName.getName().toLowerCase (Locale.getDefault()).endsWith (extensionWanted);
+				for (int extension = 0; extension < extensionWanted.length; extension ++)
+				{
+					if (thePathName.getName().toLowerCase (Locale.getDefault()).endsWith (extensionWanted [extension]))
+					{
+						// ---------------------------------------------------------
+						// 23/05/2017 ECU the extension matches so indicate this fact
+						// ---------------------------------------------------------
+						return true;
+						// ---------------------------------------------------------
+					}
+				}
+				// -----------------------------------------------------------------
+				// 23/05/2017 ECU none of the extensions matched so indicate no match
+				// -----------------------------------------------------------------
+				return false;
 				// -----------------------------------------------------------------
 			}
 		}
@@ -280,8 +328,8 @@ public class FileChooser extends ListActivity
     	{
     		// ---------------------------------------------------------------------
     		// 17/12/2015 ECU no select method defined so normal use
-    		// 18/12/2015 ECU note - display information about the file - if it is
-    		//                of an image then display a thumbnail of it
+    		// 18/12/2015 ECU Note - display information about the file - if it is
+    		//                       of an image then display a thumbnail of it
     		// ---------------------------------------------------------------------
     		if (fileOptions.getPath().toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_PHOTOGRAPH))
     		{
@@ -347,8 +395,12 @@ public class FileChooser extends ListActivity
 				// -------------------------------------------------------------
 				// 16/03/2015 ECU call up the method that will handle the 
 				//                input text
+    			// 22/03/2018 ECU note that by specifying 'null' then this means
+    			//                that the method being called is static
+    			// 28/06/2019 ECU changed from 'selectMethod.invoke' to accommodate calls
+    			//                to a method which may or may not be static
 				// -------------------------------------------------------------
-				selectMethod.invoke (null,new Object [] {fileOptions.getFullFileName()});
+    			Utilities.invokeMethod (selectMethod,new Object [] {fileOptions.getFullFileName()});
 				// -------------------------------------------------------------
 			} 
 			catch (Exception theException) 
@@ -362,31 +414,18 @@ public class FileChooser extends ListActivity
     	}
     }
     // =============================================================================
-    private void listTheFiles (File theFileName,final String theExtensionWanted)
+    private void listTheFiles (File theFileName,final String [] theExtensionWanted)
     {
     	// -------------------------------------------------------------------------
     	// 05/12/2015 ECU created to build a list of files that are in the directory
     	//                whose path is passed as the argument
     	// 18/12/2015 ECU changed the name from 'fill'
-    	// -------------------------------------------------------------------------
-    	// 05/12/2013 ECU set the current file name in the title
-    	// -------------------------------------------------------------------------
-    	this.setTitle ("Current Directory : " + theFileName.getPath());
+    	// 23/05/2017 ECU changed theExtensionWanted from 'String'
+    	// 07/10/2017 ECU check if the specified directory is 'readable'
     	// -------------------------------------------------------------------------
     	// 05/12/2013 ECU get list of files in the specified directory
     	// -------------------------------------------------------------------------
     	File [] fileList;
-    	// -------------------------------------------------------------------------
-    	// 09/12/2013 ECU check if any filtering is required
-    	// -------------------------------------------------------------------------
-    	if (theExtensionWanted == null)
-    	{
-    		fileList = theFileName.listFiles ();
-    	}
-    	else
-    	{
-    		fileList = theFileName.listFiles (filter); 
-    	}
     	// -------------------------------------------------------------------------
     	// 05/12/2013 ECU set up the list of files and directories
     	// 18/12/2015 ECU note - want to display directories first then files. The
@@ -396,61 +435,93 @@ public class FileChooser extends ListActivity
     	List<FileOptions> directories 	= new ArrayList<FileOptions>();
     	List<FileOptions> files 		= new ArrayList<FileOptions>();
     	// -------------------------------------------------------------------------
-    	// 05/12/2013 ECU build up the lists
+    	// 07/10/2017 ECU check if the directory is 'readable'
     	// -------------------------------------------------------------------------
-		try
-		{
-			// ---------------------------------------------------------------------
-			// 05/12/2013 ECU loop for all files in the (un)filtered list
-			// ---------------------------------------------------------------------
-			for (File fileIndex : fileList)
-			{
-				if (fileIndex.isDirectory())
-				{
-					// -------------------------------------------------------------
-					// 05/12/2013 ECU file name is of directory so add to that list
-					// -------------------------------------------------------------
-					directories.add (new FileOptions(fileIndex));
-				}
-				else
-				{
-					// -------------------------------------------------------------
-					// 05/12/2013 ECU file name is of a file so add to that list
-					// -------------------------------------------------------------
-					files.add (new FileOptions(fileIndex));
-				}
-			 }
-		 }
-		 catch(Exception theException)
-		 {			 
-		 }
-		 // ------------------------------------------------------------------------
-		 // 05/12/2013 ECU sort the lists into ascending order
-		 // ------------------------------------------------------------------------
-		 Collections.sort (directories);
-		 Collections.sort (files);
-		 // ------------------------------------------------------------------------
-		 // 05/12/2013 ECU add the lists together
-		 // ------------------------------------------------------------------------
-		 directories.addAll (files);
-		 // ------------------------------------------------------------------------
-		 // 09/12/2013 ECU check if there is a parent
-		 // ------------------------------------------------------------------------
-		 if (theFileName.getParent() != null)
-			 directories.add (0,new FileOptions(new File (theFileName.getParent()),true));
-		 // ------------------------------------------------------------------------
-		 // 09/12/2014 ECU set up the adapter to display the files
-		 // 15/12/2015 ECU added displayImage as argument
-		 // 17/12/2015 ECU pass the list view as 'null' so that no scroll listener
-		 //                is set
-		 //            ECU changed from file_view to file_list_view
-		 // ------------------------------------------------------------------------
-		 adapter = new FileArrayAdapter (FileChooser.this,null,R.layout.file_list_view,directories,displayImage);
-		 // ------------------------------------------------------------------------
-		 // 09/12/2013 ECU display the files via the adapter
-		 // ------------------------------------------------------------------------
-		 this.setListAdapter (adapter);
-		 // ------------------------------------------------------------------------
+    	if (theFileName.canRead())
+    	{
+    		// ---------------------------------------------------------------------
+    		// 09/12/2013 ECU check if any filtering is required
+    		// ---------------------------------------------------------------------
+    		if (theExtensionWanted == null)
+    		{
+    			fileList = theFileName.listFiles ();
+    		}
+    		else
+    		{
+    			fileList = theFileName.listFiles (filter); 
+    		}
+    		// ---------------------------------------------------------------------
+    		// 05/12/2013 ECU build up the lists
+    		// ---------------------------------------------------------------------
+    		try
+    		{
+    			// -----------------------------------------------------------------
+    			// 05/12/2013 ECU loop for all files in the (un)filtered list
+    			// -----------------------------------------------------------------
+    			for (File fileIndex : fileList)
+    			{
+    				if (fileIndex.isDirectory())
+    				{
+    					// ---------------------------------------------------------
+    					// 05/12/2013 ECU file name is of directory so add to that list
+    					// ---------------------------------------------------------
+    					directories.add (new FileOptions(fileIndex));
+    				}
+    				else
+    				{
+    					// ---------------------------------------------------------
+    					// 05/12/2013 ECU file name is of a file so add to that list
+    					// ---------------------------------------------------------
+    					files.add (new FileOptions(fileIndex));
+    					// ---------------------------------------------------------
+    				}
+    			}
+    		}
+    		catch(Exception theException)
+    		{			 
+    		}
+    		// ---------------------------------------------------------------------
+    		// 05/12/2013 ECU sort the lists into ascending order
+    		// ---------------------------------------------------------------------
+    		Collections.sort (directories);
+    		Collections.sort (files);
+    		// ---------------------------------------------------------------------
+    		// 05/12/2013 ECU add the lists together
+    		// ---------------------------------------------------------------------
+    		directories.addAll (files);
+    		// ---------------------------------------------------------------------
+    	}
+    	// -------------------------------------------------------------------------
+    	// 09/12/2013 ECU check if there is a parent.
+    	// 09/10/2017 ECU Note - the 'true' indicates that it is the parent
+    	// -------------------------------------------------------------------------
+    	if (theFileName.getParent() != null)
+			 directories.add (0,new FileOptions (new File (theFileName.getParent()),true));
+    	// -------------------------------------------------------------------------
+    	// 09/12/2014 ECU set up the adapter to display the files
+    	// 15/12/2015 ECU added displayImage as argument
+    	// 17/12/2015 ECU pass the list view as 'null' so that no scroll listener
+    	//                is set
+    	//            ECU changed from file_view to file_list_view
+    	// 07/10/2017 ECU can only adjust the adapter if there is something to
+    	//                display
+    	// -------------------------------------------------------------------------
+    	if (directories.size() > 0)
+    	{
+    		// ---------------------------------------------------------------------
+        	// 05/12/2013 ECU set the current file name in the title
+    		// 09/10/2017 ECU changed to just show the path not a 'Current Directory'
+    		//                introduction
+        	// ---------------------------------------------------------------------
+        	this.setTitle (theFileName.getPath());
+    		// ---------------------------------------------------------------------
+    		adapter = new FileArrayAdapter (FileChooser.this,null,R.layout.file_list_view,directories,displayImage);
+    		// ---------------------------------------------------------------------
+    		// 09/12/2013 ECU display the files via the adapter
+    		// ---------------------------------------------------------------------
+    		this.setListAdapter (adapter);
+    	}
+    	// -------------------------------------------------------------------------
     }
     // =============================================================================
 }

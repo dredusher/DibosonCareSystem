@@ -40,7 +40,7 @@ public class DeviceStatusHandler extends Handler
 	{
 		// -------------------------------------------------------------------------
 		// 02/05/2015 ECU this initiates the send to the specified address
-		// 05/05/2015 ECU changed to use MainActivity.M ....
+		// 05/05/2015 ECU changed to use StaticData.M ....
 		// -------------------------------------------------------------------------
 		Message message = this.obtainMessage (StaticData.MESSAGE_SEND);
 		message.obj 	= theIPAddress;
@@ -98,7 +98,7 @@ public class DeviceStatusHandler extends Handler
 					// -------------------------------------------------------------
 					try 
 					{ 
-						successMethod.invoke(null);
+						successMethod.invoke (null);
 					} 
 					catch (Exception theException) 
 					{	
@@ -127,7 +127,7 @@ public class DeviceStatusHandler extends Handler
 						// ---------------------------------------------------------
 						try 
 						{ 
-							failureMethod.invoke(null);
+							failureMethod.invoke (null);
 						} 
 						catch (Exception theException) 
 						{	

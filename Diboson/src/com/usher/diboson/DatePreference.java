@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 import android.widget.DatePicker;
 import android.widget.TextView;
 
-@SuppressLint("DefaultLocale")
+@SuppressLint ("DefaultLocale")
 public class DatePreference extends DialogPreference 
 {
 	// =============================================================================
@@ -58,16 +58,21 @@ public class DatePreference extends DialogPreference
         super (theContext,theAttributeSet,theStyle);
         // -------------------------------------------------------------------------
         // 22/04/2015 ECU initialise the displayed buttons
+        // 14/07/2017 ECU change to use resources rather than literal strings
         // -------------------------------------------------------------------------
-        setPositiveButtonText ("Set");
-        setNegativeButtonText ("Cancel");
+        setPositiveButtonText (theContext.getString (R.string.set));
+        setNegativeButtonText (theContext.getString (R.string.cancel));
         // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
     public String toString () 
     {	
-        return (String.format ("%02d/%02d/%4d",lastDay,lastMonth,lastYear));
+    	// -------------------------------------------------------------------------
+    	// 14/07/2017 ECU changed to use resource rather a literal string
+    	// -------------------------------------------------------------------------
+        return (String.format (getContext ().getString (R.string.date_of_birth_format),lastDay,lastMonth,lastYear));
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
@@ -148,7 +153,7 @@ public class DatePreference extends DialogPreference
         	// ---------------------------------------------------------------------
         	// 19/11/2014 ECU make sure that the displayed value is updated
         	// ---------------------------------------------------------------------
-            datePicker.clearFocus();
+            datePicker.clearFocus ();
             // ---------------------------------------------------------------------
             // 22/04/2015 ECU get the input values from the picker. Remember that
             //                'getMonth' starts with January = 0, I need it as 1
@@ -157,7 +162,10 @@ public class DatePreference extends DialogPreference
             lastMonth 	= 	datePicker.getMonth() + 1;
             lastYear	= 	datePicker.getYear();
             // ---------------------------------------------------------------------
-            String date = String.format ("%02d/%02d/%4d",lastDay,lastMonth,lastYear);
+            // 14/07/2017 ECU changed to use resource rather than having the string
+            //                literal
+            // ---------------------------------------------------------------------
+            String date = String.format (getContext ().getString (R.string.date_of_birth_format),lastDay,lastMonth,lastYear);
 
             if (callChangeListener (date)) 
             {
@@ -179,7 +187,7 @@ public class DatePreference extends DialogPreference
     	// -------------------------------------------------------------------------
     	// 22/04/2015 ECU called up to set the initial value
     	// -------------------------------------------------------------------------
-        String date=null;
+        String date = null;
         // -------------------------------------------------------------------------
         // 22/04/2015 ECU check whether the stored value is to be restored
         // 09/11/2015 ECU use DEFAULT_DATE rather than literal

@@ -1,7 +1,6 @@
 package com.usher.diboson;
 
 import java.util.ArrayList;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -15,15 +14,17 @@ import android.widget.Button;
 public class GroupActivity extends Activity 
 {
 	// =============================================================================
-		   static int				  action;					// 11/10/2016 ECU added
-		   static Context			  context;					// 09/10/2016 ECU added
-	       static int				  currentGroup;
-	       static Button			  groupCreateButton;
-	       static Button			  groupDeleteGroupButton;
-	       static Button			  groupDeleteGroupsButton;
-	       static Button			  groupDisplayButton;
-	       static Button			  groupEnableButton;
-	       static Button			  groupRedefineButton;
+		   int				  action;					// 11/10/2016 ECU added
+		   Context			  context;					// 09/10/2016 ECU added
+	       int				  currentGroup;
+	       Button			  groupCreateButton;
+	       Button			  groupDeleteGroupButton;
+	       Button			  groupDeleteGroupsButton;
+	       Button			  groupDisplayButton;
+	       Button			  groupEnableButton;
+	       Button			  groupRedefineButton;
+		   Object             underlyingObject;
+	// -----------------------------------------------------------------------------
 	public static GroupMessageHandler groupMessageHandler;
 	// =============================================================================
 	// =============================================================================
@@ -52,6 +53,10 @@ public class GroupActivity extends Activity
 			// 09/10/2016 ECU remember the context for future use
 			// ---------------------------------------------------------------------
 			context = this;
+			// ---------------------------------------------------------------------
+			// 22/03/2018 ECU remember the underlying object
+			// ---------------------------------------------------------------------
+			underlyingObject = this;
 			// ---------------------------------------------------------------------
 			groupMessageHandler = new GroupMessageHandler ();
 			// ---------------------------------------------------------------------
@@ -122,11 +127,13 @@ public class GroupActivity extends Activity
 					// -------------------------------------------------------------
 					// 09/10/2016 ECU added to remove all stored groups
 					// -------------------------------------------------------------
-					DialogueUtilities.yesNo (context,"Delete All Groups",
-   		   				 					 "Do you really want to delete all groups",
-   		   				 					 0,
-   		   				 					 Utilities.createAMethod (GroupActivity.class,"YesMethod",(Object) null),
-   		   				 					 null); 
+					DialogueUtilitiesNonStatic.yesNo (context,
+													  underlyingObject,
+													  "Delete All Groups",
+													  "Do you really want to delete all groups",
+													  0,
+													  Utilities.createAMethod (GroupActivity.class,"YesMethod",(Object) null),
+													  null); 
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -145,8 +152,9 @@ public class GroupActivity extends Activity
 					PublicData.storedData.groupActivities = !PublicData.storedData.groupActivities;
 					// -------------------------------------------------------------
 					// 04/11/2016 ECU default to the first group
+					// 23/09/2017 ECU changed to use the method for initialisation
 					// -------------------------------------------------------------
-					PublicData.storedData.groupListCurrent = 0;
+					initialiseGrouping (getBaseContext ());
 					// -------------------------------------------------------------
 					// 11/10/2016 ECU update the buttons
 					// -------------------------------------------------------------
@@ -175,7 +183,7 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 	};
 	// =============================================================================
-	static void defineAGroup (Context theContext,int theGroup)
+	void defineAGroup (Context theContext,int theGroup)
 	{
 		Utilities.popToastAndSpeak (theContext.getString (R.string.group_select_activities),true);
 		// -------------------------------------------------------------------------
@@ -215,7 +223,7 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void deleteAGroup (int theGroup)
+	void deleteAGroup (int theGroup)
 	{
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU created to delete the specified group
@@ -234,7 +242,7 @@ public class GroupActivity extends Activity
 		// ---------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void displayButtons ()
+	void displayButtons ()
 	{
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU check on visibility state required
@@ -259,21 +267,24 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void displayAGroup (int theGroup)
+	void displayAGroup (int theGroup)
 	{
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU created to display the contents of a group list
+		// 18/04/2017 ECU added context as argument to ....Titles
+		// 22/03/2018 ECU changed to specify the underlying object
 		// -------------------------------------------------------------------------
-		DialogueUtilities.listChoice (context,
-				  					  String.format (context.getString(R.string.group_list_format),PublicData.storedData.groupLists.get(theGroup).groupListName),
-				  					  GroupList.getActivityTitles (theGroup),
-				  					  null,
-				  					  context.getString (R.string.cancel),
-				  					  null);
+		DialogueUtilitiesNonStatic.listChoice (context,
+											   underlyingObject,
+											   String.format (context.getString(R.string.group_list_format),PublicData.storedData.groupLists.get(theGroup).groupListName),
+											   GroupList.getActivityTitles (context,theGroup),
+											   null,
+											   context.getString (R.string.cancel),
+											   null);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-	static class GroupMessageHandler extends Handler
+	class GroupMessageHandler extends Handler
 	{
 		// -------------------------------------------------------------------------
 		// 04/10/2016 ECU created to handle any screen updates
@@ -291,8 +302,9 @@ public class GroupActivity extends Activity
 				case StaticData.MESSAGE_DATA:
 					// -------------------------------------------------------------
 					// 04/10/2016 ECU stop the refresh
+					// 18/04/2017 ECU added the context as an argument
 					// -------------------------------------------------------------
-					GroupList.Add (currentGroup,theMessage.arg1);
+					GroupList.Add (context,currentGroup,theMessage.arg1);
 					// -------------------------------------------------------------
 					break;
 	        	// -----------------------------------------------------------------	
@@ -301,13 +313,18 @@ public class GroupActivity extends Activity
 					// 04/10/2016 ECU stop the refresh
 					// -------------------------------------------------------------
 					// 09/10/2016 ECU request the name of this group
+					// 20/03/2017 ECU added the HINT
+					//            ECU Note - the following Dialogue does not display
+					//                       a cursor - is this because not on the
+					//                       UI ?? Not sure this is a big issue.
 					// -------------------------------------------------------------
-					DialogueUtilities.textInput (context,
-		   					 					 context.getString (R.string.title_group_list_name),
-		   					 					 context.getString (R.string.enter_group_list_name),
-		   					 					 "",
-		   					 					 Utilities.createAMethod (GroupActivity.class,"GroupNameMethod",""),
-		   					 					 null);
+					DialogueUtilitiesNonStatic.textInput (context,
+													      underlyingObject,
+													      context.getString (R.string.title_group_list_name),
+													      context.getString (R.string.enter_group_list_name),
+													      StaticData.HINT + context.getString (R.string.type_in_group_name),
+													      Utilities.createAMethod (GroupActivity.class,"GroupNameMethod",StaticData.BLANK_STRING),
+													      null);
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -325,26 +342,70 @@ public class GroupActivity extends Activity
 		}
 	};
 	// =============================================================================
-	public static void GroupNameMethod (String theName)
+	public void GroupNameMethod (String theName)
 	{
 		// -------------------------------------------------------------------------
-		// 08/10/2016 ECU created to input the group list name
+		// 20/03/2017 ECU if no name is specified then ask for it again
+		// 06/01/2019 ECU changed to use 'emptyString'
 		// -------------------------------------------------------------------------
-		PublicData.storedData.groupLists.get (currentGroup).groupListName = theName;
+		if (Utilities.emptyString(theName))
+		{
+			// ---------------------------------------------------------------------
+			// 08/10/2016 ECU created to input the group list name
+			// ---------------------------------------------------------------------
+			PublicData.storedData.groupLists.get (currentGroup).groupListName = theName;
+			// ---------------------------------------------------------------------
+			// 11/10/2016 ECU now display the newly created group
+			// ---------------------------------------------------------------------
+			displayAGroup (currentGroup);
+			// ---------------------------------------------------------------------
+			// 11/10/2016 ECU set the visibility of the buttons
+			// ---------------------------------------------------------------------
+			displayButtons ();
+			// ---------------------------------------------------------------------
+			// 23/01/2016 ECU indicate that the command is complete
+			// 11/10/2016 ECU removed
+			// ---------------------------------------------------------------------
+			//((Activity) context).finish();
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 20/03/2017 ECU tell the user that a name needs to be entered
+			// ---------------------------------------------------------------------
+			MessageHandler.popToastAndSpeak (context.getString (R.string.group_no_name));
+			// ---------------------------------------------------------------------
+			// 20/03/2017 ECU request the group name again
+			// ---------------------------------------------------------------------
+			groupMessageHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
+			// ---------------------------------------------------------------------
+		}
+	}
+	// =============================================================================
+	public static void initialiseGrouping (Context theContext)
+	{
 		// -------------------------------------------------------------------------
-		// 11/10/2016 ECU now display the newly created group
+		// 23/09/2017 ECU created to initialise variables when grouping is switched
+		//                on
 		// -------------------------------------------------------------------------
-		displayAGroup (currentGroup);
-		// ---------------------------------------------------------------------
-		// 11/10/2016 ECU set the visibility of the buttons
-		// ---------------------------------------------------------------------
-		displayButtons ();
+		PublicData.storedData.groupListCurrent = 0;
 		// -------------------------------------------------------------------------
-		// 23/01/2016 ECU indicate that the command is complete
-		// 11/10/2016 ECU removed
+		// 23/09/2017 ECU 'sort by usage' is not compatible with 'grouping' so switch
+		//                it off
 		// -------------------------------------------------------------------------
-		//((Activity) context).finish();
-		// -------------------------------------------------------------------------
+		if (PublicData.storedData.groupActivities)
+		{
+			// ---------------------------------------------------------------------
+			// 23/09/2017 ECU switch off 'sort by usage' if on and tell the user
+			// ---------------------------------------------------------------------
+			if (PublicData.storedData.sortByUsage)
+			{
+				PublicData.storedData.sortByUsage = false;
+				Utilities.popToastAndSpeak (theContext.getString (R.string.group_usage_off),true);
+			}
+			// ---------------------------------------------------------------------
+		}
 	}
 	// =============================================================================
 	void selectAGroup (int theAction)
@@ -355,16 +416,19 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 		action = theAction;
 		// -------------------------------------------------------------------------
-		DialogueUtilities.listChoice (context,
-									  "Select a Group",
-									  GroupList.getTitles (),
-									  Utilities.createAMethod (GroupActivity.class,"SelectGroupMethod",0),
-									  context.getString (R.string.cancel),
-									  null);
+		// 22/03/2018 ECU change to specify the underlying object
+		// -------------------------------------------------------------------------
+		DialogueUtilitiesNonStatic.listChoice (context,
+										       underlyingObject,
+										       "Select a Group",
+										       GroupList.getTitles (),
+										       Utilities.createAMethod (GroupActivity.class,"SelectGroupMethod",0),
+										       context.getString (R.string.cancel),
+										       null);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void SelectGroupMethod (int theGroup)
+	public void SelectGroupMethod (int theGroup)
 	{
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU created to receive the selected group name
@@ -400,7 +464,7 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-  	public static void YesMethod (Object theSelection)
+  	public void YesMethod (Object theSelection)
   	{
   		// -------------------------------------------------------------------------
   		// 11/10/2016 ECU the groups can be deleted

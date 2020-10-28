@@ -10,24 +10,31 @@ public class ListItem implements Serializable,Comparable<ListItem>
 	// 05/02/2014 ECU created to contain the item that will be displayed in
 	//				  a custom grid view
 	// 04/10/2016 ECU added the 'colour'
+	// 06/05/2017 ECU added 'imageURL'
+	// 09/05/2019 ECU added customLegend
+	// 10/05/2019 ECU added itemType and itemState which are used by DevicesActivity
 	/* ========================================================================== */
 	int		colour;			// 04/10/2016 ECU added
+	String  customLegend;	// 09/05/2019 ECU added
 	String  extras;			// 06/02/2014 ECU added for any extras
 	String	imagePath;		// 05/02/2014 ECU path to the image
 	int		imageResourceId;// 19/12/2015 ECU resource id of an image
+	String  imageURL;		// 06/05/2017 ECU URL to an image
 	int		index;			// 30/03/2014 ECU index to source records
+	boolean itemState;		// 10/05/2019 ECU item state
+	int		itemType;		// 10/05/2019 ECU item type
 	String	legend;			// 05/02/2014 ECU legend for the image
 	boolean	selected;		// 30/03/2014 ECU if item selected
 	String  summary;		// 06/02/2014 ECU added for summary
 	/* ========================================================================== */
 	public ListItem (String theImagePath,String theLegend,String theSummary,String theExtras,int theIndex)
 	{
+		// ----------------------------------------------------------------------
 		extras		= theExtras;
 		imagePath	= theImagePath;
 		index		= theIndex;					// 30/03/2014 ECU added
 		legend		= theLegend;
 		summary		= theSummary;
-		
 		// ----------------------------------------------------------------------
 		// 30/03/2014 ECU default private variables that are not supplied
 		// ----------------------------------------------------------------------
@@ -40,6 +47,14 @@ public class ListItem implements Serializable,Comparable<ListItem>
 		// 04/10/2016 ECU set the colour
 		// ----------------------------------------------------------------------
 		colour = StaticData.NO_RESULT;
+		// ----------------------------------------------------------------------
+		// 06/05/2017 ECU URL to an image
+		// ----------------------------------------------------------------------
+		imageURL = null;
+		// ----------------------------------------------------------------------
+		// 09/05/2019 ECU custom legend
+		// ----------------------------------------------------------------------
+		customLegend = null;
 		// ----------------------------------------------------------------------
 	}
 	// --------------------------------------------------------------------------
@@ -67,6 +82,10 @@ public class ListItem implements Serializable,Comparable<ListItem>
 		// ----------------------------------------------------------------------
 		colour = StaticData.NO_RESULT;
 		// ----------------------------------------------------------------------
+		// 06/05/2017 ECU URL to an image
+		// ----------------------------------------------------------------------
+		imageURL = null;
+		// ----------------------------------------------------------------------
 	}
 	/* -------------------------------------------------------------------------- */
 	public ListItem (String theImagePath,String theLegend,String theSummary,String theExtras,int theIndex,boolean theSelectedFlag)
@@ -85,6 +104,10 @@ public class ListItem implements Serializable,Comparable<ListItem>
 		// 04/10/2016 ECU set the colour
 		// ----------------------------------------------------------------------
 		colour = StaticData.NO_RESULT;
+		// ----------------------------------------------------------------------
+		// 06/05/2017 ECU URL to an image
+		// ----------------------------------------------------------------------
+		imageURL = null;
 		// ----------------------------------------------------------------------
 	}
 	// --------------------------------------------------------------------------
@@ -113,6 +136,10 @@ public class ListItem implements Serializable,Comparable<ListItem>
 		// ----------------------------------------------------------------------
 		colour = StaticData.NO_RESULT;
 		// ----------------------------------------------------------------------
+		// 06/05/2017 ECU URL to an image
+		// ----------------------------------------------------------------------
+		imageURL = null;
+		// ----------------------------------------------------------------------
 	}
 	/* ========================================================================== */
 	@Override
@@ -131,14 +158,25 @@ public class ListItem implements Serializable,Comparable<ListItem>
 		return colour;
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+	public String GetCustomLegend ()
+	{
+		// -------------------------------------------------------------------------
+		// 09/05/2019 ECU created to return the custom legend
+		// -------------------------------------------------------------------------
+		return customLegend;
+		// -------------------------------------------------------------------------
+	}
 	/* ============================================================================= */
 	public String GetImagePath ()
 	{
+		// -------------------------------------------------------------------------
 		// 26/01/2014 ECU returns the resource ID of the stored image
-		
+		// -------------------------------------------------------------------------
 		return imagePath;
+		// -------------------------------------------------------------------------
 	}
-	/* ========================================================================== */
+	/* ============================================================================= */
 	public String GetExtras ()
 	{
 		// ----------------------------------------------------------------------

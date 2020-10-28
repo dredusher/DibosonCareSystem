@@ -62,7 +62,7 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
  	//							at android.view.ViewRootImpl$AsyncInputStage.apply(ViewRootImpl.java:3797)
  	//							at android.view.ViewRootImpl$InputStage.deliver
 	//
-	//				  as this is not a 'user activity' the ability to add test documentation(via long press on 
+	//				  as this is not a 'user activity' the ability to add test documentation (via long press on 
 	//                the BACK KEY is not necessary
 	// -----------------------------------------------------------------------
 	// Testing

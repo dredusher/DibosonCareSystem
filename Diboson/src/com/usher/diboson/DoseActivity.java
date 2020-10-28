@@ -214,8 +214,8 @@ public class DoseActivity extends DibosonActivity
 			// 27/11/2014 ECU just clear the fields
 			// ---------------------------------------------------------------------
 			amount.setText 	("1.0");
-			units.setText	("");
-			notes.setText 	("");
+			units.setText	(StaticData.BLANK_STRING);
+			notes.setText 	(StaticData.BLANK_STRING);
 			// ---------------------------------------------------------------------
 			deleteDoseButton.setVisibility(View.INVISIBLE);
 			// ---------------------------------------------------------------------

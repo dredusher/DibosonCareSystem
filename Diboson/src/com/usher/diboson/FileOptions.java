@@ -10,22 +10,26 @@ public class FileOptions implements Comparable<FileOptions>
 	private File	details;  
 	private boolean	parent;
 	/* =============================================================================== */
-	public FileOptions(File theDetails)  
+	public FileOptions (File theDetails)  
 	{  
 		details = theDetails;
 		parent  = false;
 	}  
 	/* =============================================================================== */
-	public FileOptions(File theDetails, boolean theFlag)  
+	public FileOptions (File theDetails, boolean theParentFlag)  
 	{  
 		details = theDetails;
-		parent  = theFlag;
+		parent  = theParentFlag;
 	}  
 	/* =============================================================================== */
 	public String getData ()
 	{
+		// --------------------------------------------------------------------------
+		// 09/10/2017 ECU Note - check if this entry is a parent, folder, ....
+		//            ECU add the check whether the contents are readable or not
+		// --------------------------------------------------------------------------
 		if (parent)
-			return "parent";
+			return "parent"  + (details.canRead() ? StaticData.BLANK_STRING : " (contents not readable)");
 		else
 		if (details.isDirectory())
 			return "folder";
@@ -38,7 +42,7 @@ public class FileOptions implements Comparable<FileOptions>
 		// -------------------------------------------------------------------------
 		// 31/10/2015 ECU created to return the full file name
 		// -------------------------------------------------------------------------
-		return details.getAbsolutePath();
+		return details.getAbsolutePath ();
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -46,38 +50,42 @@ public class FileOptions implements Comparable<FileOptions>
 	{
 		// -------------------------------------------------------------------------
 		// 10/11/2014 ECU changed to use Locale.getDefault instead of Locale.UK
+		// 24/07/2017 ECU changed to use ALARM
 		// -------------------------------------------------------------------------
 		SimpleDateFormat dateFormat = new SimpleDateFormat ("EEEE dd MMM yyyy",Locale.getDefault());
-		SimpleDateFormat timeFormat = new SimpleDateFormat ("HH:mm:ss   ",Locale.getDefault());
-		
+		SimpleDateFormat timeFormat = new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT + "   ",Locale.getDefault());
+		// -------------------------------------------------------------------------
 		return timeFormat.format (details.lastModified()) + dateFormat.format (details.lastModified());
+		// ---------------------------------------------------------------------------
 	}
 	/* =============================================================================== */
-	public String getName()  
+	public String getName ()  
 	{ 
+		// ---------------------------------------------------------------------------
 		if (parent)
 			return ("..");
 		else
-			return details.getName();  
+			return details.getName(); 
+		// ---------------------------------------------------------------------------
 	} 
 	/* =============================================================================== */
 	public String getPath()  
 	{  
 		return details.getPath();  
 	}
-	/* =============================================================================== */ 
+	// ===============================================================================
 	@Override  
 	public int compareTo (FileOptions theFileOptions) 
 	{  
 		if(this.getName() != null)  
 			return this.getName().toLowerCase().compareTo(theFileOptions.getName().toLowerCase());   
 		else  
-			throw new IllegalArgumentException();  
+			throw new IllegalArgumentException ();  
 	}  
 	/* =============================================================================== */
 	public boolean isDirectory ()
 	{
-		return details.isDirectory();
+		return details.isDirectory ();
 	}
 	/* =============================================================================== */
 	public boolean isParent ()
@@ -87,7 +95,7 @@ public class FileOptions implements Comparable<FileOptions>
 	/* =============================================================================== */
 	public String Print ()
 	{
-		return this.getName() + "\n" + this.getPath() + "\n" + this.getModificationTime();
+		return this.getName() + StaticData.NEWLINE + this.getPath() + StaticData.NEWLINE + this.getModificationTime();
 	}
 	/* =============================================================================== */
 } 

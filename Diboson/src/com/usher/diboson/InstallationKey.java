@@ -17,8 +17,8 @@ public class InstallationKey implements Serializable
 	public String print ()
 	{
 		return "Installation Key\n" +
-			   " Preset : " + preset + "\n" +
-			   " Device : " + serialNumber + "\n" + 
+			   " Preset : " + preset + StaticData.NEWLINE +
+			   " Device : " + serialNumber + StaticData.NEWLINE + 
 			   " Date : " + PublicData.dateFormatter.format (date);
 	}
 	// -----------------------------------------------------------------------------

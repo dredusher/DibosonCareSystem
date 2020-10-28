@@ -2,7 +2,6 @@ package com.usher.diboson;
 
 import java.text.SimpleDateFormat;
 import java.util.Locale;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
@@ -57,34 +56,39 @@ public class DibosonActivity extends Activity
 	}
 	/* ============================================================================= */
 	@Override 
-	protected void onPause() 
+	protected void onPause () 
 	{
 		// -------------------------------------------------------------------------
-		// 23/09/2013 ECU unregister the accelerometer listener
+		// 23/09/2013 ECU Note - take actions when this activity loses focus
 		// -------------------------------------------------------------------------
 		super.onPause (); 
+		// -------------------------------------------------------------------------
 	} 
 	/* ============================================================================= */
 	@Override 
-	protected void onResume() 
+	protected void onResume () 
 	{ 
 		// -------------------------------------------------------------------------
-		// 23/09/2013 ECU register the listener again
+		// 23/09/2013 ECU Note - take actions when this activity regains focus
 		// -------------------------------------------------------------------------
+		super.onResume (); 
 		// -------------------------------------------------------------------------
-		super.onResume(); 
 	} 
 	// =============================================================================
 	@Override
-	public void onSaveInstanceState(Bundle savedInstanceState) 
+	public void onSaveInstanceState (Bundle savedInstanceState) 
 	{
-	    super.onSaveInstanceState(savedInstanceState);
+		// -------------------------------------------------------------------------
+	    super.onSaveInstanceState (savedInstanceState);
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
-	public void onRestoreInstanceState(Bundle savedInstanceState) 
+	public void onRestoreInstanceState (Bundle savedInstanceState) 
 	{
-	    super.onRestoreInstanceState(savedInstanceState);
+		// -------------------------------------------------------------------------
+	    super.onRestoreInstanceState (savedInstanceState);
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -115,6 +119,7 @@ public class DibosonActivity extends Activity
 		// 14/12/2015 ECU pass through for handling by the OS
 		// -------------------------------------------------------------------------
 	    return super.onKeyDown (theKeyCode, theKeyEvent);
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -134,11 +139,11 @@ public class DibosonActivity extends Activity
 			//                to add documentation or do a screen capture
 			// ---------------------------------------------------------------------
 			DialogueUtilities.yesNo (activity,  
-					 getString (R.string.documentation_title),
-					 getString (R.string.documentation_summary),
-					 null,
-					 true,getString (R.string.documentation),Utilities.createAMethod   (DibosonActivity.class,"DocumentationMethod",(Object) null),
-					 true,getString (R.string.screen_capture), Utilities.createAMethod (DibosonActivity.class,"ScreenCaptureMethod", (Object) null)); 
+					 				 getString (R.string.documentation_title),
+					 				 getString (R.string.documentation_summary),
+					 				 null,
+					 				 true,getString (R.string.documentation),Utilities.createAMethod   (DibosonActivity.class,"DocumentationMethod",(Object) null),
+					 				 true,getString (R.string.screen_capture), Utilities.createAMethod (DibosonActivity.class,"ScreenCaptureMethod", (Object) null)); 
 			// ---------------------------------------------------------------------
 			// 04/11/2015 ECU indicate that the key has been handled
 			// ---------------------------------------------------------------------
@@ -147,13 +152,17 @@ public class DibosonActivity extends Activity
 		}
 		// -------------------------------------------------------------------------
 	    return super.onKeyLongPress (theKeyCode, theKeyEvent);
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
 	public void onRestart () 
 	{
 		// -------------------------------------------------------------------------
-		super.onStop();   
+		// 13/03/2018 ECU seemed to be a typing error was 'onStop' 
+		// -------------------------------------------------------------------------
+		super.onRestart (); 
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	
@@ -169,9 +178,11 @@ public class DibosonActivity extends Activity
 		int localTestingLevel = StaticData.NO_RESULT;
 		try 
 		{
+			// ---------------------------------------------------------------------
 			ActivityInfo activityInfo
 							  = activity.getPackageManager ().getActivityInfo (activity.getComponentName(), PackageManager.GET_META_DATA);
 			localTestingLevel = (activityInfo.metaData).getInt (StaticData.PARAMETER_TESTING_LEVEL,StaticData.NO_RESULT);
+			// ---------------------------------------------------------------------
 		} 
 		catch (Exception theException) 
 		{

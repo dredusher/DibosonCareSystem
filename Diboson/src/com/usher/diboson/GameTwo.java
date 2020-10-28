@@ -15,6 +15,8 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -34,6 +36,13 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 	                  the Android OS
 	   18/12/2016 ECU use 'long click' to change or reset the background image
 	              ECU general tidy up of the code layout
+	   26/12/2017 ECU changed from using a thread to update the display to a handler
+	              ECU Note - this activity does not use layers just because wanted a
+	                         very simple program. At some stage wanted to rewrite
+	                         with 
+	                              Layer 1 ................ background
+	                              Layer 2 ................ earth
+	                              Layer 3 ................ moving ball
 	   ============================================================================= 
 	   Testing
 	   =======
@@ -56,7 +65,6 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 					float			accelerationZ;
 					Sensor 			accelerometer;
 					Bitmap          background;
-	static			Context			context;						// 18/12/2016 ECU added
 					Bitmap          earth;
 					float           earthX;	
 					float           earthY;	
@@ -67,19 +75,29 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 					float			landingZoneXUpper;
 					float			landingZoneYUpper;
 					Paint			paint;
+					boolean			restarted;						// 06/07/2019 ECU added
 					SensorManager 	sensorManager;
-					boolean			shapeThreadRunning	= false;
 					ShapeView 		shapeView;
-					int             ballX;					         // x position of ball
-					int             ballY;					         // y position of ball
+					int             ballX;					        // x position of ball
+					int             ballY;					        // y position of ball
 					float           timeInterval       	= 0.5f; 
 					float			velocityX;
 					float			velocityY;
+	// =============================================================================
+	// 28/06/2019 ECU Note - the following variables are declare as 'static' because
+	//                if they are not then following 'Utilities.selectAFile', which launches
+	//				  a new activity, the subsequent dialogues are not shown correctly. 
+	//				  Not happy with this but leave at the moment.
+	// -----------------------------------------------------------------------------
+		static		Context			context;						// 18/12/2016 ECU added
+		static		Object			underlyingObject;
+	// =============================================================================
+					
 	/* ============================================================================= */
 	@Override
-	public void onCreate(Bundle savedInstanceState) 
+	public void onCreate (Bundle savedInstanceState) 
 	{
-		super.onCreate(savedInstanceState);
+		super.onCreate (savedInstanceState);
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null)
 		{
@@ -91,15 +109,29 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// ---------------------------------------------------------------------
 			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
 			// ---------------------------------------------------------------------
+			// 07/07/2019 ECU check if this activity has been restarted
+			// ---------------------------------------------------------------------
+			restarted = false;
+			Bundle extras = getIntent().getExtras();
+			if (extras != null) 
+			{
+				// -----------------------------------------------------------------
+				// 06/07/2019 ECU check for activity restart
+				// -----------------------------------------------------------------
+				restarted = extras.getBoolean (StaticData.PARAMETER_RESTART,false);
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
 			// 18/12/2016 ECU remember the context for later use
 			// ---------------------------------------------------------------------
 			context = this;
+			underlyingObject = this;
 			// --------------------------------------------------------------------- 
-			// initialise accelerometer
+			// 26/12/2017 ECU Note - initialise accelerometer
 			// ---------------------------------------------------------------------
-			sensorManager = (SensorManager)getSystemService(SENSOR_SERVICE);
-			accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-			sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+			sensorManager = (SensorManager) getSystemService (SENSOR_SERVICE);
+			accelerometer = sensorManager.getDefaultSensor (Sensor.TYPE_ACCELEROMETER);
+			sensorManager.registerListener (this,accelerometer,SensorManager.SENSOR_DELAY_GAME);
 			// ---------------------------------------------------------------------
 			// 20/02/2014 ECU set the position of the earth to be in the middle of the screen
 			// ---------------------------------------------------------------------
@@ -158,6 +190,17 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 					ResetBackgroundMethod (null);
 					// -------------------------------------------------------------
 				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 25/06/2019 ECU decide if any blurring is required
+					// -------------------------------------------------------------
+					if (PublicData.storedData.dexterityGameBackgroundBlur > 0)
+					{
+						background = Utilities.blurBitMap (background, 1.0f, PublicData.storedData.dexterityGameBackgroundBlur);
+					}
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
@@ -169,7 +212,7 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// 20/02/2014 ECU set up the content view for display
 			// ---------------------------------------------------------------------	
 			setContentView (shapeView);
-		 
+			// ---------------------------------------------------------------------
 			shapeView.setZOrderOnTop (true);
 			shapeView.getHolder ().setFormat (PixelFormat.TRANSLUCENT);
 			// ---------------------------------------------------------------------
@@ -185,12 +228,13 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 					// 18/12/2016 ECU ask the user if the background is to be reset
 					//                or changed to another image
 					// -------------------------------------------------------------
-					DialogueUtilities.yesNo (context,  
-											 context.getString (R.string.background_title),
-											 context.getString (R.string.background_summary),
-											 null,
-											 true,context.getString (R.string.background_define),Utilities.createAMethod (GameTwo.class,"DefineBackgroundMethod",(Object) null),
-											 true,context.getString (R.string.background_reset), Utilities.createAMethod (GameTwo.class,"ResetBackgroundMethod", (Object) null)); 
+					DialogueUtilitiesNonStatic.yesNo (context,
+													  underlyingObject,
+													  context.getString (R.string.background_title),
+													  context.getString (R.string.background_summary),
+													  null,
+													  true,context.getString (R.string.background_define),Utilities.createAMethod (GameTwo.class,"DefineBackgroundMethod",(Object) null),
+													  true,context.getString (R.string.background_reset), Utilities.createAMethod (GameTwo.class,"ResetBackgroundMethod", (Object) null)); 
 					// -------------------------------------------------------------
 					return true;
 				}
@@ -198,8 +242,15 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// ---------------------------------------------------------------------
 			// 19/02/2014 ECU indicate the aim of the game
 			// 18/12/2016 ECU use resource
+			// 06/07/2019 ECU only speak the phrase if the activity has not been
+			//                restarted
 			// ---------------------------------------------------------------------
-			Utilities.SpeakAPhrase (this,getString (R.string.game_two_move));
+			if (!restarted)
+			{
+				Utilities.SpeakAPhrase  (this,getString (R.string.game_two_move));
+				Utilities.SpeechSilence (StaticData.ONE_SECOND);
+				Utilities.SpeakAPhrase  (this,getString (R.string.game_two_background));
+			}
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -226,30 +277,30 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		//                exit
 		// -------------------------------------------------------------------------
 		haveLanded 			= true;
-		shapeThreadRunning 	= false;
 		// -------------------------------------------------------------------------
-        super.onDestroy();
+        super.onDestroy ();
+        // -------------------------------------------------------------------------
     }
 	// =============================================================================
 	@Override
 	protected void onPause() 
 	{
-		super.onPause();
+		super.onPause ();
 		// -------------------------------------------------------------------------
 		// 16/09/2013 ECU stop sensor sensing
 		// -------------------------------------------------------------------------
-		sensorManager.unregisterListener(this);
+		sensorManager.unregisterListener (this);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
-	protected void onResume() 
+	protected void onResume () 
 	{
 		super.onResume();
 		// ------------------------------------------------------------------------- 
 		// 16/09/2013 ECU start sensor sensing
 		// -------------------------------------------------------------------------
-		sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_GAME);
+		sensorManager.registerListener (this,accelerometer,SensorManager.SENSOR_DELAY_GAME);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -259,45 +310,51 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		// -------------------------------------------------------------------------
 		// 16/09/2013 ECU obtain the three accelerations from sensors
 		// -------------------------------------------------------------------------
-		accelerationX = event.values[0];
-		accelerationY = event.values[1];
-	 
-		accelerationZ = event.values[2];
+		accelerationX = event.values [0];
+		accelerationY = event.values [1]; 
+		accelerationZ = event.values [2];
 		// -------------------------------------------------------------------------
 		// 16/09/2013 ECU taking into account the frictions
 		// -------------------------------------------------------------------------
 		accelerationX 
-		   = Math.signum (accelerationX) * Math.abs(accelerationX) * (1 - FACTOR_FRICTION * Math.abs(accelerationZ) / GRAVITY);
+		   = Math.signum (accelerationX) * Math.abs (accelerationX) * (1 - FACTOR_FRICTION * Math.abs (accelerationZ) / GRAVITY);
 		accelerationY 
-		   = Math.signum (accelerationY) * Math.abs(accelerationY) * (1 - FACTOR_FRICTION * Math.abs(accelerationZ) / GRAVITY);
+		   = Math.signum (accelerationY) * Math.abs (accelerationY) * (1 - FACTOR_FRICTION * Math.abs (accelerationZ) / GRAVITY);
+		// -------------------------------------------------------------------------
+		// 26/12/2017 ECU tell the handler to update the display
+		// -------------------------------------------------------------------------
+		shapeView.shapeHandler.sendEmptyMessage(StaticData.MESSAGE_DISPLAY);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	private class ShapeView extends SurfaceView implements SurfaceHolder.Callback
 	{
-		private RectF 		rectangle;
-		private ShapeThread shapeThread;
+		private RectF 			rectangle;
+		private ShapeHandler	shapeHandler;			// 26/12/2017 ECU added
 	 	//-------------------------------------------------------------------------- 
 		public ShapeView (Context context) 
 		{
 			// ---------------------------------------------------------------------
 			super (context);
-	 
-			getHolder ().addCallback(this);
 			// ---------------------------------------------------------------------
-			// 20/02/2014 ECU define the thread to do the work
+			getHolder ().addCallback (this);
 			// ---------------------------------------------------------------------
-			shapeThread = new ShapeThread(getHolder(), this);
-			
-			setFocusable(true);
+			// 26/12/2017 ECU declare the handler to handle the change in display
+			// ---------------------------------------------------------------------
+			shapeHandler = new ShapeHandler (getHolder(), this);
+			// ---------------------------------------------------------------------
+			// 26/12/2017 ECU Note - set this surface view as the focus
+			// ---------------------------------------------------------------------
+			setFocusable (true);
 			// ---------------------------------------------------------------------
 			// 20/02/2014 ECU define a rectangle that will be used for drawing
 			//                the ball
 			// ---------------------------------------------------------------------
 			rectangle = new RectF ();
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
-		public boolean setOvalCentre(int x, int y)
+		public boolean setOvalCentre (int x, int y)
 		{
 			// ---------------------------------------------------------------------
 			// 20/02/2014 ECU set the position of the ball
@@ -317,6 +374,7 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			MoveTheBall ();
 			// ---------------------------------------------------------------------
 			return true;
+			// ---------------------------------------------------------------------
 		}
 		// =========================================================================
 		protected void onDraw (Canvas canvas)
@@ -335,14 +393,15 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 						       ballX + BALL_SIZE,
 						       ballY + BALL_SIZE);
 				// -----------------------------------------------------------------
-				// 26/05/2013 ECU clear the whole canvas to black
+				// 26/05/2013 ECU redraw the background and earth - ideally this
+				//                should be done using layers to speed things up
 				// -----------------------------------------------------------------
 				canvas.drawBitmap (background, 0, 0, paint);
 				canvas.drawBitmap (earth,earthX-EARTH_SIZE/2,earthY-EARTH_SIZE/2,paint);
 				// -----------------------------------------------------------------
 				// 20/02/2014 ECU now draw the ball in its new position
 				// -----------------------------------------------------------------
-				canvas.drawOval(rectangle, paint);
+				canvas.drawOval (rectangle, paint);
 				// -----------------------------------------------------------------
 			}
 		}
@@ -354,16 +413,21 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		}
 		// =========================================================================
 		@Override
-		public void surfaceCreated(SurfaceHolder holder) 
+		public void surfaceCreated (SurfaceHolder holder) 
 		{
 			// ---------------------------------------------------------------------
 			// 20/02/2014 ECU set the thread running
 			// 04/11/2015 ECU added a try/catch just in case
+			// 26/12/2017 ECU with the use of a handler rather than a thread then
+			//                the try/catch is probably not needed
 			// ---------------------------------------------------------------------
 			try
 			{
-				shapeThread.setRunning (true);
-				shapeThread.start ();
+				// -----------------------------------------------------------------
+				// 26/12/2017 ECU indicate that the surface has been created
+				// -----------------------------------------------------------------
+				shapeView.shapeHandler.sendEmptyMessage (StaticData.MESSAGE_START);
+				// -----------------------------------------------------------------
 			}
 			catch (Exception theException)
 			{
@@ -382,108 +446,104 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		@Override
 		public void surfaceDestroyed (SurfaceHolder holder) 
 		{
-			boolean retry = true;
 			// ---------------------------------------------------------------------
-			// 20/02/2014 ECU stop the thread from running
+			// 26/12/2017 ECU tell the handler that the surface has been destroyed
 			// ---------------------------------------------------------------------
-			shapeThread.setRunning(false);
-			
-			while(retry)
-			{
-				try
-				{
-					// -------------------------------------------------------------
-					// 20/02/2014 ECU block thread until receiver finishes
-					//                execution
-					// -------------------------------------------------------------
-					shapeThread.join ();
-					// -------------------------------------------------------------
-					retry = false;
-				} 
-				catch (InterruptedException theException)
-				{
-				}
-			}
+			shapeView.shapeHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
+			// ---------------------------------------------------------------------
 		}
+		// =========================================================================
 	}
 	/* ============================================================================= */
-	class ShapeThread extends Thread 
+	class ShapeHandler extends Handler
 	{
 		// -------------------------------------------------------------------------
+		// 26/12/2017 ECU created to handle the updating of the display
+		// -------------------------------------------------------------------------
+		private Canvas			canvas;
 		private SurfaceHolder 	surfaceHolder;
 		private ShapeView 		shapeView;
 		// -------------------------------------------------------------------------
-		public ShapeThread (SurfaceHolder theSurfaceHolder, ShapeView theShapeView) 
+		public ShapeHandler (SurfaceHolder theSurfaceHolder, ShapeView theShapeView) 
 		{
 			surfaceHolder 	= theSurfaceHolder;
 			shapeView 		= theShapeView;
 		}
 		// -------------------------------------------------------------------------
-		public void setRunning (boolean run)
-		{
-			shapeThreadRunning = run;
-		}
-		// -------------------------------------------------------------------------
-		public SurfaceHolder getSurfaceHolder() 
-		{
-			return surfaceHolder;
-		}
-		// -------------------------------------------------------------------------
-		@Override
-		public void run() 
-		{
-			Canvas canvas;
-			
-			while (shapeThreadRunning) 
-			{
-				shapeView.updateOvalCentre ();
-				
-				canvas = null;
-				try 
-				{
-					canvas = surfaceHolder.lockCanvas (null);
-					
-					synchronized (surfaceHolder) 
+	    @Override
+	    public void handleMessage (Message theMessage) 
+	    {  
+	       	// ---------------------------------------------------------------------
+	    	// 26/12/2017 ECU process the incoming message
+	    	// ---------------------------------------------------------------------
+	    	switch (theMessage.what)
+	    	{
+	    		// -----------------------------------------------------------------
+	    		case StaticData.MESSAGE_DISPLAY:
+	    			// -------------------------------------------------------------
+	    			// 26/12/2017 ECU the ball has moved so update the display
+	    			// -------------------------------------------------------------
+	    			shapeView.updateOvalCentre ();
+					// -------------------------------------------------------------
+					try 
 					{
 						// ---------------------------------------------------------
-						// 16/09/2013 ECU changed from onDraw
-						// --------------------------------------------------------- 
-						shapeView.draw (canvas);
+						// 26/12/2017 ECU Note - try and lock a 'canvas' which will be
+						//                       used for displaying the graphics. If
+						//                       something goes wrong then a 'null' be
+						//                       returned
+						// 27/12/2017 ECU Note - this indicates that want to start
+						//                       editing within the surface
 						// ---------------------------------------------------------
-					}
-				} 
-				finally 
-				{
-					if (canvas != null) 
+						canvas = surfaceHolder.lockCanvas (null);
+						// ---------------------------------------------------------
+						if (canvas != null)
+						{
+							shapeView.draw (canvas);
+							// -----------------------------------------------------
+						}
+					} 
+					finally 
 					{
-						surfaceHolder.unlockCanvasAndPost(canvas);
+						if (canvas != null) 
+						{
+							// -----------------------------------------------------
+							// 27/12/2017 ECU Note - finish editing pixels within the
+							//                       surface
+							// -----------------------------------------------------
+							surfaceHolder.unlockCanvasAndPost (canvas);
+							// -----------------------------------------------------
+						}
 					}
-				}
-			}
-		}
-		// -------------------------------------------------------------------------
+					// -------------------------------------------------------------
+	    			break;
+	    		// -----------------------------------------------------------------
+	    		case StaticData.MESSAGE_FINISH:
+	    			// -------------------------------------------------------------
+	    			// 26/12/2017 ECU will be called when the surface is destroyed
+	    			// -------------------------------------------------------------
+	    			break;
+	    		// -----------------------------------------------------------------
+	    		case StaticData.MESSAGE_START:
+	    			// -------------------------------------------------------------
+	    			// 26/12/2017 ECU will be called when the surface is created
+	    			// -------------------------------------------------------------
+	    			break;
+	    		// -----------------------------------------------------------------
+	    	}
+	    	// ---------------------------------------------------------------------
+	    }
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void DefineBackgroundMethod (Object theDummyArgument)
+	public void DefineBackgroundMethod (Object theDummyArgument)
 	{
 		// -------------------------------------------------------------------------
 		// 18/12/2016 ECU define the background image
+		// 22/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		Utilities.selectAFile (context,StaticData.EXTENSION_PHOTOGRAPH,
 				new MethodDefinition <GameTwo> (GameTwo.class,"SelectedBackground"));
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static void ResetBackgroundMethod (Object theDummyArgument)
-	{
-		// -------------------------------------------------------------------------
-		// 18/12/2016 ECU reset the background image
-		// -------------------------------------------------------------------------
-		PublicData.storedData.dexterityGameBackground = null;
-		// -------------------------------------------------------------------------
-		// 18/12/2016 ECU stop and then restart this activity
-		// -------------------------------------------------------------------------
-		restartThisActivity ();
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -549,51 +609,74 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// 19/02/2014 ECU reset the fast message
 			// ---------------------------------------------------------------------
 			fastMessage = false;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------	
-		// 19/02/2014 ECU handle bouncing off of the edges
+		// 19/02/2014 ECU handle bouncing off of the edges - dodgy physics eh !!
 		// -------------------------------------------------------------------------
-		if(ballX < BALL_SIZE)
+		if (ballX < BALL_SIZE)
 		{
 			ballX 		= BALL_SIZE;
 			velocityX 	= -velocityX * FACTOR_BOUNCEBACK;
 		}
 		else
-		if(ballX > (PublicData.screenWidth - BALL_SIZE))
+		if (ballX > (PublicData.screenWidth - BALL_SIZE))
 		{
 			ballX 		= PublicData.screenWidth - BALL_SIZE;
 			velocityX 	= -velocityX * FACTOR_BOUNCEBACK;
 		}
 		
-		if(ballY < BALL_SIZE)  
+		if (ballY < BALL_SIZE)  
 		{  
 			ballY 		= BALL_SIZE;  
 			velocityY 	= -velocityY * FACTOR_BOUNCEBACK;  
 		}  
 		else 
- 		if(ballY > PublicData.screenHeight - (2 * BALL_SIZE))
+ 		if (ballY > PublicData.screenHeight - (2 * BALL_SIZE))
 		{
 			ballY 		= PublicData.screenHeight - (2 * BALL_SIZE);
 			velocityY 	= -velocityY * FACTOR_BOUNCEBACK;
 		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void restartThisActivity ()
+	public void ResetBackgroundMethod (Object theDummyArgument)
+	{
+		// -------------------------------------------------------------------------
+		// 18/12/2016 ECU reset the background image
+		// 22/03/2018 ECU changed from 'static'
+		// -------------------------------------------------------------------------
+		PublicData.storedData.dexterityGameBackground = null;
+		// -------------------------------------------------------------------------
+		// 18/12/2016 ECU stop and then restart this activity
+		// -------------------------------------------------------------------------
+		restartThisActivity ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void restartThisActivity ()
 	{
 		// -------------------------------------------------------------------------
 		// 18/12/2016 ECU 'finish' this activity
+		// 28/06/2019 ECU changed from 'static'
+		//            ECU changed from 'GameTwo.context' to 'context'
 		// -------------------------------------------------------------------------
-		((Activity) GameTwo.context).finish ();
+		((Activity) context).finish ();
 		// -------------------------------------------------------------------------
 		// 18/12/2016 ECU restart this activity
 		// -------------------------------------------------------------------------
-		Intent localIntent = new Intent (GameTwo.context,GameTwo.class);
+		Intent localIntent = new Intent (context,GameTwo.class);
 		localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
-		GameTwo.context.startActivity (localIntent);
+		// -------------------------------------------------------------------------
+		// 06/07/2019 ECU set the flag to indicate that the activity is being restarted
+		// -------------------------------------------------------------------------
+		localIntent.putExtra (StaticData.PARAMETER_RESTART,true);
+		// -------------------------------------------------------------------------
+		context.startActivity (localIntent);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-	public static void SelectedBackground (String theFileName)
+	public void SelectedBackground (String theFileName)
  	{
  		// -------------------------------------------------------------------------
  		// 18/12/2016 ECU created to get the file that contains the image for the
@@ -603,10 +686,46 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
  		// -------------------------------------------------------------------------
  		PublicData.storedData.dexterityGameBackground = theFileName; 	
  		// -------------------------------------------------------------------------
- 		// 18/12/2016 ECU stop and restart this activity
+ 		// 25/06/2019 ECU decide whether the bitmap is to be blurred
  		// -------------------------------------------------------------------------
- 		restartThisActivity ();
+ 		DialogueUtilitiesNonStatic.sliderChoice (context,
+			 	 								 underlyingObject,
+			 	 								 context.getString (R.string.background_blur),
+			 	 								 context.getString (R.string.background_blur_summary),
+			 	 								 R.drawable.bouncing_ball,
+			 	 								 null,
+			 	 								 PublicData.storedData.dexterityGameBackgroundBlur,
+			 	 								 0,
+			 	 								 50,
+			 	 								 context.getString (R.string.set),
+			 	 								 Utilities.createAMethod (GameTwo.class,"SetBlurMethod",0),
+			 	 								 context.getString (R.string.cancel_operation),
+			 	 								 Utilities.createAMethod (GameTwo.class,"SetBlurCancelMethod",0));
  		// -------------------------------------------------------------------------
  	}
+	// =============================================================================
+	public void SetBlurMethod (int theBlurRadius)
+	{
+		// -------------------------------------------------------------------------
+		// 25/06/2019 ECU store the required amount of blur
+		// -------------------------------------------------------------------------
+		PublicData.storedData.dexterityGameBackgroundBlur = theBlurRadius;
+		// -------------------------------------------------------------------------
+		// 18/12/2016 ECU stop and restart this activity
+		// -------------------------------------------------------------------------
+		restartThisActivity ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void SetBlurCancelMethod (int theBlurRadius)
+	{
+		// -------------------------------------------------------------------------
+		// 25/06/2019 cancelling the 'set blur' operation - leave as is
+		// -------------------------------------------------------------------------
+		// 18/12/2016 ECU stop and restart this activity
+		// -------------------------------------------------------------------------
+		restartThisActivity ();
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 }

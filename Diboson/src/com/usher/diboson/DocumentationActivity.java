@@ -16,7 +16,7 @@ public class DocumentationActivity extends Activity
 	
 	// =============================================================================
 	static	String		activityName = null;
-			Context 	context;
+	static	Context 	context;
 	static 	String  	directoryName;
 	static  TextView	documentationTextView;
 	static  int			testingLevel;				// 11/11/2015 ECU added
@@ -59,12 +59,12 @@ public class DocumentationActivity extends Activity
 	   		//                an error occurs when trying to retrieve the associated
 	   		//                string
 	   		// --------------------------------------------------------------------
-	   		String testingLevelString = "";
+	   		String testingLevelString = StaticData.BLANK_STRING;
 	   		// --------------------------------------------------------------------
 	   		try
 	   		{
 	   			if (testingLevel != StaticData.NO_RESULT)
-	   				testingLevelString = "\n" + getResources().getStringArray(R.array.testing_levels)[testingLevel];
+	   				testingLevelString = StaticData.NEWLINE + getResources().getStringArray(R.array.testing_levels)[testingLevel];
 	   		}
 	   		catch (Exception theException)
 	   		{
@@ -95,8 +95,9 @@ public class DocumentationActivity extends Activity
 			documentationTextView = (TextView)findViewById (R.id.documentation_textview);
 			// --------------------------------------------------------------------	
 			// 04/11/2015 ECU show the existing documentation
+			// 03/06/2019 ECU pass through the context
 			// --------------------------------------------------------------------
-			showDocumentation (activityName,documentationTextView);
+			showDocumentation (this,activityName,documentationTextView);
 			// --------------------------------------------------------------------
 		}
 		else
@@ -133,8 +134,8 @@ public class DocumentationActivity extends Activity
 							 							   getString (R.string.notes_summary),
 							 							   25,
 							 							   StaticData.HINT + "Enter any notes you want to add",
-							 							   Utilities.createAMethod (DocumentationActivity.class,"AddNote",""),
-							 							   Utilities.createAMethod (DocumentationActivity.class,"Cancel","")); 
+							 							   Utilities.createAMethod (DocumentationActivity.class,"AddNote",StaticData.BLANK_STRING),
+							 							   Utilities.createAMethod (DocumentationActivity.class,"Cancel",StaticData.BLANK_STRING)); 
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -152,15 +153,16 @@ public class DocumentationActivity extends Activity
 	// =============================================================================
 	
 	// =============================================================================
-	static void showDocumentation (String theActivityName,TextView theTextView)
+	static void showDocumentation (Context theContext,String theActivityName,TextView theTextView)
 	{
 		// -------------------------------------------------------------------------
 		// 04/11/2015 ECU created to populate the specified text view with the
 		//                current documentation
 		//            ECU the documentation is held in the 'Documentation' folder
 		//                in a file named 'theActivityName'
+		// 03/06/2019 ECU added the context as an argument and pass through
 		// -------------------------------------------------------------------------
-		byte [] localRawDocumentation = Utilities.readAFile (directoryName + theActivityName);
+		byte [] localRawDocumentation = Utilities.readAFile (theContext,directoryName + theActivityName);
 		// -------------------------------------------------------------------------
 		// 04/11/2015 ECU check if there is any documentation
 		// -------------------------------------------------------------------------
@@ -183,12 +185,13 @@ public class DocumentationActivity extends Activity
 		// 11/07/2015 ECU created to handle the entered message
 		// ------------------------------------------------------------------------
 		Utilities.AppendToFile (directoryName + activityName,
-								"\n" + Utilities.getAdjustedTime (PublicData.dateFormatterFull) + 
-								"  " + PublicData.storedData.developerName + "\n" + theNotes + "\n");
+								StaticData.NEWLINE + Utilities.getAdjustedTime (PublicData.dateFormatterFull) + 
+								"  " + PublicData.storedData.developerName + StaticData.NEWLINE + theNotes + StaticData.NEWLINE);
 		// ------------------------------------------------------------------------
 		// 04/11/2015 ECU refresh the display of recorded notes
+		// 03/06/2019 ECU pass through the context
 		// -----------------------------------------------------------------------
-		showDocumentation (activityName,documentationTextView);
+		showDocumentation (context,activityName,documentationTextView);
 		// ------------------------------------------------------------------------
 	}
 	// ----------------------------------------------------------------------------

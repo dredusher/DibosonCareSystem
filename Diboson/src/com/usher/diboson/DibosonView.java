@@ -236,7 +236,7 @@ public class DibosonView extends View implements OnGestureListener
 	public boolean onSingleTapUp (MotionEvent e) 
 	{	
 		AudioAnalyser.resetScale = !AudioAnalyser.resetScale;
-		Utilities.popToast ("Scale " + (AudioAnalyser.resetScale ? "" : "not ") + "being reset");
+		Utilities.popToast ("Scale " + (AudioAnalyser.resetScale ? StaticData.BLANK_STRING : "not ") + "being reset");
 		return false;
 	}
 	// =============================================================================
@@ -402,7 +402,7 @@ public class DibosonView extends View implements OnGestureListener
 			// ---------------------------------------------------------------------
 			// 18/01/2014 ECU build in an adjustment to centre the text against the line
 			// ---------------------------------------------------------------------
-			kHzString = "" + (AudioAnalyser.frequencyStart + (index * 1000)) / 1000;
+			kHzString = StaticData.BLANK_STRING + (AudioAnalyser.frequencyStart + (index * 1000)) / 1000;
 					
 			float [] width = new float [kHzString.length()];
 			// ---------------------------------------------------------------------

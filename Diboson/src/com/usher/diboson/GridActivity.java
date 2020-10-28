@@ -121,8 +121,38 @@ import android.widget.Toast;
 // 30/12/2016 ECU put in long press option for the flashlight (torch)
 // 01/01/2017 ECU modify the BaseAdapter so that text can be displayed with an image
 // 27/02/2017 ECU added daily summary activity
+// 20/03/2017 ECU when 'groupActivities' is true then ignore the click counter
+// 01/04/2017 ECU changed GridImages to use the resource ID rather than a literal
+//                string when displaying the legends of tasks. This also involved
+//                changes to the GridImages class
+// 05/06/2017 ECU added 'gridHelpIntro'
+// 17/06/2017 ECU included the handling of 'startPanicAlarm'
+// 19/07/2017 ECU handle the legends for 'long press' on images
+// 26/08/2017 ECU added 'blood pressure' activity
+// 01/09/2017 ECU when this activity is started then there are a number of phrases
+//                that the TextToSpeechService is processing. If the user is quick then
+//                this could be annoying - so which the user clicks on an icon then
+//                tell the service to flush the queue after stopping what is being
+//                spoken
+// 15/09/2017 ECU added 'video streaming'
+// 23/09/2017 ECU Note - 'groupActivities' is used to specify a number of activities
+//                       which are to 'form a group'. It is set to true, via a
+//                       parameter in the intent, by the GroupActivity.
+// 06/10/2017 ECU added 'theft protection'
+// 02/01/2018 ECU added MusicPlayerTimerActivity
+// 04/02/2018 ECU added CountdownTimerActivity
+// 05/07/2018 ECU provide 'positive feedback' facilities
+// 17/08/2018 ECU handle the 'ignoring' of 'click','long click' and 'scroll' events
+// 27/12/2018 ECU PROBLEM - 'sorting by usage' - see 'raw/documentation_bugs'
+// 28/12/2018 ECU The problem of 27/12/2018 is caused by those actions which do not
+//                require an activity to be called, e.g. torch. These actions will
+//                not result on 'onResume' being envoked and therefore the screen
+//                will not be updated correctly. To get around this, in a messy way,
+//                'UpdateDisplay' has been declared and can be called after the actions
+//                like torch to force the displayed to be updated correctly.
+// 02/04/2019 ECU added 'devices'
+// 13/06/2019 ECU added 'RevCounterActivity'
 // ==================================================================================
-
 public class GridActivity extends Activity implements SensorEventListener,OnGestureListener
 {
 	/* ============================================================================= */
@@ -160,6 +190,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 							activeImages;				// 19/01/2014 ECU added
 														// 18/01/2015 ECU changed to 2d array
 	public static Activity	activity = null;			// 04/05/2015 ECU added
+	public static String	gridHelpIntro;				// 05/06/2017 ECU added
 	public static String    gridHelpFileHeader;			// 14/10/2014 ECU added - the header of help
 														//                for a grid cell
 	public static GridRefreshHandler 
@@ -195,6 +226,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	int						iconSize;					// 16/02/2014 ECU use instead of
 														//                imageWidth / imageHeight
 														// 26/01/2014 ECU made public
+	boolean					ignoreUserActions = false;	// 17/08/2018 ECU added to indicate when to action or not
+														//                action user actions
 	int						lastPosition = StaticData.NO_RESULT;
 														// 25/01/2016 ECU remember the last position clicked
 	Sensor 		   			lightSensor; 				// 17/02/2014 ECU moved here from MainActivity
@@ -204,10 +237,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	int						positionToAction = StaticData.NO_RESULT;
 														// 10/11/2014 ECU added
 	SensorManager    		sensorManager = null; 		// 17/02/2014 ECU moved here from MainActivity
+	boolean					sortInhibit	= false;		// 23/09/2017 ECU added
+	View					switchImageView;			// 05/07/2018 ECU added
+	Object					underlyingObject;			// 22/03/2018 ECU added
 	boolean					volumeKey = false;			// 01/10/2014 ECU used to prevent multiple
 														//                actioning of volume key when
 	                                                    //				  zooming
-	boolean					zoomed = false;				// 01/10/2014 ECU remember if zomming has happened
+	boolean					zoomed = false;				// 01/10/2014 ECU remember if zooming has happened
 	/* ============================================================================= */
 	// 19/01/2014 ECU created - if an entry is true then it will be shown in both
 	//                development and normal mode. If false it will be shown only in
@@ -235,6 +271,21 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	// 25/08/2015 ECU added validation to the 'torch' entry
 	// 02/01/2016 ECU added long press on carer
 	// 30/12/2016 ECU added long press on torch
+	// 19/07/2017 ECU added the long press legend on caring
+	//            ECU added the long press legend on barcode reader
+	//            ECU having tested the above then add 'long press' legends to most
+	//                entries
+	// 26/08/2017 ECU added 'blood pressure'
+	// 27/09/2017 ECU make video streaming conditional on StaticData.VIDEO_STREAMING
+	// 18/12/2017 ECU added the long legend for 'contacts'
+	// 02/01/2018 ECU added the long press for 'music player'
+	// 01/01/2019 ECU PROBLEM - because 'gridImages' contains elements 'R.drawable...'
+	//                          and 'R.string...' then these can change between
+	//							compilations so that the information held on disk will
+	//                          no longer be valid. The only reason that the information 
+	//                          is held on disk is to retain the usage.
+	//            ECU Changed the logic so that the usage for each element is stored
+	//                in an array which will be stored to disk.
 	// -----------------------------------------------------------------------------
 	// NOTES about the following 'gridImages' array
 	// ===== 
@@ -269,69 +320,74 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	//                          The defined validation Method, when called, must return
 	//                          'true' if the activity associated with the element can
 	//                          be started - 'false' if it cannot.
+	//
+	//                          PLEASE NOTE - there is no particular order of this
+	//                                        array - just grew this way as it was
+	//                                        developed.
+	//
+	//										  01/01/2019 ECU arranged alphabetically by legend
 	// -----------------------------------------------------------------------------
-	@SuppressWarnings("rawtypes")
-	public static GridImages [] gridImages = {
-								new GridImages<Object> 			(R.drawable.gameone,			"Visual Game",					true), 
-								new GridImages<Object> 			(R.drawable.bouncing_ball,		"Dexterity Game",				true),	
-								new GridImages<Object> 			(R.drawable.medication,			"Medication Details",			true,	true),
-								new GridImages<Object> 			(R.drawable.photoalbum,			"Family Album",					true),
-								new GridImages<Object> 			(R.drawable.exercise,			"Exercises",					true),	
-								new GridImages<Object> 			(R.drawable.timer,				"Timers",						true),		
-								new GridImages<Object> 			(R.drawable.carer,				"Carer Planning",				true,	true),		
-								new GridImages<Object> 			(R.drawable.doctor,				"Doctor Appointments",			true,	true),	
-								new GridImages<Object> 			(R.drawable.hospital,			"Hospital Appointments",		true,	true),	
-								new GridImages<Object> 			(R.drawable.disk,				"Disk Utilities",				false),		
-								new GridImages<Object> 			(R.drawable.microphone,			"Sound Recorder",				true),	
-								new GridImages<Object> 			(R.drawable.video,				"Video Recorder",				true),		
-								new GridImages<Validation> 		(R.drawable.torch,				"Torch",						true,	true, Validation.class, "torchValidation"),		
-								new GridImages<Object> 			(R.drawable.internet,			"Browse the Internet",			true),
-								new GridImages<Object> 			(R.drawable.music,				"Music Player",					true),  	
-								new GridImages<Object> 			(R.drawable.compass_small,		"Compass",						true),	
-								new GridImages<Object> 			(R.drawable.falling,			"Fall Detector",				true),
-								new GridImages<Object> 			(R.drawable.mail,				"Mail System",					true,   true),	
-								new GridImages<Object> 			(R.drawable.voice_recognition,	"Voice Commands",				true,	true),	
-								new GridImages<Object> 			(R.drawable.bluetooth,			"Bluetooth",					false), 
-								new GridImages<Object> 			(R.drawable.tcp,				"TCP Utilities",				false),	
-								new GridImages<Object> 			(R.drawable.system_information,	"System Details",		   		false,	true),
-								new GridImages<Object> 			(R.drawable.test,				"Test Facilities",				false),	
-								new GridImages<Object> 			(R.drawable.audio_streaming,	"Audio Streaming",				true),	
-								new GridImages<Object> 			(R.drawable.barcode,			"Barcode Reader",				true,	true),	
-								new GridImages<Object> 			(R.drawable.dialogue,			"Start a Dialogue",				true),	
-								new GridImages<Object> 			(R.drawable.files,				"File Explorer",				false),		
-								new GridImages<Television> 		(R.drawable.television,			"Remote Controller",			true,	true, Television.class, "validation"),
-								new GridImages<Object> 			(R.drawable.location,			"Tracking Facility",			true),	
-								new GridImages<Object> 			(R.drawable.settings,			"System Settings",				true),		
-								new GridImages<Object> 			(R.drawable.audio_analyser,		"Audio Analyser",				false),
-								new GridImages<Object> 			(R.drawable.speaking_clock,   	"Speaking Clock",				true,	true),
-								new GridImages<Object>			(R.drawable.shopping,   		"Shopping",						true),
-								new GridImages<Object> 			(R.drawable.swipe,   			"Swipe Tests",					false),	
-								new GridImages<Object> 			(R.drawable.radar,   			"Radar Security",				false),
-								new GridImages<Object> 			(R.drawable.drawer,   			"Navigation Drawer",			false),
-								new GridImages<WeMoActivity>	(R.drawable.wemo,   		 	"WeMo Tasks",					true,	true, WeMoActivity.class, "validation"),
-								new GridImages<Object>			(R.drawable.screen_capture,		"Screen Capture",				true),
-								new GridImages<Object>			(R.drawable.tone_generator,		"Tone Generator",				false,	true),
-								new GridImages<Object>			(R.drawable.tv_guide,			"TV Program Guide",				true,	true),
-								new GridImages<Object> 			(R.drawable.database,   		"Contacts",						true,	true),
-								new GridImages<Object> 			(R.drawable.panic_alarm,   		"Panic Alarm",					true,	true),
-								new GridImages<LiquidActivity> 	(R.drawable.liquid,   			"Liquid Selection",				true,	false, LiquidActivity.class, "validation"),
-								new GridImages<NFC_Activity> 	(R.drawable.nfc,   			    "NFC Tags",						true,	false, NFC_Activity.class, "validation"),
-								new GridImages<Object> 			(R.drawable.named_actions,		"Named Actions",				false),
-								new GridImages<Object> 			(R.drawable.upnp,				"UPnP - WeMo",					false),
-								new GridImages<Object> 			(R.drawable.groups,				"Group Activities",				false),
-								new GridImages<Object> 			(R.drawable.documents,			"Documents",					false),
-								new GridImages<Object> 			(R.drawable.daily_summary,		"Daily Summary",				true,	true)
+	public final static GridImages <?> [] originalGridImages = {
+								new GridImages<Object> 			(R.drawable.audio_analyser,		R.string.legend_audio_analyser,				false),
+								new GridImages<Object> 			(R.drawable.audio_streaming,	R.string.legend_audio_streaming,			true,	true,	R.string.legend_audio_streaming_long),
+								new GridImages<Object> 			(R.drawable.barcode,			R.string.legend_barcode_reader,				true,	true,	R.string.legend_barcode_reader_long),
+								new GridImages<Object> 			(R.drawable.blood_pressure,		R.string.legend_blood_pressure,				true,	true,	R.string.legend_blood_pressure_long),
+								new GridImages<Object> 			(R.drawable.bluetooth,			R.string.legend_bluetooth,					false),
+								new GridImages<Object> 			(R.drawable.internet,			R.string.legend_browse_the_internet,		true),
+								new GridImages<Object> 			(R.drawable.carer,				R.string.legend_carer_planning,				true,	true,	R.string.legend_carer_planning_long),
+								new GridImages<Object> 			(R.drawable.compass_small,		R.string.legend_compass,					true),	
+								new GridImages<Object> 			(R.drawable.database,   		R.string.legend_contacts,					true,	true,	R.string.legend_contacts_long),
+								new GridImages<Object> 			(R.drawable.daily_summary,		R.string.legend_daily_summary,				true,	true,	R.string.legend_daily_summary_long),
+								new GridImages<Object> 			(R.drawable.bouncing_ball,		R.string.legend_dexterity_game,				true),	
+								new GridImages<Object> 			(R.drawable.devices,			R.string.legend_devices,					false),	
+								new GridImages<Object> 			(R.drawable.disk,				R.string.legend_disk_utilities,				false),	
+								new GridImages<Object> 			(R.drawable.doctor,				R.string.legend_doctor_appointments,		true,	true,	R.string.legend_hospital_appointments_long),
+								new GridImages<Object> 			(R.drawable.documents,			R.string.legend_documents,					false),
+								new GridImages<Object> 			(R.drawable.exercise,			R.string.legend_exercises,					true),
+								new GridImages<Object> 			(R.drawable.falling,			R.string.legend_fall_detector,				true),
+								new GridImages<Object> 			(R.drawable.photoalbum,			R.string.legend_family_album,				true),
+								new GridImages<Object> 			(R.drawable.files,				R.string.legend_file_explorer,				false),	
+								new GridImages<Object> 			(R.drawable.groups,				R.string.legend_group_activities,			false),
+								new GridImages<Object> 			(R.drawable.hospital,			R.string.legend_hospital_appointments,		true,	true,	R.string.legend_hospital_appointments_long),
+								new GridImages<LiquidActivity> 	(R.drawable.liquid,   			R.string.legend_liquid_selection,			true,	false, 	LiquidActivity.class, "validation"),
+								new GridImages<Object> 			(R.drawable.mail,				R.string.legend_mail_system,				true,   true,	R.string.legend_mail_system_long),
+								new GridImages<Object> 			(R.drawable.medication,			R.string.legend_medication_details,			true,	true,	R.string.legend_medication_details_long),
+								new GridImages<Object> 			(R.drawable.music,				R.string.legend_music_player,				true,	true,	R.string.legend_music_player_long),
+								new GridImages<Object> 			(R.drawable.named_actions,		R.string.legend_named_actions,				true),
+								new GridImages<Object> 			(R.drawable.drawer,   			R.string.legend_navigation_drawer,			false),
+								new GridImages<NFC_Activity> 	(R.drawable.nfc,   			    R.string.legend_nfc_tags,					true,	false, 	NFC_Activity.class, "validation"),
+								new GridImages<Object> 			(R.drawable.panic_alarm,   		R.string.legend_panic_alarm,				true,	true,	R.string.legend_panic_alarm_long),
+								new GridImages<Object> 			(R.drawable.radar,   			R.string.legend_radar_security,				false),
+								new GridImages<Television> 		(R.drawable.television,			R.string.legend_remote_controller,			true,	true,	R.string.legend_remote_controller_long, Television.class, "validation"),
+								new GridImages<Object> 			(R.drawable.rev_counter,		R.string.legend_rev_counter,				false),	
+								new GridImages<Object>			(R.drawable.screen_capture,		R.string.legend_screen_capture,				true),
+								new GridImages<Object>			(R.drawable.shopping,   		R.string.legend_shopping,					true,	true,	R.string.legend_shopping_long),
+								new GridImages<Object> 			(R.drawable.microphone,			R.string.legend_sound_recorder,				true),
+								new GridImages<Object> 			(R.drawable.speaking_clock,   	R.string.legend_speaking_clock,				true,	true,	R.string.legend_speaking_clock_long),
+								new GridImages<Object> 			(R.drawable.dialogue,			R.string.legend_start_a_dialogue,			true),
+								new GridImages<Object> 			(R.drawable.swipe,   			R.string.legend_swipe_tests,				false),	
+								new GridImages<Object> 			(R.drawable.system_information,	R.string.legend_system_details,		   		false,	true,	R.string.legend_system_details_long),
+								new GridImages<Object> 			(R.drawable.settings,			R.string.legend_system_settings,			true),	
+								new GridImages<Object> 			(R.drawable.tcp,				R.string.legend_tcp_utilities,				false),	
+								new GridImages<Object> 			(R.drawable.test,				R.string.legend_test_facilities,			false),	
+								new GridImages<Object> 			(R.drawable.theft,				R.string.legend_theft_protection,			true,	true,	R.string.legend_theft_protection_long),
+								new GridImages<Object> 			(R.drawable.timer,				R.string.legend_timers,						true,	true,	R.string.legend_timers_long),
+								new GridImages<Object>			(R.drawable.tone_generator,		R.string.legend_tone_generator,				false,	true,	R.string.legend_tone_generator_long),
+								new GridImages<Validation> 		(R.drawable.torch,				R.string.legend_torch,						true,	true,	R.string.legend_torch_long, Validation.class, "torchValidation"),
+								new GridImages<Object> 			(R.drawable.location,			R.string.legend_tracking_facility,			true),
+								new GridImages<Object>			(R.drawable.tv_guide,			R.string.legend_tv_program_guide,			true,	true,	R.string.legend_tv_program_guide_long),
+								new GridImages<Object> 			(R.drawable.upnp,				R.string.legend_upnp_wemo,					true,	true,	R.string.legend_upnp_wemo_long),
+								new GridImages<Object> 			(R.drawable.video,				R.string.legend_video_recorder,				true,	StaticData.VIDEO_STREAMING,	R.string.legend_video_recorder_long),
+								new GridImages<Object> 			(R.drawable.gameone,			R.string.legend_visual_game,				true),
+								new GridImages<Object> 			(R.drawable.voice_recognition,	R.string.legend_voice_commands,				true,	true,	R.string.legend_voice_commands_long),
+								new GridImages<WeMoActivity>	(R.drawable.wemo,   		 	R.string.legend_wemo_tasks,					true,	true,	R.string.legend_wemo_tasks_long, WeMoActivity.class, "validation")	
 						};
 	// =============================================================================
 	// 16/01/2015 ECU changed to public static
 	// -----------------------------------------------------------------------------
 	public static ArrayList<GridItem> gridItems = new ArrayList<GridItem>();
 	// =============================================================================
-	// 22/05/2015 ECU have an array to stored the 'unsorted' array
-	// 19/10/2016 ECU do the prest to 'null'
-	// -----------------------------------------------------------------------------
-	@SuppressWarnings ("rawtypes")
-	static GridImages [] originalGridImages = null; 
+	public static GridImages <?> [] gridImages; 
 	/* ============================================================================= */
 	@Override
 	protected void onCreate (Bundle savedInstanceState) 
@@ -359,6 +415,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			context	= this;
 			// ---------------------------------------------------------------------
+			// 22/03/2018 ECU added as a listener for 'invokes'
+			// ---------------------------------------------------------------------
+			underlyingObject = this;
+			// ---------------------------------------------------------------------
 			Bundle extras = getIntent().getExtras();
 			if (extras != null) 
 			{
@@ -367,23 +427,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				groupActivities = extras.getBoolean (StaticData.PARAMETER_GROUP,false);
 				// -----------------------------------------------------------------
-				if (groupActivities)
-				{
-					// -------------------------------------------------------------
-					// 08/10/2016 ECU want to get the full list of activities
-					// -------------------------------------------------------------
-					PublicData.storedData.gridImages = null;
-					// -------------------------------------------------------------
-				}
-				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
-			// 19/10/2016 ECU store the original images but only once - originally
-			//                there was no check on null which caused issues with
-			//                grouping activities
+			// 01/01/2019 ECU before copying the original grid images then set the
+			//                usages
 			// ---------------------------------------------------------------------
-			if (originalGridImages == null)
-				originalGridImages = Arrays.copyOf (gridImages,gridImages.length);
+			SetUsages ();
+			// ---------------------------------------------------------------------
+			// 01/01/2019 ECU copy the original images into the working array
+			// ---------------------------------------------------------------------
+			gridImages = Arrays.copyOf (originalGridImages,originalGridImages.length);
 			// ---------------------------------------------------------------------
 			// 18/01/2015 ECU check on whether the instance of gridImages in storedData
 			//                is to be reset
@@ -392,24 +445,25 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			if (!PublicData.storedData.groupActivities || groupActivities || PublicData.storedData.groupLists == null)
 			{
-				if (PublicData.storedData.gridImages == null || 
-						(PublicData.storedData.gridImages.length != gridImages.length) ||
-						!PublicData.storedData.sortByUsage)
+				// -----------------------------------------------------------------
+				// 28/12/2018 ECU now decide how whether the images need sorting
+				// -----------------------------------------------------------------
+				// 28/12/2018 ECU first check for sorting by legend
+				//            ECU added the groupActivities check
+				// -----------------------------------------------------------------
+				if (PublicData.storedData.sortByLegend || groupActivities)
 				{
-					// -----------------------------------------------------------------
-					// 18/01/2015 ECU need to reset the stored data with class data
-					// -----------------------------------------------------------------
-					PublicData.storedData.gridImages = gridImages;
-					// -----------------------------------------------------------------
+					SortGridImagesByLegend ();
 				}
 				else
+				// -----------------------------------------------------------------
+				// 28/12/2018 ECU check for sorting by usage
+				// -----------------------------------------------------------------
+				if (PublicData.storedData.sortByUsage)
 				{
-					// -----------------------------------------------------------------
-					// 18/01/2015 ECU the stored version is OK to be used
-					// -----------------------------------------------------------------
-					gridImages = PublicData.storedData.gridImages;
-					// -----------------------------------------------------------------
+					 Arrays.sort (gridImages);	
 				}
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -422,6 +476,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 					gridImages = Arrays.copyOf (originalGridImages,originalGridImages.length);
 				// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
+			// 23/09/2017 ECU preset any variables
+			// ---------------------------------------------------------------------
+			sortInhibit 		= false;
 			// ---------------------------------------------------------------------
 			// 31/12/2014 ECU indicate that activity has been entered
 			// ---------------------------------------------------------------------
@@ -438,8 +496,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				positionToAction = extras.getInt(StaticData.PARAMETER_POSITION, StaticData.NO_RESULT);
 				// -----------------------------------------------------------------
 				// 30/12/2014 ECU make sure that the specified command is in range
+				// 07/02/2018 ECU with the addition of the 'long press' then needed
+				//                to change the checking for validity
 				// -----------------------------------------------------------------
-				if (positionToAction >= gridImages.length || positionToAction < 0)
+				if ((positionToAction & StaticData.ACTIVITY_LONG_OFFSET_MASK) >= gridImages.length || positionToAction < 0)
 				{
 					// -------------------------------------------------------------
 					// 30/12/2014 ECU invalid entry so indicate 'no parameter'
@@ -454,6 +514,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				actionActivity = extras.getBoolean (StaticData.PARAMETER_INTENT,true);
 				// -----------------------------------------------------------------
+				// 23/09/2017 ECU check for the 'sort inhibit' parameter which
+				//                indicates whether the image array is to be sorted 
+				//                or not
+				// -----------------------------------------------------------------
+				sortInhibit = extras.getBoolean (StaticData.PARAMETER_SORT_INHIBIT,false);
 			}
 			// ---------------------------------------------------------------------
 			// 10/11/2014 ECU check whether the activity is being called with a
@@ -503,10 +568,12 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				// 14/10/2014 ECU set up the header to the help files that correspond to
 				//                grid cells
+				// 05/06/2017 ECU change to use gridHelpIntro
 				// -----------------------------------------------------------------
+				gridHelpIntro	   = this.getString (R.string.grid_help_file_header);
 				gridHelpFileHeader = PublicData.projectFolder + 
 											this.getString (R.string.help_directory) + 
-											this.getString (R.string.grid_help_file_header);
+											gridHelpIntro;
 				// -----------------------------------------------------------------
 				// 09/11/2014 ECU add in the gesture detector
 				// -----------------------------------------------------------------
@@ -542,14 +609,21 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 						// 09/08/2016 ECU added the final 'true' to indicate that the
 						//                image should be scaled to fit the screen
 						// 08/10/2016 ECU put in the check on grouping
+						// 17/06/2017 ECU put in the 'panic alarm' check
 						// ---------------------------------------------------------
-						if (!PublicData.storedData.groupActivities && !groupActivities)
+						if (!PublicData.storedData.groupActivities && 
+								!groupActivities && 
+								!PublicData.storedData.startPanicAlarm)
+						{
 							Utilities.DisplayADrawable (context,R.drawable.grid_help,StaticData.DRAWABLE_WAIT_TIME,false,true);
+						}
 						// ---------------------------------------------------------
 						// 12/07/2016 ECU put in the check on the number of clicks
 						//                needed to start an activity
+						// 20/03/2017 ECU put in check on groupActivities
 						// ---------------------------------------------------------
-						clickCounterReminder ();
+						if (!groupActivities)
+							clickCounterReminder ();
 						// ---------------------------------------------------------
 					}
 					else
@@ -589,13 +663,32 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				{
 					TimerActivity.actionStoredAlarms (MainActivity.activity);
 					PanicAlarmActivity.Initialise (MainActivity.activity);
+					// -------------------------------------------------------------
+					// 21/06/2018 ECU handle the random event
+					// -------------------------------------------------------------
+					PublicData.storedData.randomEvent.setAlarm (context);
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
+				// 10/03/2018 ECU check if there is a countdown timer running
+				// -----------------------------------------------------------------
+				CountdownTimerActivity.CheckIfRunning (this);
+				// -----------------------------------------------------------------
 				// 18/05/2016 ECU check if an activity is to be started automatically
+				// 23/09/2017 ECU changed to use 'Legend' rather than 'Number' because
+				//                the position of an activity can change if 'sort by
+				//                usage' is in use
 				// -----------------------------------------------------------------
 				if (PublicData.storedData.activityOnStart)
 				{
-					SwitchOnImage (PublicData.storedData.activityOnStartNumber,null);
+					SwitchOnImage (GridImages.returnPosition (gridImages,PublicData.storedData.activityOnStartLegend),null);
+				}
+				// -----------------------------------------------------------------
+				// 17/06/2017 ECU check if the 'panic alarm' is to be triggered
+				// -----------------------------------------------------------------
+				if (PublicData.storedData.startPanicAlarm)
+				{
+					PanicAlarmActivity.Actions (this);
 				}
 				// -----------------------------------------------------------------
 			}
@@ -605,8 +698,24 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// 10/11/2014 ECU activity has been called with a position parameter so
 				//                start up the required activity. Be careful the second
 				//       		  argument is the view so 'null' may not be a good idea
+				// 07/02/2018 ECU decide whether the 'long press' is to be actioned
 				// -----------------------------------------------------------------
-				SwitchOnImage (positionToAction,null);
+				if (positionToAction < StaticData.ACTIVITY_LONG_OFFSET)
+				{
+					// -------------------------------------------------------------
+					// 07/02/2018 ECU treat as if the item just clicked
+					// -------------------------------------------------------------
+					SwitchOnImage (positionToAction,null);
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 07/02/2018 ECU treat as if the 'long press' is to be actioned
+					// -------------------------------------------------------------
+					SwitchOnImageLong (positionToAction - StaticData.ACTIVITY_LONG_OFFSET,null);
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 				// 10/11/2014 ECU and terminate this activity
 				// -----------------------------------------------------------------
@@ -671,7 +780,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    		// -----------------------------------------------------------------
 	    		// 06/10/2016 ECU grouping of activities is switched on
 	    		// -----------------------------------------------------------------
-	    		GroupActivity.groupMessageHandler.sendEmptyMessage(StaticData.MESSAGE_FINISH);
+	    		GroupActivity.groupMessageHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
 	    		// -----------------------------------------------------------------
 	    		// 06/10/2016 ECU finish this activity
 	    		// -----------------------------------------------------------------
@@ -719,6 +828,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    		// 20/02/2014 ECU reached the stage where the activity should be
 	    		//                exited
 	    		// -----------------------------------------------------------------
+	    		// 01/01/2019 ECU execute any tasks that need completing before
+	    		//                this activity is 'destroyed'
+	    		// -----------------------------------------------------------------
+	    		TidyUpBeforeExiting ();
+	    		// -----------------------------------------------------------------
 	    		return super.onKeyDown (keyCode, event);
 	    		// -----------------------------------------------------------------
 	    	}
@@ -753,6 +867,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    	}
 	    	else
 	    		return super.onKeyDown(keyCode, event);
+	    	// ---------------------------------------------------------------------
 	    }   
 	    // -------------------------------------------------------------------------
 	    else
@@ -762,10 +877,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			 // -------------------------------------------------------------------- 
 			 backKeyCounter = BACK_KEY_COUNTER;
 			 // --------------------------------------------------------------------
-	         return super.onKeyDown(keyCode, event);
+	         return super.onKeyDown(keyCode,event);
+	         // --------------------------------------------------------------------
 	    }
 	}
-	/* ============================================================================ */
+	/* ============================================================================= */
 	@Override
 	public boolean onKeyUp (int keyCode, KeyEvent keyEvent) 
 	{
@@ -782,7 +898,28 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    		// -----------------------------------------------------------------
 	    		volumeKey = false;
 	    		// -----------------------------------------------------------------
-	    	}    	
+	    	}
+	    	// ---------------------------------------------------------------------
+	    	// 29/09/2018 ECU check if the 'theft activity' needs to know about the
+	    	//                key
+	    	// 20/08/2019 ECU return according to the state returned by Vol....
+	    	// ---------------------------------------------------------------------
+	    	if (TheftActivity.movement != null)
+	    	{
+	    		// -----------------------------------------------------------------
+	    		// 20/08/2019 ECU check if the volume key has been processed locally
+	    		// -----------------------------------------------------------------
+	    		if (TheftActivity.movement.VolumeKeyPressed ())
+	    		{
+	    			// -------------------------------------------------------------
+	    			// 20/08/2019 ECU the key has been processed so indicate this to 
+	    			//                the caller
+	    			// -------------------------------------------------------------
+	    			return true;
+	    			// -------------------------------------------------------------
+	    		}
+	    	}
+	    	// ---------------------------------------------------------------------
 	    }
 	    // -------------------------------------------------------------------------
 	    // 01/10/2014 ECU get the key processed normally
@@ -799,15 +936,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			if (PublicData.storedData.groupListCurrent < (PublicData.storedData.groupLists.size() - 1))
 			{
 				PublicData.storedData.groupListCurrent++;
-				// -------------------------------------------------------------
+				// -----------------------------------------------------------------
             	// 08/10/2016 ECU restart this activity
         		// 09/10/2016 ECU moved here
-            	// -------------------------------------------------------------
+            	// -----------------------------------------------------------------
         		finish ();
             	localIntent = new Intent (context,GridActivity.class);
         		startActivityForResult (localIntent,0);
-        		// -------------------------------------------------------------
+        		// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
 		}
 	};
 	// =============================================================================
@@ -892,14 +1030,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			if (PublicData.storedData.groupListCurrent > 0)
 			{
 				PublicData.storedData.groupListCurrent--;				
-				// -------------------------------------------------------------
+				// -----------------------------------------------------------------
 				// 08/10/2016 ECU restart this activity
 				// 09/10/2016 ECU moved here
-				// -------------------------------------------------------------
+				// -----------------------------------------------------------------
 				finish ();
 				localIntent = new Intent (context,GridActivity.class);
 				startActivityForResult (localIntent,0);
-				// -------------------------------------------------------------
+				// -----------------------------------------------------------------
 			}
 		}
 	};
@@ -930,19 +1068,27 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
-		// 16/01/2015 ECU added the check on 'gridRebuild'
+		// 16/01/2015 ECU added the check on 'gridRe....'
 		// 18/01/2015 ECU added the sortByUsage option
+		// 27/09/2017 ECU split the 'sortByUsage' away from the 'gridRebuild' because
+		//                do not want to copy the original grid images. The 'sort by
+		//                usage' is here because the number of times an activity is
+		//                called will possibly change the order of displayed 'rows'
 		// -------------------------------------------------------------------------
 		if (PublicData.gridRebuild || PublicData.storedData.sortByUsage) 
 		{
-			// ---------------------------------------------------------------------
-			// 16/01/2015 ECU make sure the rebuild flag is cleared
-			// ---------------------------------------------------------------------
-			PublicData.gridRebuild = false;
-			// ---------------------------------------------------------------------
-			// 22/05/2015 ECU reset the images array - back to its 'unsorted' state
-			// ---------------------------------------------------------------------
-			gridImages = Arrays.copyOf (originalGridImages,originalGridImages.length);
+			if (PublicData.gridRebuild)
+			{
+				// -----------------------------------------------------------------
+				// 22/05/2015 ECU reset the images array - back to its 'unsorted' state
+				// -----------------------------------------------------------------
+				gridImages = Arrays.copyOf (originalGridImages,originalGridImages.length);
+				// -----------------------------------------------------------------
+				// 16/01/2015 ECU make sure the rebuild flag is cleared
+				// -----------------------------------------------------------------
+				PublicData.gridRebuild = false;
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 			// 16/01/2015 ECU rebuild the display
 			// 10/03/2015 ECU changed to use 'developmentMode' in 'storedData'
@@ -954,25 +1100,25 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 		if (beenPaused)
 		{
-			// --------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 30/11/2014 ECU reset the flag that indicates an 'onPause' has
 			//                happened
-			// --------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			beenPaused = false;
-			// --------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 30/11/2014 ECU reenable the monitor service if it was running
 			//                when 'onPause' occurred
-			// --------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			if (enableMonitor)
 			{
 				enableMonitor = false;
 				PublicData.storedData.monitor.enabled = true;
 			}
-			// --------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 		}
-		// ------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 	   	super.onResume(); 
-	   	// ------------------------------------------------------------------------
+	   	// -------------------------------------------------------------------------
 	} 
 	/* ============================================================================= */
 	public void onSensorChanged (SensorEvent sensorEvent) 
@@ -1038,7 +1184,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    		// -----------------------------------------------------------------
 	    		// 08/04/2014 ECU changed to use resource
 	    		// -----------------------------------------------------------------
-	    		Utilities.popToast (getString(R.string.file_name_returned) + "\n" + fileName,true);
+	    		Utilities.popToast (getString(R.string.file_name_returned) + StaticData.NEWLINE + fileName,true);
 	    	}
 	    	else 
 	 	    if (theResultCode == RESULT_CANCELED) 
@@ -1083,6 +1229,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			menu.add (0,MENU_ZOOM_IN,0,"Zoom in");
 			menu.add (0,MENU_ZOOM_OUT,0,"Zoom out");
 			menu.add (0,MENU_ZOOM_RESTORE,0,"Restore to Original");	
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------	
 		return true;
@@ -1249,8 +1396,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	        // 01/01/2017 ECU clear the text view. This is necessary because views
 	        //                get recycled so the wrong text can be displayed with an
 	        //                image.
+	        // 19/07/2017 ECU changed to use BLANK....
 	        // ---------------------------------------------------------------------
-	        localHolder.textView.setText ("");
+	        localHolder.textView.setText (StaticData.BLANK_STRING);
 	        // ---------------------------------------------------------------------
 	        // 12/09/2013 ECU set image size using variables rather than actual values
 	        // 16/02/2014 ECU use iconSize
@@ -1274,8 +1422,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	        //                the displayed details of an activity
 	        // 01/01/2017 ECU added the 'textview' for updating and changed to use
 	        //                thumbIds rather than activeImages [IMAGE_INDEX]
+	        // 04/06/2017 ECU added the context as an argument
+	        // 20/08/2019 ECU do not process the activityUpdate if in grid mode
 			// ---------------------------------------------------------------------	
-	        UserInterface.activityUpdate (localImages [position],localHolder.imageView,localHolder.textView);
+	        if (PublicData.storedData.userView)
+	        	UserInterface.activityUpdate (context,localImages [position],localHolder.imageView,localHolder.textView);
 	        // ---------------------------------------------------------------------
 	        // 02/01/2017 ECU Note - return the view
 	        // ---------------------------------------------------------------------
@@ -1307,8 +1458,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				// 31/01/2014 ECU in development mode so include all images
 				// 27/01/2015 ECU included the 'long press' argument
+				// 01/04/2017 ECU changed to use new Legend method
+				// 18/04/2017 ECU added context as an argument
+				// 19/07/2017 ECU added the 'long press' legend
 				// -----------------------------------------------------------------		
-				localGridItems.add (new GridItem (gridImages [theIndex].imageId,gridImages [theIndex].legend,gridImages [theIndex].longPress));
+				localGridItems.add (new GridItem (gridImages [theIndex].imageId,
+												  gridImages [theIndex].Legend (context),
+												  gridImages [theIndex].longPress,
+												  gridImages [theIndex].LegendLong (context)));
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -1317,14 +1475,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// 27/01/2015 ECU included the 'long press' argument
 				// 09/03/2015 ECU include the validate option to check that the
 				//                associated activity can run on this device
+				// 18/04/2017 ECU added context as an argument
+				// 19/07/2017 ECU added the 'long press' legend
 				// -----------------------------------------------------------------		
 				if (gridImages [theIndex].mode && 
 					gridImages [theIndex].Validate())
 				{
 					localGridItems.add (new GridItem (gridImages [theIndex].imageId,
-							                          gridImages [theIndex].legend,
-							                          gridImages [theIndex].longPress));
+							                          gridImages [theIndex].Legend (context),
+							                          gridImages [theIndex].longPress,
+							                          gridImages [theIndex].LegendLong (context)));
 				}
+				// -----------------------------------------------------------------
 			}
 		}
 		// -------------------------------------------------------------------------
@@ -1358,7 +1520,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 		// 19/10/2016 ECU created to decide whether the buttons are to be displayed
 		//                or not
-		// --------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		if (PublicData.storedData.groupListCurrent == 0)
 			groupPreviousButton.setVisibility (View.INVISIBLE);
 		else
@@ -1367,9 +1529,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			groupNextButton.setVisibility (View.INVISIBLE);
 		else
 			groupNextButton.setVisibility (View.VISIBLE);
-		// --------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
+	// =============================================================================
 	void DisplayUserView (boolean theGridType)
 	{
 		// =========================================================================
@@ -1413,8 +1575,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 					// -------------------------------------------------------------
 					// 28/01/2014 ECU changed to have a separate method
 					// 02/03/2014 ECU added the view as an argument
+					// 17/08/2018 ECU added the ignore check
 		            // -------------------------------------------------------------
-		            SwitchOnImage (position,view);           
+					if (!ignoreUserActions)
+					{
+						SwitchOnImage (position,view);
+					}
+					// -------------------------------------------------------------
 		        }
 		    });
 		    // ---------------------------------------------------------------------
@@ -1431,8 +1598,12 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		    		// ------------------------------------------------------------
 		    		// 28/01/2014 ECU changed to use a self-contained method
 		    		// 27/11/2014 ECU added 'view' as an argument
-		    		// ------------------------------------------------------------        	
-		            SwitchOnImageLong (position,view);
+		    		// 17/08/2018 ECU added the ignore check
+		    		// ------------------------------------------------------------  
+		    		if (!ignoreUserActions)
+		    		{
+		    			SwitchOnImageLong (position,view);
+		    		}
 				    // ------------------------------------------------------------                       	
 		            return true;
 		        }
@@ -1440,17 +1611,33 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		    // ---------------------------------------------------------------------
 		 	// 10/11/2014 ECU put in the listener to enable swipes to be detected
 		 	// ---------------------------------------------------------------------
-		 	gridView.setOnTouchListener(new OnTouchListener() 
+		 	gridView.setOnTouchListener (new OnTouchListener() 
 		 	{
 		 	    @Override
 		 	    public boolean onTouch (View view, MotionEvent event) 
 		 	    {
 		 	    	// -------------------------------------------------------------
-		 	    	// 25/01/2016 ECU added to correct a warning message
+		 	    	// 17/08/2018 ECU decide if user actions are to be processed
 		 	    	// -------------------------------------------------------------
-		 	    	view.performClick ();
+		 	    	if (!ignoreUserActions)
+					{
+			    		// ---------------------------------------------------------
+			    		// 25/01/2016 ECU added to correct a warning message
+			    		// ---------------------------------------------------------
+			    		view.performClick ();
+			    		// ---------------------------------------------------------
+			    		return gestureDetector.onTouchEvent (event);
+			    		// ---------------------------------------------------------
+					}
+			    	else
+			    	{
+			    		// ---------------------------------------------------------
+			    		// 17/08/2018 ECU indicate that the event is to be ignored
+			    		// ---------------------------------------------------------
+			    		return true;
+			    		// ---------------------------------------------------------
+			    	}
 		 	    	// -------------------------------------------------------------
-		 		    return gestureDetector.onTouchEvent(event);
 		 	    }				
 		 	});   
 		    // ---------------------------------------------------------------------
@@ -1511,8 +1698,12 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		        {
 					// -------------------------------------------------------------
 					// 28/01/2014 ECU changed to have a separate method
+					// 17/08/2018 ECU added the ignore check
 				    // -------------------------------------------------------------
-		            SwitchOnImage (position,view);   
+					if (!ignoreUserActions)
+					{
+						SwitchOnImage (position,view); 
+					}
 		            // -------------------------------------------------------------
 		        }
 		    });
@@ -1530,10 +1721,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		    		// -------------------------------------------------------------
 		    		// 28/09/2014 ECU changed to use a self-contained method
 		    		// 27/11/2014 ECU added view as the argument
+		    		// 17/08/2018 ECU added the ignore check
 				    // -------------------------------------------------------------
-		            SwitchOnImageLong (position,view);
+		    		if (!ignoreUserActions)
+					{
+		    			SwitchOnImageLong (position,view);
+					}
 				    // -------------------------------------------------------------                      	
 		            return true;
+		            // -------------------------------------------------------------
 		        }
 		    });
 			// ---------------------------------------------------------------------
@@ -1544,13 +1740,24 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			    @Override
 			    public boolean onTouch (View view, MotionEvent event) 
 			    {
-			    	// -------------------------------------------------------------
-		 	    	// 25/01/2016 ECU added to correct a warning message
-		 	    	// -------------------------------------------------------------
-		 	    	view.performClick ();
-		 	    	// -------------------------------------------------------------
-				    return gestureDetector.onTouchEvent (event);
-				    // -------------------------------------------------------------
+			    	if (!ignoreUserActions)
+					{
+			    		// ---------------------------------------------------------
+			    		// 25/01/2016 ECU added to correct a warning message
+			    		// ---------------------------------------------------------
+			    		view.performClick ();
+			    		// ---------------------------------------------------------
+			    		return gestureDetector.onTouchEvent (event);
+			    		// ---------------------------------------------------------
+					}
+			    	else
+			    	{
+			    		// ---------------------------------------------------------
+			    		// 17/08/2018 ECU indicate that the event is to be ignored
+			    		// ---------------------------------------------------------
+			    		return true;
+			    		// ---------------------------------------------------------
+			    	}
 			    }				
 			});
 			// ---------------------------------------------------------------------
@@ -1612,155 +1819,287 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		}
 		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
-	 void SetImageSizes (int theNumberOfIconsPerRow)
-	 {
-		 // ------------------------------------------------------------------------
-		 // 15/01/2014 ECU just tried to tidy the code up
-		 // 16/02/2014 ECU rewrite the code to not be switchable on screen size
-		 // ------------------------------------------------------------------------
-		 iconSize = PublicData.screenWidth / theNumberOfIconsPerRow;
-		 // ------------------------------------------------------------------------
-		 // 19/09/2013 ECU set the column width
-	     // ------------------------------------------------------------------------   
-		 gridView.setColumnWidth (iconSize);
-		 // ------------------------------------------------------------------------
-		 // 16/02/2014 ECU make sure that the number of columns is correct
-		 // ------------------------------------------------------------------------
-		 gridView.setNumColumns (theNumberOfIconsPerRow);
-	     // ------------------------------------------------------------------------           
-	 }
-	 @SuppressWarnings("rawtypes")
 	// =============================================================================
-	 Integer [][] GetImages (boolean theMode)
-	 {
-		 // ------------------------------------------------------------------------
-		 // 19/01/2014 ECU do a quick scan to see how many elements I need
-		 // 09/03/2015 ECU added the check of validity of icons
-		 // ------------------------------------------------------------------------
-		 // 19/01/2014 ECU if theMode is true then the whole array is used
-		 // 18/01/2015 ECU the array will contain the 'resource id' of the image
-		 //                - NOT its index in the array
-		 //            ECU changed to work with a 2d array
-		 // ------------------------------------------------------------------------
-		 // 18/01/2015 ECU check for sort mode
-		 // ------------------------------------------------------------------------
-		 if (PublicData.storedData.sortByUsage)
-		 {
-			 Arrays.sort (gridImages);	
-		 }
-		 // ------------------------------------------------------------------------
-		 // 26/04/2015 ECU check if the grid images are to be sorted by the legend
-		 // 17/09/2015 ECU changed to 'ignore the case'
-		 // ------------------------------------------------------------------------
-		 if (PublicData.storedData.sortByLegend)
-		 {
-			 Arrays.sort(gridImages,new Comparator<GridImages>() 
-			 {
-				 @Override
-				 public int compare (GridImages gridImage0, GridImages gridImage1) 
-				 {		
-					 return gridImage0.legend.compareToIgnoreCase (gridImage1.legend);   	
-				 }
-			 });
-		 } 
-		 // ------------------------------------------------------------------------
-		 // 09/03/2015 ECU add a list to hold required information
-		 // ------------------------------------------------------------------------
-		 ArrayList <Integer> resultsList = new ArrayList <Integer> ();
-		 // ------------------------------------------------------------------------
-		 // 09/03/2015 ECU loop for all entries in 'gridImages'
-		 // ------------------------------------------------------------------------
-		 for (int theIndex = 0; theIndex < gridImages.length; theIndex++)
-		 {
-			 // --------------------------------------------------------------------
-			 // 09/03/2015 ECU if in 'development mode' then include everything
-			 // --------------------------------------------------------------------
-			 if (theMode)
-			 {
-				 // ----------------------------------------------------------------
-				 // 09/03/2015 ECU development mode
-				 // ----------------------------------------------------------------
-				 resultsList.add (theIndex);
-			 }
-			 else
-			 {
-				 // ----------------------------------------------------------------
-				 // 09/03/2015 ECU production mode
-				 //            ECU added check on whether the activity is valid on
-				 //                this device
-				 // ----------------------------------------------------------------
-				 if (gridImages [theIndex].mode == !theMode && gridImages [theIndex].Validate())
-					 resultsList.add (theIndex);
-			 }
-		 }
-		 // ------------------------------------------------------------------------
-		 // 09/03/2015 ECU size the results array
-		 // ------------------------------------------------------------------------
-		 Integer [][] resultsArray = new Integer [2][resultsList.size()];
-		 // ------------------------------------------------------------------------
-		 // 09/03/2015 ECU build the results from the stored information
-		 // ------------------------------------------------------------------------
-		 for (int theIndex=0; theIndex < resultsList.size(); theIndex++)
-		 {
-			 resultsArray [IMAGE_INDEX][theIndex] 	 = gridImages [resultsList.get(theIndex)].imageId;
-			 resultsArray [POSITION_INDEX][theIndex] = resultsList.get(theIndex);	 
-		 }
-		 // ------------------------------------------------------------------------	 
-		 // 10/02/2014 ECU check if need to build the cell usage list
-		 // 18/01/2015 ECU removed cellUsage code
-		 // ------------------------------------------------------------------------   
-		 // ------------------------------------------------------------------------
-		 // 10/02/2014 ECU try and sort the images by usage if require
-		 // 18/01/2015 ECU removed the cell usage code
-		 // ------------------------------------------------------------------------
-		 // ------------------------------------------------------------------------	
-		 return resultsArray;	 	 
-	 }
-	 // ============================================================================
-	 void startTheActivity (Intent theIntent)
-	 {
-		 // ------------------------------------------------------------------------
-		 // 06/02/2015 ECU indicate that an activity has been selected
-		 // ------------------------------------------------------------------------
-		 startTheActivity (theIntent,StaticData.NO_RESULT);
-	 }
-	 // ----------------------------------------------------------------------------
-	 void startTheActivity (Intent theIntent,int theResultCode)
-	 {
-		 // ------------------------------------------------------------------------
-		 // 30/11/2014 ECU indicate that an activity has been selected
-		 // ------------------------------------------------------------------------
-		 activityStarted = true;
-		 // ------------------------------------------------------------------------
-		 // 28/11/2014 ECU starts the specified intent or just returns the intent
-		 //                is requested
-		 // ------------------------------------------------------------------------
-		 if (actionActivity)
-		 {
-			 // --------------------------------------------------------------------
-			 // 28/11/2014 ECU start the activity
-			 // 06/02/2015 ECU put in the check on NO_RESULT
-			 // --------------------------------------------------------------------
-			 if (theResultCode == StaticData.NO_RESULT)
-				 startActivity (theIntent);
-			 else
-				 startActivityForResult (theIntent,theResultCode);
-		 }
-		 else
-		 {
-			 // --------------------------------------------------------------------
-			 // 28/11/2014 ECU just return the intent to be started
-			 // 06/02/2015 ECU pass back the position that was selected
-			 // --------------------------------------------------------------------
-			 theIntent.putExtra(StaticData.PARAMETER_POSITION,activeImagePosition);
-			 setResult (RESULT_OK,theIntent);	
-			 finish ();
-			 // --------------------------------------------------------------------
-		 }
-		
-		 // ------------------------------------------------------------------------
-	 }
+	public static int positionInActiveImages (int theResourceID)
+	{
+		// -------------------------------------------------------------------------
+		// 30/03/2017 ECU loop through the array looking for the specified resource
+		// -------------------------------------------------------------------------
+		for (int theIndex = 0; theIndex < activeImages [IMAGE_INDEX].length; theIndex++)
+		{
+			// ---------------------------------------------------------------------
+			// 30/03/2017 ECU check for a match in the array
+			// ---------------------------------------------------------------------
+			if (activeImages [IMAGE_INDEX][theIndex] == theResourceID)
+			{
+				// -----------------------------------------------------------------
+				// 30/03/2017 ECU return the index into the array
+				// -----------------------------------------------------------------
+				return theIndex;
+				// -----------------------------------------------------------------
+			}
+		}
+		// -------------------------------------------------------------------------
+		// 30/03/2017 ECU there is no match in the array
+		// -------------------------------------------------------------------------
+		return StaticData.NO_RESULT;
+		// -------------------------------------------------------------------------
+	}
+	/* ============================================================================= */
+	void SetImageSizes (int theNumberOfIconsPerRow)
+	{
+		// ------------------------------------------------------------------------
+		// 15/01/2014 ECU just tried to tidy the code up
+		// 16/02/2014 ECU rewrite the code to not be switchable on screen size
+		// ------------------------------------------------------------------------
+		iconSize = PublicData.screenWidth / theNumberOfIconsPerRow;
+		// ------------------------------------------------------------------------
+		// 19/09/2013 ECU set the column width
+		// ------------------------------------------------------------------------   
+		gridView.setColumnWidth (iconSize);
+		// ------------------------------------------------------------------------
+		// 16/02/2014 ECU make sure that the number of columns is correct
+		// ------------------------------------------------------------------------
+		gridView.setNumColumns (theNumberOfIconsPerRow);
+		// ------------------------------------------------------------------------           
+	}
+	// =============================================================================
+	Integer [][] GetImages (boolean theMode)
+	{
+		// -------------------------------------------------------------------------
+		// 19/01/2014 ECU do a quick scan to see how many elements I need
+		// 09/03/2015 ECU added the check of validity of icons
+		// -------------------------------------------------------------------------
+		// 19/01/2014 ECU if theMode is true then the whole array is used
+		// 18/01/2015 ECU the array will contain the 'resource id' of the image
+		//                - NOT its index in the array
+		//            ECU changed to work with a 2d array
+		// -------------------------------------------------------------------------
+		// 18/01/2015 ECU check for sort mode
+		// 23/09/2017 ECU check on 'sortInhibit' which, if true, will prevent the
+		//                sort
+		// 28/12/2018 ECU add the 'group..' check
+		// -------------------------------------------------------------------------
+		if (PublicData.storedData.sortByUsage && !sortInhibit && !groupActivities)
+		{
+			Arrays.sort (gridImages);	
+		}	
+		// -------------------------------------------------------------------------
+		// 26/04/2015 ECU check if the grid images are to be sorted by the legend
+		// 17/09/2015 ECU changed to 'ignore the case'
+		// -------------------------------------------------------------------------
+		if (PublicData.storedData.sortByLegend)
+		{
+			// ---------------------------------------------------------------------
+			// 28/12/2018 ECU changed to call the method rather than having the code
+			//                inline
+			// ---------------------------------------------------------------------
+			SortGridImagesByLegend ();
+			// ---------------------------------------------------------------------
+		} 	
+		// -------------------------------------------------------------------------
+		// 09/03/2015 ECU add a list to hold required information
+		// -------------------------------------------------------------------------
+		ArrayList <Integer> resultsList = new ArrayList <Integer> ();
+		// -------------------------------------------------------------------------
+		// 09/03/2015 ECU loop for all entries in 'gridImages'
+		// -------------------------------------------------------------------------
+		for (int theIndex = 0; theIndex < gridImages.length; theIndex++)
+		{
+			// ---------------------------------------------------------------------
+			// 09/03/2015 ECU if in 'development mode' then include everything
+			// ---------------------------------------------------------------------
+			if (theMode)
+			{
+				// -----------------------------------------------------------------
+				// 09/03/2015 ECU development mode
+				// -----------------------------------------------------------------
+				resultsList.add (theIndex);
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 09/03/2015 ECU production mode
+				//            ECU added check on whether the activity is valid on
+				//                this device
+				// -----------------------------------------------------------------
+				if (gridImages [theIndex].mode == !theMode && gridImages [theIndex].Validate())
+					resultsList.add (theIndex);
+			}
+		}
+		// -------------------------------------------------------------------------
+		// 09/03/2015 ECU size the results array
+		// -------------------------------------------------------------------------
+		Integer [][] resultsArray = new Integer [2][resultsList.size()];
+		// -------------------------------------------------------------------------
+		// 09/03/2015 ECU build the results from the stored information
+		// -------------------------------------------------------------------------
+		for (int theIndex=0; theIndex < resultsList.size(); theIndex++)
+		{
+			resultsArray [IMAGE_INDEX][theIndex] 	 = gridImages [resultsList.get(theIndex)].imageId;
+			resultsArray [POSITION_INDEX][theIndex] = resultsList.get(theIndex);	 
+		}
+		// -------------------------------------------------------------------------	 
+		// 10/02/2014 ECU check if need to build the cell usage list
+		// 18/01/2015 ECU removed cellUsage code
+		// -------------------------------------------------------------------------   
+		// -------------------------------------------------------------------------
+		// 10/02/2014 ECU try and sort the images by usage if require
+		// 18/01/2015 ECU removed the cell usage code
+		// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		return resultsArray;	
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void SortGridImagesByLegend ()
+	{
+		// -------------------------------------------------------------------------
+		// 28/12/2018 ECU created to sort the 'gridImages' by legend - added the
+		//                method because it is called more than once
+		// -------------------------------------------------------------------------
+		Arrays.sort (gridImages,new Comparator<GridImages <?>>() 
+		{
+			@Override
+			public int compare (GridImages <?> gridImage0, GridImages <?> gridImage1) 
+			{		
+				// -----------------------------------------------------------------
+				// 01/04/2017 ECU changed to use new Legend method
+				// 18/04/2017 ECU added context as an argument
+				// -----------------------------------------------------------------
+				return gridImage0.Legend (context).compareToIgnoreCase (gridImage1.Legend (context));  
+				// -----------------------------------------------------------------
+			}
+		});
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void startTheActivity (Intent theIntent)
+	{
+		// -------------------------------------------------------------------------
+		// 06/02/2015 ECU indicate that an activity has been selected
+		// -------------------------------------------------------------------------
+		startTheActivity (theIntent,StaticData.NO_RESULT);
+		// -------------------------------------------------------------------------
+	}	
+	// -----------------------------------------------------------------------------
+	void startTheActivity (Intent theIntent,int theResultCode)
+	{
+		// -------------------------------------------------------------------------
+		// 30/11/2014 ECU indicate that an activity has been selected
+		// -------------------------------------------------------------------------
+		activityStarted = true;
+		// -------------------------------------------------------------------------
+		// 28/11/2014 ECU starts the specified intent or just returns the intent
+		//                is requested
+		// -------------------------------------------------------------------------
+		if (actionActivity)
+		{
+			// ---------------------------------------------------------------------
+			// 28/11/2014 ECU start the activity
+			// 06/02/2015 ECU put in the check on NO_RESULT
+			// 05/07/2018 ECU this is the point at which some action is to be taken
+			//                so check for 'positive feedback'
+			// ---------------------------------------------------------------------
+			if (!PublicData.storedData.positiveFeedback)
+			{
+				if (theResultCode == StaticData.NO_RESULT)
+					startActivity (theIntent);
+				else
+					startActivityForResult (theIntent,theResultCode);
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 05/07/2018 ECU positive feedback is required
+				// -----------------------------------------------------------------
+				// 17/08/2018 ECU before starting the 'positive feedback' then indicate
+				//                that any actions are ignored
+				// -----------------------------------------------------------------
+				ignoreUserActions = true;
+				// -----------------------------------------------------------------
+				// 05/07/2018 ECU now activate the 'feedback' animation
+				// 24/01/2019 ECU pass through the 'positiveFeedback' flag
+				// -----------------------------------------------------------------
+				PositiveFeedback.UserAction (context,
+											 PublicData.storedData.positiveFeedback,
+											 switchImageView,theIntent,theResultCode);
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 28/11/2014 ECU just return the intent to be started
+			// 06/02/2015 ECU pass back the position that was selected
+			// 23/09/2017 ECU rather than return the position of the activity, which
+			//                could change if 'sort by usage' is in use, then return
+			//                the 'legend' instead
+			// ---------------------------------------------------------------------
+			theIntent.putExtra (StaticData.PARAMETER_LEGEND,gridImages [activeImagePosition].Legend());
+			setResult (RESULT_OK,theIntent);	
+			finish ();
+			// ---------------------------------------------------------------------
+		}	
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void SetUsages ()
+	{
+		// -------------------------------------------------------------------------
+		// 01/01/2019 ECU created to set the usages in the original grid image array
+		//                to those retrieved from disk
+		// -------------------------------------------------------------------------
+		// 02/01/2019 ECU read the usages that were previously saved into a local 
+		//                array for handling
+		// -------------------------------------------------------------------------
+		int [] localUsages = (int []) Utilities.readObjectFromDisk (PublicData.projectFolder + getString (R.string.usages_file));
+		// -------------------------------------------------------------------------
+		if ((localUsages != null) &&
+			(localUsages.length == originalGridImages.length))
+		{
+			// ---------------------------------------------------------------------
+			// 01/01/2019 ECU loop through the array
+			// ---------------------------------------------------------------------
+			for (int theItem = 0; theItem < originalGridImages.length; theItem++)
+			{
+				// -----------------------------------------------------------------
+				// 01/01/2019 ECU set the usage for this element
+				// -----------------------------------------------------------------
+				originalGridImages [theItem].usage = localUsages [theItem];
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void StoreUsages ()
+	{
+		// -------------------------------------------------------------------------
+		// 01/01/2019 ECU created to build an array of usages corresponding to the
+		//                'original' grid images
+		// -------------------------------------------------------------------------
+		int [] localUsages = new int [GridActivity.originalGridImages.length];
+		// -------------------------------------------------------------------------
+		// 01/01/2019 ECU loop through the array building up the array of usages
+		// -------------------------------------------------------------------------
+		for (int theEntry = 0; theEntry < GridActivity.originalGridImages.length; theEntry++)
+		{
+			// ---------------------------------------------------------------------
+			// 01/01/2019 ECU store the usage for the particular image
+			// ---------------------------------------------------------------------
+			localUsages [theEntry] 
+				= GridImages.GetUsage (GridActivity.originalGridImages [theEntry].imageId);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 02/01/2019 ECU write the array to disk
+		// -------------------------------------------------------------------------
+		Utilities.writeObjectToDisk (PublicData.projectFolder + getString (R.string.usages_file),localUsages);
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 	// =============================================================================
 	// P R E S S   O N   I M A G E
@@ -1772,6 +2111,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 // 02/03/2014 ECU added the view as an argument
 		 // 14/01/2015 ECU rearrange to be alphabetical
 		 // ------------------------------------------------------------------------
+		 // 05/07/2018 ECU remember the view associated with this 'switch'
+		 // ------------------------------------------------------------------------
+		 switchImageView = theView;
+		 // ------------------------------------------------------------------------
+		 // 01/09/2017 ECU if the user is quick then the user could click an icon
+		 //                whilst the system is speaking some informative phrases
+		 //                which could be annoying - so just flush them out
+		 // ------------------------------------------------------------------------
+		 TextToSpeechService.Flush ();
+		 // ------------------------------------------------------------------------
 		 // 25/01/2016 ECU check if the number of clicks has been actioned
 		 //            ECU only if the limit is greater than 1 (on a new device when
 		 //				   'storedData' has not been initialised then the limit will
@@ -1779,8 +2128,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 // 06/03/2016 ECU put in the check on position... because when the Timer
 		 //				   wants to start an activity then the click counter should
 		 //                not be taken into account
+		 // 20/03/2017 ECU put in the check on groupActivities
 		 // ------------------------------------------------------------------------
-		 if (PublicData.storedData.clickCounter > 1 && (positionToAction == StaticData.NO_RESULT))
+		 if (!groupActivities && PublicData.storedData.clickCounter > 1 && (positionToAction == StaticData.NO_RESULT))
 		 {
 			 if ((lastPosition == StaticData.NO_RESULT) || (thePosition == lastPosition))
 			 {
@@ -1827,20 +2177,30 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 activeImagePosition = thePosition;
 		 // ------------------------------------------------------------------------
 		 // 30/12/2014 ECU check if need to log statistics
+		 // 01/04/2017 ECU chaned to use new Legend method
+		 // 18/04/2017 ECU added context as an argument
 		 // ------------------------------------------------------------------------
 		 if (PublicData.storedData.acquireStatistics)
 		 {
-			 Utilities.LogToProjectFile (TAG,gridImages [thePosition].legend);
+			 Utilities.LogToProjectFile (TAG,gridImages [thePosition].Legend (context));
 		 }
 		 // ------------------------------------------------------------------------
 		 // 28/04/2016 ECU handle any monitoring that has been enabled
+		 // 30/03/2017 ECU changed from the position
 		 // ------------------------------------------------------------------------
-		 MonitorData.sendMonitorData (context,StaticData.MONITOR_DATA_ACTIVITY,thePosition);
+		 MonitorData.sendMonitorData (context,StaticData.MONITOR_DATA_ACTIVITY,activeImages [IMAGE_INDEX][thePosition]);
 		 // ------------------------------------------------------------------------ 
 		 // 10/02/2014 ECU update the cell usage
 		 // 18/01/2015 ECU changed to use the gridImages rather than cellUsage
 		 // ------------------------------------------------------------------------
 		 gridImages [activeImages [POSITION_INDEX][thePosition]].usage++;
+		 // ------------------------------------------------------------------------
+		 // 05/01/2019 ECU want to make sure that the display is updated if required
+		 // ------------------------------------------------------------------------
+		 if (PublicData.storedData.usageDisplay)
+		 {
+			 gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER);
+		 }
 		 // ------------------------------------------------------------------------
 		 // 20/10/2014 ECU initialise the activity counter which can be used by
 		 //                activities that may need to restart themselves
@@ -1898,6 +2258,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
    				// 07/02/2014 ECU change to use general bar code activity
    				// -----------------------------------------------------------------	
    				localIntent = new Intent (context,BarCodeActivity.class);
+   				startTheActivity (localIntent,0);
+   				break;
+   			// =====================================================================
+   			case R.drawable.blood_pressure:
+   				// -----------------------------------------------------------------
+   				// 26/08/2017 ECU added
+   				// -----------------------------------------------------------------
+   				localIntent = new Intent (context,BloodPressureActivity.class);
    				startTheActivity (localIntent,0);
    				break;
    			// =====================================================================
@@ -1967,6 +2335,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			}
   				// -----------------------------------------------------------------
   				break;
+  			// =====================================================================
+      		case R.drawable.devices:
+      			// -----------------------------------------------------------------
+      			// 02/04/2019 ECU added - 'devices' activity
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,DevicesActivity.class);
+      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+      			break;	
       		// =====================================================================
       		case R.drawable.dialogue:
       			// -----------------------------------------------------------------
@@ -2040,7 +2417,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 09/12/2013 ECU pass through any parameters
       			// 22/02/2014 ECU change to use PARAMETER_
       			// -----------------------------------------------------------------
-      			localIntent.putExtra(StaticData.PARAMETER_FOLDER,PublicData.projectFolder);
+      			localIntent.putExtra (StaticData.PARAMETER_FOLDER,PublicData.projectFolder);
       			startTheActivity (localIntent,StaticData.REQUEST_CODE_FILE);
       			break;
       		// =====================================================================
@@ -2155,6 +2532,20 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
   			// =====================================================================
       		case R.drawable.microphone:
       			localIntent = new Intent (context,AudioRecorder.class);
+      			// -----------------------------------------------------------------
+      			// 11/06/2017 ECU if started by the timer activity then want to tell
+      			//                the activity to start the recorder
+      			// -----------------------------------------------------------------
+      			if (positionToAction != StaticData.NO_RESULT)
+      			{
+      				//--------------------------------------------------------------
+      				// 11/06/2017 ECU pass through the command to get the activity
+      				//                to start recording immediately
+      				// -------------------------------------------------------------
+      				localIntent.putExtra (StaticData.PARAMETER_RECORDER_START, true);
+      				// -------------------------------------------------------------
+      			}
+      			// -----------------------------------------------------------------
   				startTheActivity (localIntent,0);
       			break;
       		// =====================================================================
@@ -2170,17 +2561,46 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			if (!PublicData.trackBeingPlayed)
       			{
       				// -------------------------------------------------------------
-      				// 12/04/2015 ECU remote track not being played
-      				//            ECU can start the music player
-      				// -------------------------------------------------------------
-      				localIntent = new Intent (context,MusicPlayer.class);
-      				// -------------------------------------------------------------	
-      				// 02/06/2013 ECU included the flags to try and resume an activity 
-      				//                rather than start a new one
-      				// -------------------------------------------------------------
-      				localIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP); 
-      				startTheActivity (localIntent);
-      				// -------------------------------------------------------------
+  					// 12/04/2015 ECU remote track not being played
+  					//            ECU can start the music player
+  					// -------------------------------------------------------------
+  					localIntent = new Intent (context,MusicPlayer.class);
+  					// -------------------------------------------------------------	
+  					// 02/06/2013 ECU included the flags to try and resume an activity 
+  					//                rather than start a new one
+  					// ---------------------------------------------------------
+  					localIntent.addFlags (Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP); 
+  					// -------------------------------------------------------------
+      				// 02/06/2017 ECU check if there are any actions in progress
+      				//                in which case do not allow the music player
+  					// -------------------------------------------------------------
+      				if (Validation.musicPlayerValidation ())
+      				{
+      					// ---------------------------------------------------------
+      					// 02/06/2017 ECU start the music player immediately
+      					// ---------------------------------------------------------
+      					startTheActivity (localIntent);
+      					// ---------------------------------------------------------
+      				}
+      				else
+      				{
+      					// ---------------------------------------------------------
+      					// 02/06/2017 ECU there are actions in progress so do not
+      					//                allow
+      					// ---------------------------------------------------------
+      					Utilities.popToast (getString (R.string.unable_to_start_music_player_actions),true);
+      					// ---------------------------------------------------------
+      					// 02/06/2017 ECU remember the intent so that it can be started
+      					//                when the actions finish
+      					// ---------------------------------------------------------
+      					PublicData.actionIntent = localIntent;
+      					// ---------------------------------------------------------
+      					// 03/06/2017 ECU trigger the display of some information to
+      					//                inform the user
+      					// ---------------------------------------------------------
+      					MusicPlayer.refreshImageAdapter ();
+      					// ---------------------------------------------------------
+      				}
       			}
       			else
       			{
@@ -2228,7 +2648,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// S L I D E   S H O W
       			// ===================
-      			// 25/06/2013 ECU start the music player
+      			// 25/06/2013 ECU start the photo album
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,SlideShowActivity.class);
   				startTheActivity (localIntent,0);
@@ -2241,6 +2661,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			localIntent = new Intent (context,RadarActivity.class);
       			startTheActivity (localIntent,0);
       			break;
+      		// =====================================================================
+      		case R.drawable.rev_counter:
+      			// -----------------------------------------------------------------
+      			// 13/06/2019 ECU added - 'rev counter' activity
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,RevCounterActivity.class);
+      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+      			break;	
       		// =====================================================================
       		case R.drawable.screen_capture:
       			// -----------------------------------------------------------------
@@ -2265,20 +2694,23 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       				// --------------------------------------------------------------
       				localIntent = new Intent (context,SettingsActivity.class);
       				startTheActivity (localIntent,StaticData.REQUEST_CODE_SETTINGS);
+      				// --------------------------------------------------------------
       			}
       			else
       			{
       				// -------------------------------------------------------------
       				// 03/03/2016 ECU not in development mode so request the password
       				//                before allowing the settings activity to start
+      				// 22/03/2018 ECU changed to use underlying object
       				// --------------------------------------------------------------
-      				DialogueUtilities.textInput (context,
-							 context.getString (R.string.enter_password_title),
-							 context.getString (R.string.enter_password_summary),
-							 StaticData.HINT +  context.getString (R.string.enter_password_hint),
-							 Utilities.createAMethod (GridActivity.class,"SettingsPassword",""),
-							 null,
-							 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+      				DialogueUtilitiesNonStatic.textInput (context,
+      													  underlyingObject,
+      													  context.getString (R.string.enter_password_title),
+      													  context.getString (R.string.enter_password_summary),
+      													  StaticData.HINT +  context.getString (R.string.enter_password_hint),
+      													  Utilities.createAMethod (GridActivity.class,"SettingsPassword",StaticData.BLANK_STRING),
+      													  null,
+      													  InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
       				// -------------------------------------------------------------
       			}
       	    	break;
@@ -2293,11 +2725,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       	    	break;
       	    // =====================================================================
       		case R.drawable.speaking_clock:
+      		// -----------------------------------------------------------------
+      			// 25/01/2016 ECU added - speaking clock - the current time
+      			// 20/03/2017 ECU pass through the context as an argument
+      			// 24/04/2018 ECU add the 'true' so that text is always displayed
+      			//                irrespective of whether the configuration has been
+      			//				  set.
       			// -----------------------------------------------------------------
-      			// 09/02/2014 ECU added - speaking clock
+      			Utilities.SpeakingClock (context,true);
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,SpeakingClockActivity.class);
-      	    	startTheActivity (localIntent,0);
       	    	break;
       	    // =====================================================================
       		case R.drawable.swipe:
@@ -2306,6 +2742,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,SwipeActivity.class);
       			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.system_information:
@@ -2314,6 +2751,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,SystemInfoActivity.class);
       			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case  R.drawable.tcp:
@@ -2324,6 +2762,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,TCPActivity.class);
       			startTheActivity (localIntent,StaticData.REQUEST_CODE_FINISH);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.television:
@@ -2339,7 +2778,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			//                correctly
       			// 19/04/2014 ECU put in the ability to run the activity even
       			//                if there is no hardware
-      			// 27/02/2016 ECU inlcude the check on the remote controller server
+      			// 27/02/2016 ECU include the check on the remote controller server
       			// -----------------------------------------------------------------
       			if (PublicData.blueToothService || 
       				PublicData.storedData.remoteAlways ||
@@ -2372,6 +2811,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,TestActivity.class);
       			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+      			break;
+      		// =====================================================================
+      		case R.drawable.theft:
+      			// -----------------------------------------------------------------
+      			// 06/10/2017 ECU created to handle 'theft protection'
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,TheftActivity.class);
+      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.timer:
@@ -2410,6 +2859,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,ToneGeneratorActivity.class);
       			startTheActivity (localIntent,StaticData.REQUEST_CODE_FINISH);
+      			// -----------------------------------------------------------------
       			break;
   			// =====================================================================
       		case R.drawable.torch:
@@ -2421,6 +2871,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
   				FlashLight.flashLightToggle (context);
   				// -----------------------------------------------------------------
+  				// 28/12/2018 ECU because no activity was started it is necessary to
+  				//                force the display to be redrawn correctly
+  				// -----------------------------------------------------------------
+  				UpdateDisplay ();
+  				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.tv_guide:
@@ -2431,6 +2886,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,ShowEPGActivity.class);
       			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.upnp:
@@ -2440,6 +2896,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,UPnP_Activity.class);
       			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.video:
@@ -2457,6 +2914,20 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			else
       			{
       				localIntent = new Intent (context,VideoRecorderOld.class);
+      			}
+      			// -----------------------------------------------------------------
+      			// 11/06/2017 ECU if started by the timer activity then want to tell
+      			//                the activity to start the recorder using the 
+      			//                specified file name
+      			// -----------------------------------------------------------------
+      			if (positionToAction != StaticData.NO_RESULT)
+      			{
+      				//--------------------------------------------------------------
+      				// 11/06/2017 ECU pass through the command to get the activity
+      				//                to start recording immediately
+      				// -------------------------------------------------------------
+      				localIntent.putExtra (StaticData.PARAMETER_FILE_NAME,Utilities.getAUniqueFileName (StaticData.VIDEO_RECORDER_FILE_DEFAULT));
+      				// -------------------------------------------------------------
       			}
       			// -----------------------------------------------------------------
   				startTheActivity (localIntent,0);
@@ -2500,6 +2971,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
   				break;
   			// =====================================================================
 		 }
+		 // ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	// =============================================================================
@@ -2511,8 +2983,88 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 		// 20/08/2015 ECU handle a 'long press' on a displayed image
 		// -------------------------------------------------------------------------
+		// 05/07/2018 ECU remember the view associated with this 'switch'
+		// -------------------------------------------------------------------------
+		switchImageView = theView;
+		// -------------------------------------------------------------------------
+		// 01/09/2017 ECU if the user is quick then the user could click an icon
+		//                whilst the system is speaking some informative phrases
+		//                which could be annoying - so just flush them out
+		// -------------------------------------------------------------------------
+		TextToSpeechService.Flush ();
+		// -------------------------------------------------------------------------
 		switch (activeImages [IMAGE_INDEX][thePosition])
 		{
+			// =====================================================================
+			case R.drawable.audio_streaming:
+				// -----------------------------------------------------------------
+				// 14/01/2018 ECU start audio streaming from the specified device
+				// -----------------------------------------------------------------
+				if (PublicData.streamingDestination == null)
+				{
+					// -------------------------------------------------------------
+					// 15/01/2018 ECU no device has been allocated - see if one can
+					//                be allocated automatically
+					// -------------------------------------------------------------
+					// 15/01/2018 ECU get a list of compatible devices - excluding
+					//                this one
+					// -------------------------------------------------------------
+					String [] devices = Utilities.deviceListAsArray (false);
+					// -------------------------------------------------------------
+					if ((devices == null) || (devices.length == 0))
+					{
+						// ---------------------------------------------------------
+						// 15/01/2018 ECU there are no devices to stream from
+						// ---------------------------------------------------------
+						Utilities.popToastAndSpeak (getString (R.string.no_device_to_listen_to),true);
+						// ---------------------------------------------------------
+					}
+					else
+					if (devices.length == 1)
+					{
+						// ---------------------------------------------------------
+						// 15/01/2018 ECU there is only one device so assume that
+						//                that will be the source of the audio stream
+						// ---------------------------------------------------------
+						PublicData.streamingDestination = Devices.returnIPAddress (devices [0]);	
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 15/01/2018 ECU there are a number of devices so tell the
+						//                user to use 'TCP Utilities' to select the
+						//                one that is required
+						// ---------------------------------------------------------
+						Utilities.popToastAndSpeak (getString (R.string.no_device_to_listen_to_use_tcp),true);
+						// ---------------------------------------------------------
+					}
+				}
+				// -----------------------------------------------------------------
+				// 15/01/2017 ECU if the stream has been set then take the necessary
+				//                action
+				// -----------------------------------------------------------------
+				if (PublicData.streamingDestination != null)
+				{
+					// -------------------------------------------------------------
+					// 15/01/2018 ECU toggle the action to be taken
+					// -------------------------------------------------------------
+					PublicData.audioStreaming = !PublicData.audioStreaming;
+					// -------------------------------------------------------------
+					// 15/01/2018 ECU tell the remote device what to do
+					// -------------------------------------------------------------
+					Utilities.socketMessagesSendMessageType (this,
+															 PublicData.streamingDestination,
+															 PublicData.socketNumberForData, 
+															 ((PublicData.audioStreaming) ? StaticData.SOCKET_MESSAGE_START_STREAM 
+																	                      : StaticData.SOCKET_MESSAGE_STOP_STREAM));
+					// -------------------------------------------------------------
+					// 15/01/2018 ECU try and get the legends updated
+					// -------------------------------------------------------------
+					gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+				break;
 			// =====================================================================
 			case R.drawable.barcode:
 				// -----------------------------------------------------------------
@@ -2521,6 +3073,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				localIntent = new Intent (context,BarCodeActivity.class);
 				localIntent.putExtra (StaticData.PARAMETER_BARCODE,true);
 				startTheActivity (localIntent,0);
+				break;
+			// =====================================================================
+			case R.drawable.blood_pressure:
+				// -----------------------------------------------------------------
+				// 27/08/2017 ECU want to show currently stored pressures and weights
+				// -----------------------------------------------------------------
+				localIntent = new Intent (context,BloodPressureActivity.class);
+				localIntent.putExtra (StaticData.PARAMETER_DISPLAY,true);
+				startTheActivity (localIntent,0);
+				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
   			case R.drawable.carer:
@@ -2547,7 +3109,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			//                selected day
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,DailySummaryActivity.class);
-      			localIntent.putExtra( StaticData.PARAMETER_DAY,true);
+      			localIntent.putExtra (StaticData.PARAMETER_DAY,true);
       			startTheActivity (localIntent,0);
       			// -----------------------------------------------------------------
       			break;
@@ -2619,6 +3181,17 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
+      		case  R.drawable.music:
+      			// -----------------------------------------------------------------
+      			// MUSIC PLAYER TIMER
+      			// ==================
+      			// 02/01/2018 ECU start the activity to set timer for the music
+      			//                player
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,MusicPlayerTimerActivity.class);
+  				startTheActivity (localIntent,0);
+  				break;
+			// =====================================================================
       		case  R.drawable.panic_alarm:
       			// -----------------------------------------------------------------
       			// P A N I C  A L A R M
@@ -2636,11 +3209,22 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
   				break;
   			// =====================================================================
       		case R.drawable.speaking_clock:
+      		// -----------------------------------------------------------------
+      			// 09/02/2014 ECU added - speaking clock
       			// -----------------------------------------------------------------
-      			// 25/01/2016 ECU added - speaking clock - the current time
+      			localIntent = new Intent (context,SpeakingClockActivity.class);
+      	    	startTheActivity (localIntent,0);
       			// -----------------------------------------------------------------
-      			Utilities.SpeakingClock ();
+      	    	break;
+      	    // =====================================================================
+      		case R.drawable.shopping:
       			// -----------------------------------------------------------------
+      			// 24/04/2018 ECU added - do some shopping
+      			// -----------------------------------------------------------------			
+      			localIntent = new Intent (context,ShoppingActivity.class);
+      			localIntent.putExtra (StaticData.PARAMETER_SHOP,true);
+      	    	startTheActivity (localIntent,0);
+      	    	// -----------------------------------------------------------------
       	    	break;
  			// =====================================================================
       		case R.drawable.television:
@@ -2672,25 +3256,45 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
+      		case R.drawable.theft:
+      			// -----------------------------------------------------------------
+      			// 06/10/2017 ECU created to handle 'theft protection' configuration
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,TheftActivity.class);
+      			localIntent.putExtra (StaticData.PARAMETER_CONFIGURATION,true);
+      			startTheActivity (localIntent,0);
+      			break;
+      		// =====================================================================
+      		case R.drawable.timer:
+      			// -----------------------------------------------------------------
+      			// 04/02/2018 ECU created to handle 'countdown timer'
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,CountdownTimerActivity.class);
+      			startTheActivity (localIntent,0);
+      			break;
+      		// =====================================================================
       		case  R.drawable.tone_generator:
       			// -----------------------------------------------------------------
       			// 18/08/2015 ECU added
+      			// 08/08/2019 ECU handle the 'mosquito' option
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,ToneGeneratorActivity.class);
-      			Tone tones []	= {
-      								// ---------------------------------------------
-      								// 18/08/2015 ECU five notes from Close Encounters
-      								//                Of The Third Kind
-      								// ---------------------------------------------
-      			  					new Tone ("G5",500),
-      			  					new Tone ("A5",500),
-      			  					new Tone ("F5",500),
-      			  					new Tone ("F4",500),
-      			  					new Tone ("C5",1000)
-      			  					// ---------------------------------------------
-      			  				};
+      			Tone [] tones 	= {
+										// -----------------------------------------
+										// 18/08/2015 ECU five notes from Close
+      									//                Encounters Of The Third Kind
+										// -----------------------------------------
+										new Tone ("G5",500),
+										new Tone ("A5",500),
+										new Tone ("F5",500),
+										new Tone ("F4",500),
+										new Tone ("C5",1000)
+										// -----------------------------------------
+									};
+      			// -----------------------------------------------------------------
       			localIntent.putExtra (StaticData.PARAMETER_TONES,new Tones (tones));
       			startTheActivity (localIntent,StaticData.REQUEST_CODE_FINISH);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.torch:
@@ -2709,6 +3313,28 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			localIntent = new Intent (context,TVChannelsActivity.class);
       			startTheActivity (localIntent,0);
   				break;
+  			// =====================================================================
+      		case R.drawable.upnp:
+      			// -----------------------------------------------------------------
+      			// 16/04/2017 ECU added to process all UPnP devices
+      			// -----------------------------------------------------------------
+      			localIntent = new Intent (context,UPnP_Activity_All.class);
+      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+  				break;
+  			// =====================================================================
+      		case R.drawable.video:
+				// -----------------------------------------------------------------
+				// 15/09/2017 ECU start up the video streaming activity
+				// 27/09/2017 ECU add check on VIDEO_STREAMING
+				// -----------------------------------------------------------------
+				if (StaticData.VIDEO_STREAMING)
+				{
+					localIntent = new Intent (context,VideoStreamingActivity.class);
+					startTheActivity (localIntent,0);
+				}
+				// -----------------------------------------------------------------
+				break;
   			// =====================================================================
  			case R.drawable.voice_recognition:
  				// -----------------------------------------------------------------
@@ -2736,6 +3362,35 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
  				Utilities.gridHelp (context,activeImages[IMAGE_INDEX][thePosition]);
  				break;
 		}
+	}
+	// =============================================================================
+	void TidyUpBeforeExiting ()
+	{
+		// -------------------------------------------------------------------------
+		// 02/01/2019 ECU created to perform any tasks that need to be completed
+		//                before this activity ends
+		// -------------------------------------------------------------------------
+		// 02/01/2019 ECU generate the array with how the activities have been used
+		// -------------------------------------------------------------------------
+		StoreUsages ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void UpdateDisplay ()
+	{
+		// -------------------------------------------------------------------------
+		// 28/12/2018 ECU created so that the 'onResume' event method can be called
+		//                if sorting by usage is enabled
+		// -------------------------------------------------------------------------
+		if (PublicData.storedData.sortByUsage)
+		{
+			// ---------------------------------------------------------------------
+			// 28/12/2018 ECU call the normal 'onResume' method
+			// ---------------------------------------------------------------------
+			onResume ();
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	void ZoomDisplay (int theIconsPerRow)
@@ -2768,6 +3423,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			if (iconsPerRow > 1)
 				iconsPerRow--;
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -2776,6 +3432,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			if (iconsPerRow < 10)
 				iconsPerRow++;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 01/10/2014 ECU do the common aspects
@@ -2793,9 +3450,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	// 09/11/2014 ECU add the methods needed for handling gestures
 	// -----------------------------------------------------------------------------
 	@Override
-	public boolean onDown(MotionEvent motionEvent) 
+	public boolean onDown (MotionEvent motionEvent) 
 	{
+		// -------------------------------------------------------------------------
+		// 17/08/2018 ECU Note - want the scroll action to take place
+		// -------------------------------------------------------------------------
 		return false;
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	@Override
@@ -2805,47 +3466,48 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 							float velocityY) 
 	{
 		// -------------------------------------------------------------------------
+		// 17/08/2018 ECU want the user action to be processed
+		// -------------------------------------------------------------------------
 		// 09/11/2014 ECU get the check in coordinates
 		// -------------------------------------------------------------------------	
-        float changeInX = motionEvent2.getX() - motionEvent1.getX();
-        float changeInY = motionEvent2.getY() - motionEvent1.getY();
-        // -------------------------------------------------------------------------
-        // 09/11/2014 ECU if moved more in a left/right direction rather than up/
-        //                down
-        // -------------------------------------------------------------------------
-        if (Math.abs (changeInX) > Math.abs (changeInY)) 
-        {
-        	// ---------------------------------------------------------------------
-        	// 09/11/2014 ECU user has swiped, apparently, so check direction
-        	// ---------------------------------------------------------------------
-            if (Math.abs (changeInX) > SWIPE_DISTANCE_THRESHOLD && 
-            		Math.abs (velocityX) > SWIPE_VELOCITY_THRESHOLD) 
-            {
-            
-            	if (changeInX > 0) 
-            	{
-            		// -------------------------------------------------------------
-            		// 10/11/2014 ECU swipe right has been detected
-            		// -------------------------------------------------------------
-            		localIntent = new Intent (context,SwipeActivity.class);
-            		startActivityForResult (localIntent,0);
-            		// -------------------------------------------------------------
-            	} 
-            	else 
-            	{
-            		// -------------------------------------------------------------
-            		// 10/11/2014 ECU swipe left has been detected
-            		// -------------------------------------------------------------
-            		localIntent = new Intent (context,SwipeActivity.class);
-            		startActivityForResult (localIntent,0);
-            		// -------------------------------------------------------------
-            	}
-            }
-            // ---------------------------------------------------------------------
-        } 
-        // -------------------------------------------------------------------------
-        // 09/11/2014 ECU always indicate that the event has been handled
-        // -------------------------------------------------------------------------
+		float changeInX = motionEvent2.getX() - motionEvent1.getX();
+		float changeInY = motionEvent2.getY() - motionEvent1.getY();
+		// -------------------------------------------------------------------------
+		// 09/11/2014 ECU if moved more in a left/right direction rather than up/
+		//                down
+		// -------------------------------------------------------------------------
+		if (Math.abs (changeInX) > Math.abs (changeInY)) 
+		{
+			// ---------------------------------------------------------------------
+			// 09/11/2014 ECU user has swiped, apparently, so check direction
+			// ---------------------------------------------------------------------
+			if (Math.abs (changeInX) > SWIPE_DISTANCE_THRESHOLD && 
+					Math.abs (velocityX) > SWIPE_VELOCITY_THRESHOLD) 
+			{
+				if (changeInX > 0) 
+				{
+					// -------------------------------------------------------------
+					// 10/11/2014 ECU swipe right has been detected
+					// -------------------------------------------------------------
+					localIntent = new Intent (context,SwipeActivity.class);
+					startActivityForResult (localIntent,0);
+					// -------------------------------------------------------------
+				} 
+				else 
+				{
+					// -------------------------------------------------------------
+					// 10/11/2014 ECU swipe left has been detected
+					// -------------------------------------------------------------
+					localIntent = new Intent (context,SwipeActivity.class);
+					startActivityForResult (localIntent,0);
+					// -------------------------------------------------------------
+				}
+			}
+			// ---------------------------------------------------------------------
+		} 
+		// -------------------------------------------------------------------------
+		// 09/11/2014 ECU always indicate that the event has been handled
+		// -------------------------------------------------------------------------
 		return true;
 		// -------------------------------------------------------------------------
 	}
@@ -2868,10 +3530,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	}
 	// -----------------------------------------------------------------------------
 	@Override
-	public boolean onScroll (MotionEvent motionEvent1, MotionEvent motionEvent2, 
-							float distanceX,float distanceY) 
+	public boolean onScroll (MotionEvent motionEvent1, 
+							 MotionEvent motionEvent2, 
+							 float distanceX,
+							 float distanceY) 
 	{
+		// -------------------------------------------------------------------------
+		// 17/08/2018 ECU added the 'ignore' check
+		// -------------------------------------------------------------------------
+		// 17/08/2018 ECU Note - want the scroll action to take place
+		// -------------------------------------------------------------------------
 		return false;
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	@Override
@@ -2882,7 +3552,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	@Override
 	public boolean onSingleTapUp (MotionEvent motionEvent) 
 	{
+		// -------------------------------------------------------------------------
+		// 17/08/2018 ECU Note - want the scroll action to take place
+		// -------------------------------------------------------------------------
 		return false;
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	
@@ -2937,9 +3611,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         		case StaticData.MESSAGE_NOTIFICATION_END:
         			// -------------------------------------------------------------
         			// 13/07/2016 ECU created to hide the notifications button
+        			// 27/07/2017 ECU put in the check on whether the button exists
         			// -------------------------------------------------------------
-        			notificationButton.clearAnimation();
-        			notificationButton.setVisibility (View.GONE);
+        			if (notificationButton != null)
+        			{
+        				notificationButton.clearAnimation();
+        				notificationButton.setVisibility (View.GONE);
+        			}
+        			// ------------------------------------------------------------
         			break;
         		// -----------------------------------------------------------------
         		case StaticData.MESSAGE_NOTIFICATION_START:
@@ -2949,16 +3628,22 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			//            ECU the object in the message indicates
         			//                   true ..... start animation
         			//                   false .... no animation
+        			// 11/06/2017 ECU put in the check on whether the button has been
+        			//                defined yet
         			// -------------------------------------------------------------
-        			if (notificationButton.getVisibility() == View.GONE)
-        				notificationButton.setVisibility (View.VISIBLE);
-        			// -------------------------------------------------------------
-        			// 13/07/2016 ECU now decide if the animation is to start
-        			// -------------------------------------------------------------
-        			if ((Boolean) theMessage.obj)
-        				Utilities.AnimateFlashImageView (notificationButton,1000,Animation.INFINITE);
-        			// -------------------------------------------------------------
-    				notificationButton.setOnClickListener (notificationButtonOnClickListener);	
+        			if (notificationButton != null)
+        			{
+        				if (notificationButton.getVisibility() == View.GONE)
+        					notificationButton.setVisibility (View.VISIBLE);
+        				// ---------------------------------------------------------
+        				// 13/07/2016 ECU now decide if the animation is to start
+        				// ---------------------------------------------------------
+        				if ((Boolean) theMessage.obj)
+        					Utilities.AnimateFlashImageView (notificationButton,1000,Animation.INFINITE);
+        				// ---------------------------------------------------------
+        				notificationButton.setOnClickListener (notificationButtonOnClickListener);
+        				// ---------------------------------------------------------
+        			}
         			break;
         		// -----------------------------------------------------------------
         		case StaticData.MESSAGE_PROMPT:
@@ -2996,6 +3681,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			// -------------------------------------------------------------
         			break;
         		// -----------------------------------------------------------------
+        		case StaticData.MESSAGE_USER_ACTIONS:
+        			// -------------------------------------------------------------
+        			// 17/08/2018 ECU indicate that 'positive feedback' animation
+        			//				  has finished and that user actions can be
+        			//                processed again
+        			// -------------------------------------------------------------
+        			ignoreUserActions = false;
+        			// -------------------------------------------------------------
+        			break;
+        		// -----------------------------------------------------------------
         	}
         	// ---------------------------------------------------------------------
         }
@@ -3007,6 +3702,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         	// ---------------------------------------------------------------------
             this.removeMessages (StaticData.MESSAGE_SLEEP);
             sendMessageDelayed(obtainMessage (StaticData.MESSAGE_SLEEP), delayMillis);
+            // ---------------------------------------------------------------------
         }
     };
 	// =============================================================================
@@ -3016,7 +3712,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
     // 03/03/2016 ECU declare methods used in dialogues
     // =============================================================================
     // =============================================================================
-	public static void SettingsPassword (String thePassword)
+	public void SettingsPassword (String thePassword)
 	{
 		// -------------------------------------------------------------------------
 		// 03/03/2016 ECU created to check an entered password and to start the

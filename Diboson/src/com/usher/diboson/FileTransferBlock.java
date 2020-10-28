@@ -62,12 +62,12 @@ public class FileTransferBlock implements Serializable
 		// -------------------------------------------------------------------------
 		// 11/01/2016 ECU created to return a summary of the block
 		// -------------------------------------------------------------------------
-		return theTitle + "\n" +
-			   "Type : " + type + "\n" +
-			   "All Files Flag : "  + allFiles + "\n" +
-			   "Counter : " + counter + "\n" +
-			   ((fileDetails != null) ? "File : " + fileDetails.getName() + "\n" : "") +
-			   "Project Folder : " + projectFolder + "\n" +
+		return theTitle + StaticData.NEWLINE +
+			   "Type : " + type + StaticData.NEWLINE +
+			   "All Files Flag : "  + allFiles + StaticData.NEWLINE +
+			   "Counter : " + counter + StaticData.NEWLINE +
+			   ((fileDetails != null) ? "File : " + fileDetails.getName() + StaticData.NEWLINE : StaticData.BLANK_STRING) +
+			   "Project Folder : " + projectFolder + StaticData.NEWLINE +
 			   "Size of Buffer : " + sizeOfBuffer;
 		// -------------------------------------------------------------------------
 	}

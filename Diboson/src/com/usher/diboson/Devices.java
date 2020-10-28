@@ -7,6 +7,18 @@ import android.os.Build;
 
 public class Devices implements Serializable
 {
+	// =============================================================================
+	// 06/09/2017 ECU Note - contains the details of the device which is interchanged
+	//                       between devices on the network to determine compatability
+	//                       and facilities available on the device
+	// 06/09/2017 ECU added the patientName because devices on the network may be
+	//                handling different patients and want it to be that devices
+	//                are only compatible if they have the same patient name.
+	// 28/03/2019 ECU added 'nameOriginal' to be the original name of the device
+	//                - 'name' can be set by the user
+	// 27/04/2019 ECU added smartDevice
+	// =============================================================================
+	
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -15,44 +27,54 @@ public class Devices implements Serializable
 	String		IPAddress;
 	String		macAddress;				// 20/03/2015 ECU added - MAC address of this device
 	String  	name;					// 06/08/2013 ECU added - plain text name
+	String  	nameOriginal;			// 28/03/2019 ECU added - original plain text name
+	String		patientName;			// 06/09/2017 ECU added
 	boolean		phone;
 	boolean		remoteController;		// 26/02/2016 ECU added - if device has access to 
 										//                bluetooth remote controller
 	String  	response;
 	String		serialNumber;			// 20/03/2015 ECU added - serial number of this device
+	boolean		smartDevice;			// 27/04/2019 ECU added - indicates if device is a smart device
 	boolean		wemo;					// 18/03/2015 ECU added - whether device can
 										//                control Belkin WeMo devices
 	/* ============================================================================= */
-	public void Initialise (String theIPAddress,
-							String theMACAddress,
-							String theSerialNumber,
+	public void Initialise (String 	theIPAddress,
+							String 	theMACAddress,
+							String 	theSerialNumber,
 							boolean thePhone,
-							String theResponse,
+							String 	theResponse,
 							boolean theCompatibilityFlag,
 							boolean theWeMo,
-							int theAPILevel,
-							boolean theRemoteController)
+							int 	theAPILevel,
+							boolean theRemoteController,
+							String	thePatientName)
 	{
+		// -------------------------------------------------------------------------
 		apiLevel			= theAPILevel;					// 07/01/2016 ECU added
 		compatible 			= theCompatibilityFlag;
 		IPAddress 			= theIPAddress;
 		macAddress			= theMACAddress;				// 20/03/2015 ECU added
+		patientName			= thePatientName;				// 06/09/2017 ECU added
 		phone      			= thePhone;
 		remoteController	= theRemoteController;			// 26/02/2016 ECU added
 		response  			= theResponse;
 		serialNumber		= theSerialNumber;				// 20/03/2015 ECU added
+		smartDevice			= false;						// 27/04/2019 ECU added
 		wemo				= theWeMo;						// 18/03/2015 ECU added
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	public void Initialise (Context theContext)
 	{
 		// -------------------------------------------------------------------------
 		// 20/03/2015 ECU created to initialise the class using local information
+		// 28/03/2019 ECU initialise 'nameOriginal'
 		// -------------------------------------------------------------------------
 		compatible			= 	true;
 		IPAddress			= 	Utilities.getIPAddress (theContext);
 		macAddress			=   Utilities.getMACAddress (theContext);
 		name				= 	android.os.Build.MODEL;
+		nameOriginal		=   null;
 		phone				=	(Utilities.getPhoneNumber (theContext) != null);
 		response			=   "initialisation";
 		serialNumber		=	android.os.Build.SERIAL;
@@ -60,26 +82,87 @@ public class Devices implements Serializable
 		// 20/03/2015 ECU initially was checking 'WeMoActivity.serviceRunning' but
 		//                there was a delay which caused a wrong value so changed
 		// -------------------------------------------------------------------------
-		wemo			= 	PublicData.storedData.wemoHandling;
+		wemo				= 	PublicData.storedData.wemoHandling;
 		// -------------------------------------------------------------------------
 		// 07/01/2016 ECU store the API level
 		// -------------------------------------------------------------------------
-		apiLevel	    = 	Build.VERSION.SDK_INT;
+		apiLevel	    	= 	Build.VERSION.SDK_INT;
 		// -------------------------------------------------------------------------
 		// 26/02/2016 ECU added to indicate if this device has access to a bluetooth
 		//                remote controller
 		// -------------------------------------------------------------------------
 		remoteController	= 	PublicData.blueToothService;
 		// -------------------------------------------------------------------------
+		// 06/09/2017 ECU set up the patient's full name
+		// -------------------------------------------------------------------------
+		patientName			= 	PublicData.patientDetails.Name ();
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU having initialised the details - want to check if there
+		//                is some information from the stored device chain that
+		//                needs to be copied across
+		// -------------------------------------------------------------------------
+		Devices localDevice = returnDeviceInformation (name);
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU check if there is a stored entry
+		// -------------------------------------------------------------------------
+		if (localDevice != null)
+		{
+			// ---------------------------------------------------------------------
+			// 28/03/2019 ECU copy across any stored information that is required
+			// ---------------------------------------------------------------------
+			name		 = localDevice.name;
+			nameOriginal = localDevice.nameOriginal;
+			// ---------------------------------------------------------------------
+		}
+	}
+	// =============================================================================
+	boolean matchDeviceName (String theName)
+	{
+		// -------------------------------------------------------------------------
+		// 29/03/2019 ECU only check if a 'compatible' device
+		// -------------------------------------------------------------------------
+		if (compatible)
+		{
+			// ---------------------------------------------------------------------
+			// 29/03/2019 ECU check if the supplied name matches the 'original name'
+			//                of this device
+			// ---------------------------------------------------------------------
+			if (theName.equals ((nameOriginal == null) ? name : nameOriginal))
+			{
+				// ---------------------------------------------------------
+				// 28/03/2019 ECU indicate that a match has been found
+				// ---------------------------------------------------------
+				return true;
+				// ---------------------------------------------------------
+			}	
+		}
+		// ---------------------------------------------------------------------
+		// 29/03/2019 ECU either this device is 'not compatible' or the supplied
+		//                name does not match the 'original name'
+		// ---------------------------------------------------------------------
+		return false;
+		// ---------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public String Print ()
 	{
 		// -------------------------------------------------------------------------
+		// 06/09/2017 ECU created to print a summary of the current device
+		// 27/04/2019 ECU for non-compatible devices check if there is a response
+		//                - if there is then display it
+		// -------------------------------------------------------------------------
 		return "IP Address = " + IPAddress + 
-				 (compatible ?
+				 ((compatible || (patientName != null))?
 								("\nMAC Address = " + macAddress +		// 20/03/2015 ECU added
-								 "\nName = " + name +
+								 "\nName = " + name + 
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU check if the name has been changed - if so then display
+		//                the original name
+		// -------------------------------------------------------------------------
+								 ((nameOriginal == null) ? StaticData.BLANK_STRING 
+										                 : "  (Originally : " + nameOriginal + ")") +
+		// -------------------------------------------------------------------------
+								 "\nPatient\'s Name = " + patientName + // 06/09/2017 ECU added
 								 "\nSerial Number = " + serialNumber +	// 20/03/2015 ECU added
 								 "\nAPI Level = " + apiLevel +			// 07/01/2016 ECU added
 								 "\nPhone = " + phone + 
@@ -88,7 +171,8 @@ public class Devices implements Serializable
 								 "\nBelkin WeMo Control = " + wemo +	// 18/03/2015 ECU added
 								 "\nLast Response = " + response +
 								 "\nCompatible = " + compatible) 
-						     : "\nNon-compatible Device");
+						     : ("\n" +
+								 (!smartDevice ? "Non-compatible Device" : ("Smart Device\n" + response))));
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -124,11 +208,73 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public static boolean returnCompatibility (String thePatientName)
+	{
+		// -------------------------------------------------------------------------
+		// 06/09/2017 ECU created to indicate whether the device is 'compatible'
+		//                depending on the specified patient name
+		// -------------------------------------------------------------------------
+		// 06/09/2017 ECU if no local patient details have been set then any incoming
+		//                patient name in a device is to be deemed as 'not compatible'
+		// -------------------------------------------------------------------------
+		if (PublicData.patientDetails != null)
+		{
+			// ---------------------------------------------------------------------
+			// 06/09/2017 ECU the local details of the patient hve been set so if
+			//                the stored name matches that being specified then the
+			//                device is compatible, otherwise the device is for another
+			//                patient and is 'not compatible'
+			// ---------------------------------------------------------------------
+			return (PublicData.patientDetails.Name ().equalsIgnoreCase (thePatientName));
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 06/09/2017 ECU because there is no locally held patient details then
+			//                other devices will be 'not compatible'
+			// ---------------------------------------------------------------------
+			return false;
+			// ---------------------------------------------------------------------
+		}
+	}
+	// =============================================================================
+	public Devices returnDeviceInformation (String theName)
+	{
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU return the devices entry corresponding to the specified
+		//                IP address and has the correct name
+		// -------------------------------------------------------------------------
+		if (PublicData.deviceDetails != null)
+		{			
+			for (int theDevice = 0; theDevice < PublicData.deviceDetails.size (); theDevice++)
+			{
+				// -----------------------------------------------------------------
+				// 28/03/2019 ECU only interested in compatible devices
+				// -----------------------------------------------------------------
+				if (PublicData.deviceDetails.get (theDevice).matchDeviceName (theName))
+				{
+					// -------------------------------------------------------------
+					// 29/03/2019 ECU a matching device has been found so return its
+					//                details
+					// -------------------------------------------------------------
+					return PublicData.deviceDetails.get (theDevice);
+					// -------------------------------------------------------------	
+				}
+			}
+		}
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU indicate that nothing found
+		// -------------------------------------------------------------------------
+		return null;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static String returnIPAddress (String theFormattedAddress)
 	{
 		String [] theParts = theFormattedAddress.split("[(]");
 		
-		return theParts [1].replace (")","").replaceAll(" ","");
+		return theParts [1].replace (")",StaticData.BLANK_STRING).replaceAll(" ",StaticData.BLANK_STRING);
 	}
 	// =============================================================================
 	public static String returnMACAddress (String theIPAddress)
@@ -156,7 +302,7 @@ public class Devices implements Serializable
 	// =============================================================================
 	public static String returnName (String theFormattedAddress)
 	{
-		String [] theParts = theFormattedAddress.split("[(]");
+		String [] theParts = theFormattedAddress.split ("[(]");
 		// -------------------------------------------------------------------------
 		// 16/06/2016 ECU remove any leading/trailing spaces
 		// -------------------------------------------------------------------------
@@ -176,6 +322,28 @@ public class Devices implements Serializable
 		// 22/03/2015 ECU put entry into project log to indicate the fact
 		// -------------------------------------------------------------------------
 		Utilities.LogToProjectFile ("Devices","send the hello message");
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void setName (String theName)
+	{
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU created to change the name and, if not already set, then
+		//                to remember the 'original name'
+		// -------------------------------------------------------------------------
+		if (nameOriginal == null)
+		{
+			// ---------------------------------------------------------------------
+			// 28/03/2019 ECU the original name has never been set so store the current
+			//                name
+			// ---------------------------------------------------------------------
+			nameOriginal = name;
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 28/03/2019 ECU set the current name to that supplied
+		// -------------------------------------------------------------------------
+		name = theName;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

@@ -49,8 +49,8 @@ public class Liquid implements Serializable,Comparable<Liquid>
 	public String Print ()
 	{
 		// -------------------------------------------------------------------------
-		return "Liquid Name : " + name + "\n" +
-			   "Scaled Light Level : " + ambientLightLevelScaled + "\n" +
+		return "Liquid Name : " + name + StaticData.NEWLINE +
+			   "Scaled Light Level : " + ambientLightLevelScaled + StaticData.NEWLINE +
 				"Actions : " + actions;
 		// -------------------------------------------------------------------------
 	}

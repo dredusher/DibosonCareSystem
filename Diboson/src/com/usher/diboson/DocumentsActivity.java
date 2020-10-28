@@ -2,6 +2,7 @@ package com.usher.diboson;
 
 import java.util.ArrayList;
 import java.util.Collections;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -13,10 +14,14 @@ import android.widget.EditText;
 public class DocumentsActivity extends DibosonActivity 
 {
 	// =============================================================================
-	static	Activity	activity;
-	static	Context		context;
-	static	EditText	documentPath;
-	static	EditText	documentTitle;
+	// 13/04/2018 ECU changed the activity to use ListViewSelector rather than Selector
+	//                so as to reduce the number of static's
+	// =============================================================================
+			Activity	activity;
+			Context		context;
+			EditText	documentPath;
+			EditText	documentTitle;
+	ListViewSelector	listViewSelector;
 	// =============================================================================
 	
 	// =============================================================================
@@ -31,6 +36,10 @@ public class DocumentsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null)
 		{
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU added the full screen option
+			// ---------------------------------------------------------------------
+			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
 			// ---------------------------------------------------------------------
 			// 18/10/2016 ECU remember the activity and context for later use
 			// ---------------------------------------------------------------------
@@ -51,7 +60,9 @@ public class DocumentsActivity extends DibosonActivity
 			if (PublicData.storedData.documents.size() > 0)
 			{
 				// -----------------------------------------------------------------
-				HandleDocuments (this);
+				// 13/04/2018 ECU initialist the display - changed to use ListViewSelector
+				// -----------------------------------------------------------------
+				initialiseDisplay (this);
 				// -----------------------------------------------------------------
 			}
 			else
@@ -73,13 +84,39 @@ public class DocumentsActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 		}		
 	}
+	//==============================================================================
+	@Override
+	public void onActivityResult (int theRequestCode, int theResultCode, Intent theIntent) 
+	{
+		// ------------------------------------------------------------------------
+		// 10/04/2018 ECU called when an activity returns a result. In this case
+		//                the only activity that will be returning a result is
+		//                FileChooser which is activated by PickAFile which is
+		//                being used to select a photo file for the liquid being
+		//                added.
+		// ------------------------------------------------------------------------	
+		// 10/04/2018 ECU check if the correct activity is returning a result
+		// ------------------------------------------------------------------------
+		if (theRequestCode == StaticData.REQUEST_CODE_FILE)
+		{
+			// --------------------------------------------------------------------
+			// 10/04/2018 ECU check if a file was selected
+			// --------------------------------------------------------------------
+			if (theResultCode == RESULT_OK)
+			{
+				// ----------------------------------------------------------------
+				// 13/04/2018 ECU get the path of the selected document - this is
+				//                stored in the returned intent
+				// ----------------------------------------------------------------
+				documentPath.setText (theIntent.getStringExtra (StaticData.PARAMETER_FILE_PATH));
+		 		// -----------------------------------------------------------------
+			}
+			// --------------------------------------------------------------------
+		}
+	}
 	// ============================================================================= 
-    public static void AddDocument (int thePosition)
+    public void AddDocument (int thePosition)
     {
-    	// -------------------------------------------------------------------------
-    	// 18/10/2016 ECU finish the 'select' activity before continuing
-    	// -------------------------------------------------------------------------
-    	Selector.Finish();
     	// -------------------------------------------------------------------------
     	// 18/10/2016 ECU called to display the selected file
     	// -------------------------------------------------------------------------
@@ -87,58 +124,14 @@ public class DocumentsActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     }
  // ============================================================================= 
-    public static void EditDocument (int thePosition)
+    public void EditDocument (int thePosition)
     {
-    	// -------------------------------------------------------------------------
-    	// 18/10/2016 ECU finish the 'select' activity before continuing
-    	// -------------------------------------------------------------------------
-    	Selector.Finish ();
     	// -------------------------------------------------------------------------
     	registerADocument (context,thePosition);
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
-	public static void BackKeyMethod (int theIndex)
-	{
-		// -------------------------------------------------------------------------
-		// 18/10/2016 ECU created to be called when the back key pressed
-		// -------------------------------------------------------------------------
-		activity.finish ();
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static ArrayList<ListItem> BuildTheDocumentsList ()
-	{
-		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem>();
-		// -------------------------------------------------------------------------
-		// 18/10/2016 ECU add in the check on size
-		// ------------------------------------------------------------------------- 
-		if (PublicData.storedData.documents.size() > 0)
-		{
-			for (int theIndex = 0; theIndex < PublicData.storedData.documents.size(); theIndex++)
-			{
-				// -----------------------------------------------------------------
-				// 30/03/2014 ECU added the index as an argument
-				// 31/01/2016 ECU do not add carers which have been deleted
-				// -----------------------------------------------------------------
-				ListItem localListItem = new ListItem (null,
-													   PublicData.storedData.documents.get (theIndex).title,
-													   "",
-													   PublicData.storedData.documents.get (theIndex).path,
-													   theIndex);
-				
-				// -----------------------------------------------------------------
-				SelectorUtilities.selectorParameter.listItems.add (localListItem);
-				// -----------------------------------------------------------------
-			}
-		}
-		// -------------------------------------------------------------------------
-		Collections.sort (SelectorUtilities.selectorParameter.listItems);
-		// -------------------------------------------------------------------------
-		return SelectorUtilities.selectorParameter.listItems;
-	}	
-	// =============================================================================
-	private static View.OnClickListener buttonListener = new View.OnClickListener() 
+	private View.OnClickListener buttonListener = new View.OnClickListener () 
 	{
 		@Override
 		public void onClick (View view) 
@@ -154,8 +147,10 @@ public class DocumentsActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 18/10/2016 ECU browse for the required file
 					// -------------------------------------------------------------
-					Utilities.selectAFile (context,StaticData.EXTENSION_DOCUMENT,
-							new MethodDefinition <DocumentsActivity> (DocumentsActivity.class,"SelectedDocument"));
+					Utilities.PickAFile (activity,
+							 			 PublicData.projectFolder,
+							 			 StaticData.EXTENSION_DOCUMENT,
+							 			 true);
 					// -------------------------------------------------------------
 					break;
 					// -------------------------------------------------------------
@@ -164,29 +159,30 @@ public class DocumentsActivity extends DibosonActivity
 				case R.id.document_register_button: 
 				{
 					// -------------------------------------------------------------
-					// 18/10/2016 ECU register the docoument using the input data
+					// 18/10/2016 ECU register the document using the input data
 					// -------------------------------------------------------------
-					String localPath 	= documentPath.getText().toString();
+					String localPath  = documentPath.getText().toString();
 					String localTitle = documentTitle.getText().toString();
 					// -------------------------------------------------------------
 					// 18/10/2016 ECU check that there is data
 					// -------------------------------------------------------------
 					if (!Utilities.emptyString(localTitle) || !Utilities.emptyString(localPath))
 					{
-						Utilities.popToastAndSpeak(context.getString (R.string.document_data_needed), true);
+						Utilities.popToastAndSpeak (getString (R.string.document_data_needed), true);
 					}
 					else
 					{
+						// ---------------------------------------------------------
+						// 13/04/2018 ECU add the new document into the list
+						// ---------------------------------------------------------
 						Document.Add (localTitle,localPath);
 						// ---------------------------------------------------------
-						// 18/10/2016 ECU want to stop and restart this activity
+						// 13/04/2018 ECU now redisplay the screen
 						// ---------------------------------------------------------
-						activity.finish ();
-						// ---------------------------------------------------------
-						// 18/09/2016 ECU restart this activity
-						// ---------------------------------------------------------
-						Intent localIntent = activity.getIntent ();
-						activity.startActivity (localIntent);
+						// 13/04/2018 ECU because the layout has been changed within
+						//                this activity then need to do a complete
+						//                rebuild of the display
+						initialiseDisplay (activity);
 						// ---------------------------------------------------------
 					}
 					// -------------------------------------------------------------
@@ -197,29 +193,7 @@ public class DocumentsActivity extends DibosonActivity
 		}
 	};
 	// =============================================================================
-	public static void HandleDocuments (Context theContext)
-	{
-		// -------------------------------------------------------------------------
-		SelectorUtilities.Initialise();
-		// -------------------------------------------------------------------------
-		BuildTheDocumentsList ();
-		SelectorUtilities.selectorParameter.rowLayout 				= R.layout.document_row;
-		SelectorUtilities.selectorParameter.backMethodDefinition 	= new MethodDefinition<DocumentsActivity> (DocumentsActivity.class,"BackKeyMethod");
-		SelectorUtilities.selectorParameter.customMethodDefinition 	= new MethodDefinition<DocumentsActivity> (DocumentsActivity.class,"AddDocument");
-		SelectorUtilities.selectorParameter.editMethodDefinition 	= new MethodDefinition<DocumentsActivity> (DocumentsActivity.class,"EditDocument");
-		SelectorUtilities.selectorParameter.customLegend 			= theContext.getString (R.string.add);
-		SelectorUtilities.selectorParameter.classToRun 				= DocumentsActivity.class;
-		SelectorUtilities.selectorParameter.swipeMethodDefinition	= new MethodDefinition<DocumentsActivity> (DocumentsActivity.class,"SwipeAction");
-		SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_DOCUMENTS;
-		// ----------------------------------------------------------------------
-		SelectorUtilities.StartSelector (theContext,
-									     new MethodDefinition<DocumentsActivity> (DocumentsActivity.class,"SelectAction"),
-									     StaticData.OBJECT_DOCUMENTS);
-		// -------------------------------------------------------------------------
-	
-	}
-	// =============================================================================
-	static void registerADocument (Context theContext,int theDocument)
+	void registerADocument (Context theContext,int theDocument)
 	{
 		// -------------------------------------------------------------------------
 		// 18/10/2016 ECU created to register a document to the system
@@ -248,7 +222,7 @@ public class DocumentsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
-    public static void SelectAction (int thePosition)
+    public void SelectAction (int thePosition)
     {
     	// -------------------------------------------------------------------------
     	// 18/10/2016 ECU called to display the selected file
@@ -257,33 +231,27 @@ public class DocumentsActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     	// 18/10/2016 ECU just finish this activity
     	// -------------------------------------------------------------------------
-    	activity.finish ();
+    	finish ();
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
- 	public static void SelectedDocument (String theFileName)
- 	{
- 		// -------------------------------------------------------------------------
- 		// 18/10/2016 ECU copy the filename to the relevant field
- 		// -------------------------------------------------------------------------
- 		documentPath.setText (theFileName);  	
- 		// -------------------------------------------------------------------------
- 	}
-	// =============================================================================
-    public static void SwipeAction (int thePosition)
+    public void SwipeAction (int thePosition)
     {
     	// -------------------------------------------------------------------------
 		// 18/10/2016 ECU created to confirm the deletion
+    	// 13/04/2018 ECU changed to use the non-static version
 		// -------------------------------------------------------------------------
-		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-				   				 String.format (Selector.context.getString (R.string.delete_confirmation_format),PublicData.storedData.documents.get (thePosition).title),
-				   				 (Object) thePosition,
-				   				 Utilities.createAMethod (DocumentsActivity.class,"YesMethod",(Object) null),
-				   				 null); 
+		DialogueUtilitiesNonStatic.yesNo (context,
+										  activity,
+										  "Item Deletion",
+										  String.format (getString (R.string.delete_confirmation_format),PublicData.storedData.documents.get (thePosition).title),
+										  					(Object) thePosition,
+										  Utilities.createAMethod (DocumentsActivity.class,"YesMethod",(Object) null),
+										  null); 
 		// -------------------------------------------------------------------------  
     }
 	// =============================================================================
-  	public static void YesMethod (Object theSelection)
+  	public void YesMethod (Object theSelection)
   	{
   		// -------------------------------------------------------------------------
   		// 18/10/2016 ECU the selected item can be deleted
@@ -293,11 +261,127 @@ public class DocumentsActivity extends DibosonActivity
     	// 18/10/2016 ECU called to display the selected file
     	// -------------------------------------------------------------------------
     	PublicData.storedData.documents.remove (localSelection);
-    	// -------------------------------------------------------------------------
-    	// 18/10/2016 ECU now rebuild the display
-    	// -------------------------------------------------------------------------
-    	Selector.Rebuild ();
+  		// -------------------------------------------------------------------------
+  		// 13/04/2018 ECU check whether everything has been deleted or not
+  		// -------------------------------------------------------------------------
+  		if (PublicData.storedData.documents.size () > 0)
+  		{
+  			// ---------------------------------------------------------------------
+  			// 13/04/2018 ECU rebuild the display
+  			// ---------------------------------------------------------------------
+  			refreshDisplay ();
+  			// ---------------------------------------------------------------------
+  		}
+  		else
+  		{
+  			// ---------------------------------------------------------------------
+  			// 13/04/2018 ECU tell the user that all documents have been deleted
+  			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (getString (R.string.documents_all_deleted),true);
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU cannot do any more so terminate this activity
+			// ---------------------------------------------------------------------
+			finish ();
+			// ---------------------------------------------------------------------
+  		}
     	// -------------------------------------------------------------------------
   	}
     // ============================================================================= 
+  	
+  	
+  	// =============================================================================
+  	// =============================================================================
+  	// ListViewSelector
+  	// ================
+  	//
+  	//		Declare methods associated with the use of ListViewSelector
+  	//
+  	// ============================================================================
+  	// ============================================================================
+  	
+	// =============================================================================
+	void initialiseDisplay (Activity theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU created to generate the display of stored documents
+		// -------------------------------------------------------------------------
+		listViewSelector = new ListViewSelector (theActivity,
+				   								 R.layout.document_row,
+				   								 Utilities.createAMethod (DocumentsActivity.class, "PopulateTheList"),
+				   								 true,
+				   								 Utilities.createAMethod (DocumentsActivity.class,"SelectAction",0),
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 Utilities.createAMethod (DocumentsActivity.class,"EditDocument",0),
+				   								 getString (R.string.add),
+				   								 Utilities.createAMethod (DocumentsActivity.class,"AddDocument",0),
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 Utilities.createAMethod (DocumentsActivity.class,"SwipeAction",0)
+				   								);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public ArrayList<ListItem> PopulateTheList ()
+	{
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU created to build a list of the currently stored documents
+		// -------------------------------------------------------------------------
+		ArrayList<ListItem> listItems = new ArrayList<ListItem>();
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU add in the check on size
+		// ------------------------------------------------------------------------- 
+		if (PublicData.storedData.documents.size() > 0)
+		{
+			for (int theIndex = 0; theIndex < PublicData.storedData.documents.size(); theIndex++)
+			{
+				// -----------------------------------------------------------------
+				// 13/04/2018 ECU create a new item with the required data
+				// -----------------------------------------------------------------
+				ListItem localListItem = new ListItem (null,
+													   PublicData.storedData.documents.get (theIndex).title,
+													   StaticData.BLANK_STRING,
+													   PublicData.storedData.documents.get (theIndex).path,
+													   theIndex);
+				// -----------------------------------------------------------------
+				// 13/04/2018 ECU add the new item into the list
+				// -----------------------------------------------------------------
+				listItems.add (localListItem);
+				// -----------------------------------------------------------------
+			}
+		}
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU sort the generated items
+		// -------------------------------------------------------------------------
+		Collections.sort (listItems);
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU return the generated list
+		// -------------------------------------------------------------------------
+		return listItems;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void refreshDisplay ()
+	{
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU created to refresh the display if it exists or create the
+		//                display if not
+		// -------------------------------------------------------------------------
+		if (listViewSelector == null)
+		{
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU need to build the display
+			// ---------------------------------------------------------------------
+			initialiseDisplay (this);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU display already initialised so just refresh it
+			// ---------------------------------------------------------------------
+			listViewSelector.refresh ();
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 }

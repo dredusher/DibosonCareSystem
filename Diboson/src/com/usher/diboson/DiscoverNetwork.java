@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -51,8 +50,10 @@ public class DiscoverNetwork extends DibosonActivity
 	TextView 			addressView;				// 01/08/2013 ECU added
 	TextView			discoveredAddressView;		// 20/09/2013 ECU added
 	int					discoveryTimeout;			// 12/11/2016 ECU added
-	String				networkIPAddress = "";		// 11/11/2016 ECU added
-	String				networkMask = "";			// 11/11/2016 ECU added
+	String				networkIPAddress = StaticData.BLANK_STRING;		
+													// 11/11/2016 ECU added
+	String				networkMask = StaticData.BLANK_STRING;			
+													// 11/11/2016 ECU added
 	int                 numberOfRunningThreads;		// 11/11/2016 ECU added
 	ThreadPoolExecutor 	threadPoolExecutor = null;	// 20/09/2013 ECU added
 	TextView 			threadsRunningNumber;		// 12/11/2013 ECU added
@@ -221,8 +222,8 @@ public class DiscoverNetwork extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 11/11/2016 ECU write the header information
 			// ---------------------------------------------------------------------
-			bufferedWriter.write (StaticData.COMMENT_INTRODUCER + theIPAddress + "\n");
-			bufferedWriter.write (StaticData.COMMENT_INTRODUCER + theNetworkMask + "\n");
+			bufferedWriter.write (StaticData.COMMENT_INTRODUCER + theIPAddress + StaticData.NEWLINE);
+			bufferedWriter.write (StaticData.COMMENT_INTRODUCER + theNetworkMask + StaticData.NEWLINE);
 			// ---------------------------------------------------------------------
 			// 11/11/2016 ECU now generate the addresses
 			// ---------------------------------------------------------------------
@@ -260,7 +261,7 @@ public class DiscoverNetwork extends DibosonActivity
 							// -----------------------------------------------------
 							// 10/11/2016 ECU add into the list of addresses
 							// -----------------------------------------------------
-							bufferedWriter.write ("" + address1 + "." + address2 + "." + address3 + "." + address4 + "\n");
+							bufferedWriter.write (StaticData.BLANK_STRING + address1 + "." + address2 + "." + address3 + "." + address4 + StaticData.NEWLINE);
 							// -----------------------------------------------------
 						}	
 					}
@@ -300,6 +301,7 @@ public class DiscoverNetwork extends DibosonActivity
 			// 20/01/2016 ECU this is an incompatible device
 			// 26/02/2016 ECU added the final 'false' to indicate no remote
 			//                controller
+			// 06/09/2017 ECU add final 'null' to correspond to patient's name
 			// -------------------------------------------------------------
 			localDevice = new Devices ();
 			localDevice.Initialise (theIPAddress,
@@ -310,13 +312,25 @@ public class DiscoverNetwork extends DibosonActivity
 					                false,
 					                false,
 					                StaticData.NO_RESULT,
-					                false);
+					                false,
+					                null);
 		}
-		// -----------------------------------------------------------------
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 06/09/2017 ECU at first sight it appears that the device is compatible
+			//                but that device may be for a patient that is different
+			//                to the one being cared for on this device. Adjust
+			//                the compatibility flag accordingly
+			// ---------------------------------------------------------------------
+			localDevice.compatible = Devices.returnCompatibility (localDevice.patientName);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 		// 22/03/2015 ECU add the new device into the list
-		// -----------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		PublicData.deviceDetails.add (localDevice);		
-		// -----------------------------------------------------------------
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static File openIPAddressesFile (Context theContext,String theIPAddress,String theNetworkMask,boolean theCreateFlag)
@@ -351,8 +365,8 @@ public class DiscoverNetwork extends DibosonActivity
 					//                as comments
 					// -------------------------------------------------------------
 					BufferedReader bufferedReader = new BufferedReader (new FileReader (localFile));
-					String localAddress = bufferedReader.readLine().replace(StaticData.COMMENT_INTRODUCER,"");
-					String localMask 	= bufferedReader.readLine().replace(StaticData.COMMENT_INTRODUCER,"");
+					String localAddress = bufferedReader.readLine().replace(StaticData.COMMENT_INTRODUCER,StaticData.BLANK_STRING);
+					String localMask 	= bufferedReader.readLine().replace(StaticData.COMMENT_INTRODUCER,StaticData.BLANK_STRING);
 					bufferedReader.close ();
 					// -------------------------------------------------------------
 					// 11/11/2016 ECU check if relevant - if the address or mask is

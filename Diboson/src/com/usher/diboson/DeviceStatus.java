@@ -21,9 +21,9 @@ public class DeviceStatus implements Serializable
 		// -------------------------------------------------------------------------
 		// 05/05/2015 ECU changed to use the method rather than the actual strings
 		// -------------------------------------------------------------------------
-		return "IP Address : " 			+ IPAddress + "\n" +
-				"Clone Mode : " 		+ Utilities.booleanAsString (cloneMode) + "\n" +
-			   "Remote Music Mode : " 	+ Utilities.booleanAsString (remoteMusicMode);
+		return "IP Address : " 			+ IPAddress + StaticData.NEWLINE +
+				"Clone Mode : " 		+ Utilities.booleanAsString (cloneMode) + StaticData.NEWLINE +
+			    "Remote Music Mode : " 	+ Utilities.booleanAsString (remoteMusicMode);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

@@ -18,7 +18,7 @@ public class FileDetails implements Serializable
 	/* ========================================================================== */
 	public FileDetails (String theProjectFolder,File theFile)
 	{
-		fileName		=   theFile.getPath().replaceAll (theProjectFolder,"");
+		fileName		=   theFile.getPath().replaceAll (theProjectFolder,StaticData.BLANK_STRING);
 		fileSize		=   theFile.length();			// 07/04/2014 ECU added
 		lastModified 	= 	theFile.lastModified();
 	}

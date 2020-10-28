@@ -138,6 +138,7 @@ public class HandleProgressBar
 		//                and to stop it being updated
 		// -------------------------------------------------------------------------
 		updateProgressBar = false;
+		progressHandler.removeMessages (StaticData.MESSAGE_PROGRESS);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -219,9 +220,13 @@ public class HandleProgressBar
         			removeMessages (StaticData.MESSAGE_PROGRESS);
         			// -------------------------------------------------------------
         			// 24/10/2016 ECU initiate a refresh if required
+        			// 09/01/2018 ECU add the 'playOrPause' check
         			// -------------------------------------------------------------
-        			if (updateProgressBar)
-        				sendMessageDelayed (obtainMessage(StaticData.MESSAGE_PROGRESS),100);
+        			if (!MusicPlayer.playOrPause())
+        			{
+        				if (updateProgressBar)
+        					sendMessageDelayed (obtainMessage(StaticData.MESSAGE_PROGRESS),500);
+        			}
         			// -------------------------------------------------------------
         			break;
         		// -----------------------------------------------------------------

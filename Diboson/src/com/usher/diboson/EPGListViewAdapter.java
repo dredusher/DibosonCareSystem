@@ -1,6 +1,7 @@
 package com.usher.diboson;
 
 import java.util.ArrayList;
+
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -130,9 +131,9 @@ public class EPGListViewAdapter extends ArrayAdapter<EPGEntry>
 		//                can be recycled so don't assume it will be reset
 		// -------------------------------------------------------------------------
 		if (listItem.selected)
-			listCellView.setBackgroundColor(Color.GREEN);
+			listCellView.setBackgroundColor (Color.GREEN);
 		else
-			listCellView.setBackgroundColor(Color.LTGRAY);
+			listCellView.setBackgroundColor (Color.LTGRAY);
 		// -------------------------------------------------------------------------
 		return listCellView;
 	}
@@ -163,8 +164,10 @@ public class EPGListViewAdapter extends ArrayAdapter<EPGEntry>
 		// 24/07/2016 ECU changed because filterString moved to Show....
 		//            ECU PROBLEM - really need to build from theEntries rather
 		//                          than theEntries - needs looking at
+		// 18/11/2017 ECU change from checking for 'null' which used to mean
+		//                'search all'
 		// ------------------------------------------------------------------------
-		if (ShowEPGActivity.filterString != null)
+		if (!ShowEPGActivity.filterString.equalsIgnoreCase (StaticData.SEARCH_ALL))
 		{
 			for (int theEntry = 0; theEntry < originalData.size(); theEntry++)
 			{

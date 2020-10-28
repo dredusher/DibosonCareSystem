@@ -9,7 +9,6 @@ import android.view.GestureDetector;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
-import android.view.Window;
 import android.view.GestureDetector.OnGestureListener;
 import android.widget.TextView;
 
@@ -33,12 +32,14 @@ public class GameOne extends DibosonActivity implements OnGestureListener
 	/* ============================================================================= */
 	//final static String TAG = "GameOne";
 	/* ============================================================================= */
+	// 22/03/2018 ECU changed to 'final'
+	// -----------------------------------------------------------------------------
 	private static final String [] LETTERS = {"A","B","C","D","E","F","G","H","I","J","K","L","M",
             								  "N","O","P","Q","R","S","T","U","V","W","X","Y","Z"};
-	private static int			   NUMBER_OF_LETTERS  	= 20;		// letters to pick from
-	private static int			   ONE_SECOND 			= 1000;		// milliseconds
-	private static int			   SPEED_FASTEST		= 600;		// milliseconds
-	private static int             SPEED_INCREMENT		= 200;		// milliseconds
+	private static final int	   NUMBER_OF_LETTERS  	= 20;		// letters to pick from
+	private static final int	   ONE_SECOND 			= 1000;		// milliseconds
+	private static final int	   SPEED_FASTEST		= 600;		// milliseconds
+	private static final int       SPEED_INCREMENT		= 200;		// milliseconds
 	/* ============================================================================= */
 					boolean	 finishFlag			= false;		// 20/02/2014 ECU added
 	private 		GestureDetector gestureScanner;
@@ -69,10 +70,10 @@ public class GameOne extends DibosonActivity implements OnGestureListener
 			// 02/11/2015 ECU the activity has been created anew
 			// ---------------------------------------------------------------------
 			// 16/02/2014 ECU call up routine to set common activity features
+			// 02/04/2019 ECU changed to 'full screen'
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity (this);	
-			requestWindowFeature(Window.FEATURE_NO_TITLE);
-		
+			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);	
+			// ---------------------------------------------------------------------
 			gestureScanner = new GestureDetector(this,this);
 			// ---------------------------------------------------------------------
 			// 23/05/2013 ECU initialise and start the game

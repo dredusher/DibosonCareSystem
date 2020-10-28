@@ -33,6 +33,7 @@ public class DailyScheduler extends BroadcastReceiver
 	//                       there is nothing to be done on a 'daily' basis. For this 
 	//                       reason the 'processing of appointments' have been commented
 	//                       out of this class
+	// 20/07/2019 ECU added the code to obtain the 'public IP address'
 	/* ============================================================================= */
 	final static String TAG = "DailyScheduler";
 	/* ============================================================================= */
@@ -365,9 +366,10 @@ public class DailyScheduler extends BroadcastReceiver
 		// 10/11/2014 ECU changed to use Locale.getDefault instead of Locale.UK
 		// 19/12/2015 ECU added the method definition argument
 		// 28/10/2016 ECU changed to use dateFormatDDMMYY
+		// 24/07/2017 ECU changed to use ALARM....
 		// -------------------------------------------------------------------------
 		Utilities.LogToProjectFile (TAG,"SetAnAlarm " + " " + theAlarmID + " " +
-				new SimpleDateFormat ("HH:mm:ss " + PublicData.dateFormatDDMMYY,Locale.getDefault()).format(theTime));
+				new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT + " " + PublicData.dateFormatDDMMYY,Locale.getDefault()).format(theTime));
 		// -------------------------------------------------------------------------
 		// 03/11/2016 ECU changed to use the global alarm manager
 		// -------------------------------------------------------------------------
@@ -389,9 +391,12 @@ public class DailyScheduler extends BroadcastReceiver
 		}
 		// -------------------------------------------------------------------------
 		// 18/06/2013 ECU use alarmCounter as a unique request code - currently not used
+		// 15/03/2019 ECU added FLAG_UPDATE_CURRENT
 		// -------------------------------------------------------------------------
 		alarmPendingIntent = PendingIntent.getBroadcast (theContext,
-														theAlarmID,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK); 
+														theAlarmID,
+														alarmIntent,
+														Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT); 
 		// -------------------------------------------------------------------------
 		// 24/12/2015 ECU changed to use the new method
 		// 03/11/2016 ECU changed to use the global alarm manager
@@ -459,8 +464,9 @@ public class DailyScheduler extends BroadcastReceiver
 					// -------------------------------------------------------------
 					// 09/03/2014 ECU include the fix because events were not happening
 					//                on time - just like the speaking clock
+					// 19/07/2017 ECU pass through the context to the fix
 					// -------------------------------------------------------------
-					APIIssues.Fix001 (android.os.Build.VERSION.SDK_INT);
+					APIIssues.Fix001 (context,android.os.Build.VERSION.SDK_INT);
 					// -------------------------------------------------------------
 				
 					break;
@@ -476,8 +482,9 @@ public class DailyScheduler extends BroadcastReceiver
 					// -------------------------------------------------------------
 					// 09/03/2014 ECU include the fix because events were not happening
 					//                on time - just like the speaking clock
+					// 19/07/2017 ECU pass through the context to the fix
 					// -------------------------------------------------------------
-					APIIssues.Fix001 (android.os.Build.VERSION.SDK_INT);
+					APIIssues.Fix001 (context,android.os.Build.VERSION.SDK_INT);
 					// -------------------------------------------------------------
 				
 					break;
@@ -503,35 +510,93 @@ public class DailyScheduler extends BroadcastReceiver
 						{
 							// -----------------------------------------------------
 							case StaticData.CARE_VISIT_ARRIVAL:
-								localActions	=  PublicData.storedData.visit_start_warning_actions;
-								localMessage   +=  context.getString (R.string.arrive_shortly);
+								// -------------------------------------------------
+								// 15/07/2019 ECU check if the carer has already
+								//                arrived
+								// -------------------------------------------------
+								if (!carerRecord.visitActive)
+								{
+									// ---------------------------------------------
+									// 15/07/2019 ECU the carer has not arrived yet
+									// ---------------------------------------------
+									localActions	=  PublicData.storedData.visit_start_warning_actions;
+									localMessage   +=  context.getString (R.string.arrive_shortly);
+									// ---------------------------------------------
+								}
+								else
+								{
+									// ---------------------------------------------
+									// 15/07/2019 ECU the carer is currently visiting
+									// ---------------------------------------------
+									localMessage = null;
+									// ---------------------------------------------
+								}
 								break;
 							// -----------------------------------------------------
 							case StaticData.CARE_VISIT_DEPARTURE:
-								localActions	=  PublicData.storedData.visit_end_warning_actions;
-								localMessage   +=  context.getString (R.string.depart_shortly);
+								// -------------------------------------------------
+								// 15/07/2019 ECU check if the carer has already
+								//                departed
+								// -------------------------------------------------
+								if (carerRecord.visitActive)
+								{
+									// ---------------------------------------------
+									// 15/07/2019 ECU the carer has already left
+									// ---------------------------------------------
+									localActions	=  PublicData.storedData.visit_end_warning_actions;
+									localMessage   +=  context.getString (R.string.depart_shortly);
+									// ---------------------------------------------
+								}
+								else
+								{
+									// ---------------------------------------------
+									// 15/07/2019 ECU the carer has left
+									// ---------------------------------------------
+									localMessage = null;
+									// ---------------------------------------------
+								}
 								break;
 							// -----------------------------------------------------
 							case StaticData.CARE_VISIT_WARNING:
-								localMessage += String.format (context.getString(R.string.arrive_warning_format),
-															     localArguments [3]) + Utilities.AddAnS (localArguments [3]);
+								// -------------------------------------------------
+								// 15/07/2019 ECU check if the carer has already
+								//                arrived
+								// -------------------------------------------------
+								if (!carerRecord.visitActive)
+								{
+									localMessage += String.format (context.getString(R.string.arrive_warning_format),
+																	localArguments [3]) + Utilities.AddAnS (localArguments [3]);
+								}
+								else
+								{
+									// ---------------------------------------------
+									// 15/07/2019 ECU the carer is currently visiting
+									// ---------------------------------------------
+									localMessage = null;
+									// ---------------------------------------------
+								}
 								break;
 							// -----------------------------------------------------	
 						}
 						// ---------------------------------------------------------
 						// 02/10/2016 ECU now display and speak the message
 						// 08/12/2016 ECU changed to use carerRecord
+						// 23/06/2017 ECU changed to use Absolute...
+						// 15/07/2019 ECU check if anything is to be processed
 						// ---------------------------------------------------------
-						MessageHandler.popToastAndSpeakwithPhoto (localMessage,
-															      PublicData.projectFolder + carerRecord.photo);
-						// ---------------------------------------------------------
-						// 08/12/2016 ECU if actions have been defined then process
-						//                them
-						//            ECU changed to use carerRecord
-						// ---------------------------------------------------------
-						if (localActions != null)
+						if (localMessage != null)
 						{
-							Utilities.actionHandler (context,localActions.replaceAll(StaticData.CARER_REPLACEMENT,carerRecord.name));
+							MessageHandler.popToastAndSpeakwithPhoto (localMessage,
+																	  Utilities.AbsoluteFileName (carerRecord.photo));
+							// -----------------------------------------------------
+							// 08/12/2016 ECU if actions have been defined then process
+							//                them
+							//            ECU changed to use carerRecord
+							// -----------------------------------------------------
+							if (localActions != null)
+							{
+								Utilities.actionHandler (context,localActions.replaceAll(StaticData.CARER_REPLACEMENT,carerRecord.name));
+							}
 						}
 						// ---------------------------------------------------------
 					}
@@ -574,6 +639,10 @@ public class DailyScheduler extends BroadcastReceiver
 					// -------------------------------------------------------------
 					ProcessCarePlanVisits (context);
 					// -------------------------------------------------------------
+				    // 20/07/2019 ECU check the state of the public IP address
+				    // -------------------------------------------------------------
+				    Utilities.getPublicIpAddressThread (context);
+				    // -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
 				case StaticData.ALARM_ID_DOSAGE_ALARM:
@@ -641,10 +710,13 @@ public class DailyScheduler extends BroadcastReceiver
 			//                being called before the global alarm manager set up -
 			//                remember reach here if PublicData.stored data
 			//                is null or not initialised
+			// 14/03/2019 ECU added FLAG_UPDATE_CURRENT
 			// ---------------------------------------------------------------------
 			AlarmManager  localAlarmManager  = (AlarmManager)context.getSystemService (Context.ALARM_SERVICE);
 			PendingIntent alarmPendingIntent = PendingIntent.getBroadcast (context,
-													localAlarmID,intent,Intent.FLAG_ACTIVITY_NEW_TASK);  
+																		   localAlarmID,
+																		   intent,
+																		   Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT);  
 			// ---------------------------------------------------------------------
 			// 24/12/2015 ECU changed to use the new method
 			// ---------------------------------------------------------------------

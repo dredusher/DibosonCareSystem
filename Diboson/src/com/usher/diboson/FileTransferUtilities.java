@@ -627,7 +627,7 @@ public class FileTransferUtilities
 						// 14/01/2016 ECU the project folder needs to be sorted out
 						// ---------------------------------------------------------
 						localFileName = theTransferBlock.fileDetails.getAbsolutePath();
-						localFileName = PublicData.projectFolder + localFileName.replace (theTransferBlock.projectFolder, "");
+						localFileName = PublicData.projectFolder + localFileName.replace (theTransferBlock.projectFolder, StaticData.BLANK_STRING);
 						// ---------------------------------------------------------
 						localFileDetails = new File (localFileName);
 						// ---------------------------------------------------------
@@ -698,7 +698,7 @@ public class FileTransferUtilities
 						//                folder removed
 						// ---------------------------------------------------------
 						ClientDisplayMessage ("requested ---- " + 
-											  localFileDetails.getAbsolutePath().replace (PublicData.projectFolder, ""),
+											  localFileDetails.getAbsolutePath().replace (PublicData.projectFolder, StaticData.BLANK_STRING),
 											  filePointer,
 											  theTransferBlock.numberOfFiles);
 						// ---------------------------------------------------------
@@ -716,7 +716,7 @@ public class FileTransferUtilities
 						//                folder removed
 						// ---------------------------------------------------------
 						ClientDisplayMessage ("not needed --- " + 
-											  localFileDetails.getAbsolutePath().replace (PublicData.projectFolder, ""),
+											  localFileDetails.getAbsolutePath().replace (PublicData.projectFolder, StaticData.BLANK_STRING),
 											  filePointer,
 											  theTransferBlock.numberOfFiles);
 						// ---------------------------------------------------------

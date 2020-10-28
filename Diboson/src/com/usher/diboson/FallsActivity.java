@@ -31,6 +31,7 @@ public class FallsActivity extends DibosonActivity
 	//                here
 	// 24/01/2016 ECU added the button to define the action commands to be handled
 	//                when a fall happens
+	// 21/03/2018 ECU try and remove all static variables
 	// =============================================================================
 	//private static String TAG = "FallsActivity";
 	/* ============================================================================= */
@@ -49,30 +50,30 @@ public class FallsActivity extends DibosonActivity
 	// =============================================================================
 
 	/* ============================================================================= */	
-			static	ImageView		accelerometerView;					// 20/09/2013 ECU added
-			static  Rect 			accelerometerRectangle;
-			static  RectF 			accelerometerRectCoordinates;
-			static	float 			changeX;
-			static	float 			changeY; 
-			static	float 			changeZ;
-			static	Context			context;							// 18/11/2015 ECU added
-			static	boolean 		fallActioned 			= false;	// 23/09/2013 ECU added
-	        static 	float 			fallCriteria 			= FALL_CRITERIA;		
-	        															// 23/09/2013 ECU added
-	private static 	Bitmap 			graphBitmap;
-	private static 	Bitmap 			graphsBitmap;
-			static	float			graphicsHalfHeight;
-			static	float			graphicsHalfWidth;
-			static 	int 			graphicsHeight;
-			static 	int 			graphicsWidth;
-			static 	float 			graphIncrement;
-			static 	int 			graphsHeight;
-			static  Rect 			graphsRectangle;
-			static  RectF 			graphsRectCoordinates;
-			static 	ImageView		graphsView;							// 20/09/2013 ECU added
-			static 	int 			graphsWidth;
-			static 	int 			graphicsXOrigin;
-			static 	int 			graphicsYOrigin;
+			ImageView		accelerometerView;					// 20/09/2013 ECU added
+			Rect 			accelerometerRectangle;
+			RectF 			accelerometerRectCoordinates;
+			float 			changeX;
+			float 			changeY; 
+			float 			changeZ;
+			Context			context;							// 18/11/2015 ECU added
+			boolean 		fallActioned 			= false;	// 23/09/2013 ECU added
+	        float 			fallCriteria 			= FALL_CRITERIA;		
+	        													// 23/09/2013 ECU added
+	private Bitmap 			graphBitmap;
+	private Bitmap 			graphsBitmap;
+			float			graphicsHalfHeight;
+			float			graphicsHalfWidth;
+			int 			graphicsHeight;
+			int 			graphicsWidth;
+			float 			graphIncrement;
+			int 			graphsHeight;
+			Rect 			graphsRectangle;
+			RectF 			graphsRectCoordinates;
+			ImageView		graphsView;							// 20/09/2013 ECU added
+			int 			graphsWidth;
+			int 			graphicsXOrigin;
+			int 			graphicsYOrigin;
 			static 	boolean			paused 					= false;	// 23/09/2013 ECU added - whether processing
 																		//                required
 																		// 18/11/2015 ECU changed to static
@@ -149,7 +150,7 @@ public class FallsActivity extends DibosonActivity
 							  							  context.getString (R.string.action_command_summary),
 							  							  5,
 							  							  PublicData.storedData.fallsActionCommands,
-							  							  Utilities.createAMethod (FallsActivity.class,"SetFallsActionCommand",""),
+							  							  Utilities.createAMethod (FallsActivity.class,"SetFallsActionCommand",StaticData.BLANK_STRING),
 							  							  null,
 							  							  StaticData.NO_RESULT,
 							  							  context.getString (R.string.press_to_define_command));
@@ -170,7 +171,7 @@ public class FallsActivity extends DibosonActivity
 						//                action command
 						// ---------------------------------------------------------
 						ActionCommandUtilities.SelectCommand (context,
-								Utilities.createAMethod (FallsActivity.class,"SetFallsActionCommand",""));
+								Utilities.createAMethod (FallsActivity.class,"SetFallsActionCommand",StaticData.BLANK_STRING));
 						// ---------------------------------------------------------
 					} 
 					catch (Exception theException) 
@@ -280,7 +281,15 @@ public class FallsActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
+			// 23/03/2018 ECU force a reset even if already enabled
+			// ---------------------------------------------------------------------
+			SensorService.accelerometerEnablement (false,null,0);
+			// ---------------------------------------------------------------------
+			// 21/03/2018 ECU tell the service to pass sensor data to a method which
+			//                is 'not static'
+			// ---------------------------------------------------------------------
 			SensorService.accelerometerEnablement (true,
+												   this,
 												   Utilities.createAMethod (FallsActivity.class,"eventHandler",(Object) null),
 												   sampleRateDelay);
 			// ---------------------------------------------------------------------
@@ -318,6 +327,7 @@ public class FallsActivity extends DibosonActivity
 		// 22/10/2015 ECU added
 		// -------------------------------------------------------------------------
 		super.onDestroy();
+		// -------------------------------------------------------------------------
     }
 	/* ============================================================================= */	
 	@Override 
@@ -332,7 +342,7 @@ public class FallsActivity extends DibosonActivity
 	   	super.onPause(); 
 	} 
 	/* ============================================================================== */
-	private static void checkForAFall (Context theContext,float changeX, float changeY, float changeZ)
+	private void checkForAFall (Context theContext,float changeX, float changeY, float changeZ)
 	{
 		// -------------------------------------------------------------------------
 		// 06/06/2013 ECU just do a simple check for a fall
@@ -340,6 +350,7 @@ public class FallsActivity extends DibosonActivity
 		//            ECU indicate that the actioning has occurred
 		// 18/11/2015 ECU changed to static
 		//			  ECU added theContext as an argument
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		if (!fallActioned && (changeX > fallCriteria || 
 							  changeY > fallCriteria || 
@@ -353,7 +364,10 @@ public class FallsActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			if (PublicData.storedData.fallsActionCommands == null)
 			{
-				String fallenMessage = Utilities.ReadAFile ("FALLEN");
+				// -----------------------------------------------------------------
+				// 03/06/2019 ECU pass through the context
+				// -----------------------------------------------------------------
+				String fallenMessage = Utilities.ReadAFile (theContext,"FALLEN");
 			
 				if (fallenMessage != null)
 				{
@@ -391,11 +405,12 @@ public class FallsActivity extends DibosonActivity
 		}
 	}
 	/* ============================================================================= */
-	static void drawACircle (Canvas theCanvas,float theRadius,int theColour)
+	void drawACircle (Canvas theCanvas,float theRadius,int theColour)
 	{
 		// -------------------------------------------------------------------------
 		// 23/09/2013 ECU added to draw a circle of the specified radius
 		// 18/11/2015 ECU added theColour as an argument
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 	    workingPaint.setColor (theColour);  
 	        
@@ -403,12 +418,15 @@ public class FallsActivity extends DibosonActivity
 	    
 	}
 	/* ============================================================================= */
-	static void drawGraph (Canvas this_canvas,
-			               float [] values,
-			               int offset,
-			               int colour,
-			               int inputPointer)
+	void drawGraph (Canvas 		this_canvas,
+			        float []	values,
+			        int 		offset,
+			        int 		colour,
+			        int 		inputPointer)
 	{
+		// -------------------------------------------------------------------------
+		// 21/03/2018 ECU changed from 'static'
+		// -------------------------------------------------------------------------
 		workingPaint.setColor (colour);
 		workingPaint.setStrokeWidth (STROKE_WIDTH);
 		
@@ -422,18 +440,24 @@ public class FallsActivity extends DibosonActivity
 	   	}
 	}
 	/* ============================================================================= */
-	static void drawGraphsBackground ()
+	void drawGraphsBackground ()
 	{
+		// -------------------------------------------------------------------------
+		// 21/03/2018 ECU changed from 'static'
+		// -------------------------------------------------------------------------
 		graphsWorkingCanvas.drawARGB (0, 0, 0, 0);
 		workingPaint.setColor (Color.GRAY);
     	graphsWorkingCanvas.drawRect (graphsRectCoordinates,workingPaint);
 	}
    	/* ============================================================================= */
-	static void drawPointer (Canvas this_canvas, 
+	void drawPointer (Canvas this_canvas, 
 			                        float startX, float startY,
 			                        float stopX, float stopY,
 		                            int pointerColour)
 	{	
+		// -------------------------------------------------------------------------
+		// 21/03/2018 ECU changed from 'static'
+		// -------------------------------------------------------------------------
 		workingPaint.setColor (pointerColour);
 		workingPaint.setStrokeWidth (STROKE_WIDTH);
 				
@@ -444,10 +468,11 @@ public class FallsActivity extends DibosonActivity
 				             workingPaint);
 	}
 	/* ============================================================================= */
-	static void drawAxes (Canvas theCanvas)
+	void drawAxes (Canvas theCanvas)
 	{
 		// -------------------------------------------------------------------------
 		// 20/09/2013 ECU display the X and Y axes
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 	    // 23/09/2013 ECU changed from WHITE
 	    // ------------------------------------------------------------------------- 
@@ -460,10 +485,11 @@ public class FallsActivity extends DibosonActivity
 	    theCanvas.drawLine ((float)0.0,graphicsHalfHeight,(float)graphicsWidth,graphicsHalfHeight,workingPaint);       
 	}
 	/* ============================================================================= */
-    static void drawAccelerometerBackground ()
+   void drawAccelerometerBackground ()
     {
     	// -------------------------------------------------------------------------
     	// 20/09/2013 ECU just draws the background of the two graphics windows
+	    // 21/03/2018 ECU changed from 'static'
     	// -------------------------------------------------------------------------
 	    // 20/09/2013 ECU fill the specified canvas with the colour
 	    // -------------------------------------------------------------------------
@@ -476,12 +502,13 @@ public class FallsActivity extends DibosonActivity
 	    workingCanvas.drawRoundRect(accelerometerRectCoordinates, ROUND_SIZE, ROUND_SIZE, workingPaint);
     }
     // =============================================================================
-    public static void eventHandler (Object theSensorEventAsObject)
+    public void eventHandler (Object theSensorEventAsObject)
     {
     	// -------------------------------------------------------------------------
     	// 18/11/2015 ECU created to be called by the SensorService to handle 
     	//                accelerometer events
     	// 04/12/2015 ECU changed because data is passed as an object
+    	// 21/03/2018 ECU changed from 'static'
     	// -------------------------------------------------------------------------
 		// 06/06/2013 ECU only interested in the accelerometer
 		// 23/09/2013 ECU include the 'paused' variable
@@ -501,10 +528,11 @@ public class FallsActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     }
     /* ============================================================================= */
-    static Bitmap generateGraphics (Bitmap bitmap)
+    Bitmap generateGraphics (Bitmap bitmap)
     {
     	// -------------------------------------------------------------------------
 		// 20/09/2013 ECU code to get bitmap onto screen
+    	// 21/03/2018 ECU changed from 'static'
 	    // -------------------------------------------------------------------------
 		Bitmap localBitmap = Bitmap.createBitmap (bitmap.getWidth(),
 	    bitmap.getHeight(), Config.ARGB_8888);
@@ -563,10 +591,11 @@ public class FallsActivity extends DibosonActivity
 	    return localBitmap;
     }
 	/* ============================================================================= */
-	private static void storeValues (float theXValue, float theYValue, float theZValue)
+	private void storeValues (float theXValue, float theYValue, float theZValue)
 	{
 		// -------------------------------------------------------------------------
 		// 06/06/2013 ECU remember where the value is stored in the array
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		previousValuePointer = valuePointer;
 		// -------------------------------------------------------------------------
@@ -607,14 +636,16 @@ public class FallsActivity extends DibosonActivity
 		// 23/09/2013 ECU indicate the falls status	
 		// -------------------------------------------------------------------------
 		statusCoordinate.setText ("Status : " + (fallActioned ? "Triggered" : "Armed") + 
-								  "\nFall Criterion : " + String.format ("%.2f",fallCriteria));		
+								  "\nFall Criterion : " + String.format ("%.2f",fallCriteria));	
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-	private static void updateTheValues (float theXValue, float theYValue, float theZValue)
+	private void updateTheValues (float theXValue, float theYValue, float theZValue)
 	{
 		// -------------------------------------------------------------------------
 		// 06/06/2013 ECU work out the change since the last reading
 		// 18/11/2015 ECU changed to static
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		changeX = Math.round (theXValue - previousXValue); 
 		changeY = Math.round (theYValue - previousYValue); 
@@ -676,10 +707,11 @@ public class FallsActivity extends DibosonActivity
         graphsView.setImageBitmap (graphsBitmap);	
 	}
 	/* ============================================================================= */
-	static void waitToRearm (final int theWaitTime)
+	void waitToRearm (final int theWaitTime)
 	{
 		// -------------------------------------------------------------------------
 		// 23/09/2013 ECU added to wait a time before rearming the detector
+		// 21/03/2018 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		Thread thread = new Thread()
 		{

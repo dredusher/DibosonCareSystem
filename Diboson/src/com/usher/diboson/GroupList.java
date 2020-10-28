@@ -3,6 +3,7 @@ package com.usher.diboson;
 import java.io.Serializable;
 import java.util.List;
 
+import android.content.Context;
 import android.widget.Toast;
 
 // =================================================================================
@@ -27,11 +28,12 @@ public class GroupList implements Serializable
 	// -----------------------------------------------------------------------------
 	
 	// =============================================================================
-	public static void Add (int theGroup,int theActivityImage)
+	public static void Add (Context theContext,int theGroup,int theActivityImage)
 	{
 		// -------------------------------------------------------------------------
 		// 07/10/2016 ECU created to add a new entry into a group list
 		// 08/10/2016 ECU added the group
+		// 18/04/2017 ECU added the context as an argument
 		// -------------------------------------------------------------------------
 		// 19/10 2016 ECU get the index corresponding to the image
 		// -------------------------------------------------------------------------
@@ -46,12 +48,13 @@ public class GroupList implements Serializable
 		// -------------------------------------------------------------------------
 		for (int theIndex = 0; theIndex < PublicData.storedData.groupLists.get(theGroup).activities.size(); theIndex++)
 		{
-			if (PublicData.storedData.groupLists.get(theGroup).activities.get(theIndex) == localIndex)
+			if (PublicData.storedData.groupLists.get(theGroup).activities.get (theIndex) == localIndex)
 			{
 				// -----------------------------------------------------------------
-				//07/10/2016 ECU indicate that image already added
+				// 07/10/2016 ECU indicate that image already added
+				// 01/04/2017 ECU changed to use new Legend method
 				// -----------------------------------------------------------------
-				Utilities.popToast ("'" + getGridImage (localIndex).legend + 
+				Utilities.popToast ("'" + getGridImage (localIndex).Legend (theContext) + 
 												"'\nhas already been added to the group",true,Toast.LENGTH_SHORT);
 				// -----------------------------------------------------------------
 				return;
@@ -63,25 +66,29 @@ public class GroupList implements Serializable
 		PublicData.storedData.groupLists.get(theGroup).activities.add (localIndex);
 		// -----------------------------------------------------------------
 		// 07/10/2016 ECU indicate that the image has been added
+		// 01/04/2017 ECU changed to use new Legend method
+		// 18/04/2017 ECU added the context as an argument
 		// -----------------------------------------------------------------
-		Utilities.popToast ("'" + getGridImage (localIndex).legend + 
+		Utilities.popToast ("'" + getGridImage (localIndex).Legend (theContext) + 
 										"'\nhas been added to the group",true,Toast.LENGTH_SHORT);
 		// ------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static String [] getActivityTitles (int theGroup)
+	public static String [] getActivityTitles (Context theContext,int theGroup)
 	{
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU return the legends of the activities in this group
+		// 18/04/2017 ECU added the context as an argument
 		// -------------------------------------------------------------------------
 		String [] localStrings = new String [PublicData.storedData.groupLists.get(theGroup).activities.size ()];
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU now build up the array
 		// 19/10/2016 ECU changed because of the definition of 'activities'
+		// 01/04/2017 ECU changed to use new Legend method
 		// -------------------------------------------------------------------------
 		for (int index=0; index < localStrings.length; index++)
 		{
-			localStrings [index] = getGridImage (PublicData.storedData.groupLists.get(theGroup).activities.get (index)).legend;
+			localStrings [index] = getGridImage (PublicData.storedData.groupLists.get(theGroup).activities.get (index)).Legend (theContext);
 		}
 		// -------------------------------------------------------------------------
 		return localStrings;

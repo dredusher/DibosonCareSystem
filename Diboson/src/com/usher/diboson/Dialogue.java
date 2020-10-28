@@ -33,6 +33,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 	// 22/10/2015 ECU changed to 'extends DibosonActivity'
 	// 01/06/2016 ECU check whether any of the stored spoken phrases
 	//                are being used
+	// 20/03/2017 ECU change all occurrences of "" to BLANK_STRING
 	/* ============================================================ */
 	//private final static String 	TAG = "Dialogue";
 	/* ============================================================ */
@@ -183,33 +184,33 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 												new DialogueParameter ("date",PublicData.dateTimeString)
 											};
 	/* ============================================================================= */
-	int					action = ACTION_NONE;	// 24/11/2013 ECU added 
-	String  			adjective = "";
+	int					action 				= ACTION_NONE;					// 24/11/2013 ECU added 
+	String  			adjective 			= StaticData.BLANK_STRING;
 	BlueToothServiceUtilities	
 						blueToothServiceUtilities;
-												// 14/10/2015 ECU added
-	String				currentPhrase = "";		// 23/11/2013 ECU added
-	TextView			dialogueEnteredView;	// 21/12/2013 ECU added
-	TextView			dialogueMatchedView;	// 21/12/2013 ECU added
-	TextView			dialogueStatusView;		// 21/12/2013 ECU added
-	String				introducer = "";
-	boolean				negate = false;			// 23/11/2013 ECU added
+																			// 14/10/2015 ECU added
+	String				currentPhrase 		= StaticData.BLANK_STRING;		// 23/11/2013 ECU added
+	TextView			dialogueEnteredView;								// 21/12/2013 ECU added
+	TextView			dialogueMatchedView;								// 21/12/2013 ECU added
+	TextView			dialogueStatusView;									// 21/12/2013 ECU added
+	String				introducer 			= StaticData.BLANK_STRING;
+	boolean				negate = false;										// 23/11/2013 ECU added
 	String 				noun = DEFAULT_NOUN;
 	ArrayList<String>	phrases;
-	String 				preposition = "";
-	String 				pronoun = "";
-	boolean				question = false;
-	DialogueQuestion	questionData = null;	// 24/11/2013 ECU added
-	int					remoteDevicex;			// 01/03/2014 ECU added - id of remote device
-	String 				stress = "";
-	String 				subject = "";
-	boolean				televisionCommand = false;
-												// 20/12/2013 ECU added
-	String 				terminate = "";
-	boolean				terminating = false;
+	String 				preposition 		= StaticData.BLANK_STRING;
+	String 				pronoun 			= StaticData.BLANK_STRING;
+	boolean				question 			= false;
+	DialogueQuestion	questionData 		= null;							// 24/11/2013 ECU added
+	int					remoteDevicex;										// 01/03/2014 ECU added - id of remote device
+	String 				stress 				= StaticData.BLANK_STRING;
+	String 				subject 			= StaticData.BLANK_STRING;
+	boolean				televisionCommand 	= false;
+																			// 20/12/2013 ECU added
+	String 				terminate 			= StaticData.BLANK_STRING;
+	boolean				terminating 		= false;
 	static TextToSpeech	textToSpeech;
-	int					theme = THEME_ALL;
-	String 				verb = DEFAULT_VERB;
+	int					theme 				= THEME_ALL;
+	String 				verb 				= DEFAULT_VERB;
 	/* ============================================================================= */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -391,7 +392,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		// -------------------------------------------------------------------------
 		// 14/02/2014 ECU changed to use the local ReadAFile
 		// -------------------------------------------------------------------------
-		String theParsedString = "";
+		String theParsedString = StaticData.BLANK_STRING;
 		String theMessage = new String (ReadAFile(theFileName));
 		
 		String [] theWords = theMessage.split("[ ]");
@@ -399,7 +400,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		for (int index=0; index < theWords.length; index++)
 		{
 			if (theWords[index].startsWith (PARAM_INTRODUCER))
-				theWords[index] = ParseTheParameter (theWords[index].replaceFirst("[%%][%%]", ""));
+				theWords[index] = ParseTheParameter (theWords[index].replaceFirst("[%%][%%]", StaticData.BLANK_STRING));
 			
 			theParsedString += theWords[index] + " ";
 		}
@@ -427,7 +428,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 				return theDialogueParameters[theIndex].output;
 		}
 		
-		return "";
+		return StaticData.BLANK_STRING;
 	}
 	/* ============================================================================= */
 	int ParseThePhrase (String thePhrase)
@@ -495,7 +496,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		// -------------------------------------------------------------------------
 		// 21/12/2013 ECU initially clear the matching field
 		// -------------------------------------------------------------------------
-		dialogueMatchedView.setText ("");
+		dialogueMatchedView.setText (StaticData.BLANK_STRING);
 		// -------------------------------------------------------------------------
 		// 20/12/2013 ECU check if a television command received
 		// -------------------------------------------------------------------------
@@ -587,8 +588,9 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		//                folder and returns it as a string
 		// 14/02/2014 ECU read into a local string so that some checking can
 		//                take place as to whether the file exists
+		// 03/06/2019 ECU added the context as an argument
 		// -------------------------------------------------------------------------
-		byte [] stringRead = Utilities.readAFile (PublicData.dialogueFolder + theFileName + ".txt");
+		byte [] stringRead = Utilities.readAFile (getBaseContext (),PublicData.dialogueFolder + theFileName + ".txt");
 		
 		if (stringRead == null)
 		{
@@ -607,7 +609,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		//  26/11/2013 ECU created to extend the method to allow the replacement of
 		//                 embedded parameters
 		// -------------------------------------------------------------------------
-		String theParsedString = "";
+		String theParsedString = StaticData.BLANK_STRING;
 		
 		String [] theWords = ReadAFile (theFileName).split("[ ]");
 		
@@ -615,7 +617,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		{
 				
 			if (theWords[index].startsWith(PARAM_INTRODUCER))
-				theWords[index] = ParseTheParameter (theWords[index].replaceFirst("[%%][%%]", ""),theDialogueParameters);
+				theWords[index] = ParseTheParameter (theWords[index].replaceFirst("[%%][%%]", StaticData.BLANK_STRING),theDialogueParameters);
 			
 			theParsedString += theWords[index] + " ";
 		}
@@ -677,16 +679,16 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		if (thePhrase != null)
 		{
 			action		= ACTION_NONE;		// 24/11/2013 ECU added
-			adjective 	= "";
-			introducer 	= "";
+			adjective 	= StaticData.BLANK_STRING;
+			introducer 	= StaticData.BLANK_STRING;
 			negate 		= false;			// 23/11/2013 ECU added
 			noun 		= DEFAULT_NOUN;
-			preposition = "";
-			pronoun 	= "";
+			preposition = StaticData.BLANK_STRING;
+			pronoun 	= StaticData.BLANK_STRING;
 			question 	= false;
-			stress 		= "";
-			subject 	= "";
-			terminate 	= "";
+			stress 		= StaticData.BLANK_STRING;
+			subject 	= StaticData.BLANK_STRING;
+			terminate 	= StaticData.BLANK_STRING;
 			theme 		= THEME_ALL;
 			verb 		= DEFAULT_VERB;
 			// ---------------------------------------------------------------------
@@ -694,7 +696,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 			// ---------------------------------------------------------------------
 			String [] theWords = thePhrase.split("[ ]");
 			
-			String word = "";
+			String word = StaticData.BLANK_STRING;
 		
 			for (int theWord = 0; theWord < theWords.length; theWord++)
 			{
@@ -757,18 +759,18 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 									verb = (verb.equalsIgnoreCase(DEFAULT_VERB) ? word : verb + " and " + word);
 									break;
 								case TYPE_PRONOUN:
-									pronoun = (pronoun.equalsIgnoreCase("") ? word : pronoun + " and " + word);
+									pronoun = (pronoun.equalsIgnoreCase(StaticData.BLANK_STRING) ? word : pronoun + " and " + word);
 									break;
 								case TYPE_PREPOSITION:
-									preposition = (preposition.equalsIgnoreCase("") ? word : preposition + " and " + word);
+									preposition = (preposition.equalsIgnoreCase(StaticData.BLANK_STRING) ? word : preposition + " and " + word);
 									break;
 								case TYPE_QUESTION:
 									question = true;
 								case TYPE_STRESS:
-									stress = (stress.equalsIgnoreCase("") ? word : stress + " and " + word);
+									stress = (stress.equalsIgnoreCase(StaticData.BLANK_STRING) ? word : stress + " and " + word);
 									break;
 								case TYPE_SUBJECT:
-									subject = (subject.equalsIgnoreCase("") ? word : subject + " and " + word);
+									subject = (subject.equalsIgnoreCase(StaticData.BLANK_STRING) ? word : subject + " and " + word);
 									break;
 								case TYPE_TERMINATE:
 									terminate = word;
@@ -786,7 +788,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 			// ---------------------------------------------------------------------
 			// 22/11/2013 ECU check if a question has been asked
 			// ---------------------------------------------------------------------
-			if (!terminate.equals (""))
+			if (!terminate.equals (StaticData.BLANK_STRING))
 			{
 				// -----------------------------------------------------------------
 				// 22/11/2013 ECU indicate that the activity is closing down
@@ -831,13 +833,13 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 							
 							changedPhrase = PHRASE_DO_YOU_WANT + verb + " " + noun + " about ";  
 
-							if (!stress.equalsIgnoreCase(""))
+							if (!stress.equalsIgnoreCase(StaticData.BLANK_STRING))
 							{
 								changedPhrase += "an " + stress + " ";
 								introducer = "with";
 							}
 								
-							if (!subject.equalsIgnoreCase(""))
+							if (!subject.equalsIgnoreCase(StaticData.BLANK_STRING))
 							{
 								changedPhrase += introducer + " the " +  subject;
 							}	
@@ -898,7 +900,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 	/* ============================================================================= */
 	String ThemeEntertainment ()
 	{		
-		String theResponse = "";
+		String theResponse = StaticData.BLANK_STRING;
 		
 		if (subject.startsWith("music"))
 		{
@@ -924,15 +926,18 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 			{
 				if (PublicData.mediaPlayer != null)
 				{
+					// -------------------------------------------------------------
+					// 09/01/2018 ECU changed to use the pause method
+					// -------------------------------------------------------------
 					if (!PublicData.mediaPlayerPaused)
 					{
 						PublicData.mediaPlayer.pause();
-						PublicData.mediaPlayerPaused = true;
+						MusicPlayer.playerPaused (true);
 					}
 					else
 					{
 						PublicData.mediaPlayer.start();
-						PublicData.mediaPlayerPaused = false;
+						MusicPlayer.playerPaused (false);
 					}
 				}
 			}
@@ -988,7 +993,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 	/* ============================================================================= */
 	String ThemeHealth ()
 	{
-		String theResponse = "";
+		String theResponse = StaticData.BLANK_STRING;
 		
 		if (negate)
 		{
@@ -1004,7 +1009,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 	/* ============================================================================= */
 	String ThemeWeather ()
 	{
-		String theResponse = "";
+		String theResponse = StaticData.BLANK_STRING;
 		
 		if (question)
 		{

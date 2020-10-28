@@ -1,8 +1,6 @@
 package com.usher.diboson;
 
 import java.util.ArrayList;
-
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -20,24 +18,29 @@ public class LiquidActivity extends DibosonActivity
 {
 	// -----------------------------------------------------------------------------
 	// 18/09/2016 ECU handle any actions that may have been defined for the liquid
+	// 10/04/2018 ECU changed to use ListViewSelector instead of Selector and reduce
+	//                the number of statics
 	// -----------------------------------------------------------------------------
-	static	Activity		activity;						// 24/09/2016 ECU added
-	static  float			ambientLightLevelDefault;
-	static  TextView		ambientLightValueTextView;
-	static	Context			context;
-	static 	Liquid			liquid;
-	static 	EditText		liquidActions;
-	static	int				liquidMatched	= StaticData.NO_RESULT;
-															// 31/05/2016 ECU added
-	static	EditText		liquidName;
-	static  ImageButton		liquidPhotoButton;				// 19/09/2016 ECU added
-	static	ImageView		liquidPhotoImageView;			// 19/09/2016 ECU added
-	static  String			liquidPhotoPath = null;			// 19/09/2016 ECU added
-	static	Button			liquidProcess;					// 18/09/2016 ECU added
-	static	boolean			status 			= false;		// false = process, true = register
-	static 	boolean			terminate 		= false;
-	static UpdateHandler	updateHandler;				
+	Activity			activity;						// 24/09/2016 ECU added
+	float				ambientLightLevelDefault;
+	TextView			ambientLightValueTextView;
+	Context				context;
+	Liquid				liquid;
+	EditText			liquidActions;
+	int					liquidMatched	= StaticData.NO_RESULT;
+														// 31/05/2016 ECU added
+	EditText			liquidName;
+	ImageButton			liquidPhotoButton;				// 19/09/2016 ECU added
+	ImageView			liquidPhotoImageView;			// 19/09/2016 ECU added
+	String				liquidPhotoPath = null;			// 19/09/2016 ECU added
+	Button				liquidProcess;					// 18/09/2016 ECU added
+	ListViewSelector 	listViewSelector;
+	boolean				status 			= false;		// false = process, true = register
+	boolean				terminate 		= false;
+	UpdateHandler		updateHandler;				
 	// -----------------------------------------------------------------------------
+	
+	// =============================================================================
 	@Override
 	protected void onCreate (Bundle savedInstanceState) 
 	{
@@ -45,7 +48,7 @@ public class LiquidActivity extends DibosonActivity
 		// 18/05/2016 ECU created to handle the registration and processing of
 		//                liquids
 		// -------------------------------------------------------------------------
-		super.onCreate(savedInstanceState);
+		super.onCreate (savedInstanceState);
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null) 
 		{
@@ -84,34 +87,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 24/09/2016 ECU there are stored liquids so use the selector
 					// -------------------------------------------------------------
-					// -------------------------------------------------------------
-					// 03/08/2016 ECU there are already a number of named actions
-					// -------------------------------------------------------------
-					// 05/08/2016 ECU initialise the selector data
-					// -------------------------------------------------------------
-					SelectorUtilities.Initialise();
-					// -------------------------------------------------------------
-					// 04/08/2016 ECU added the 'back' method
-					// 05/08/2016 ECU added the 'long select' method
-					// 25/09/2016 ECU changed to use the liquids row
-					// -------------------------------------------------------------
-					BuildList ();
-					SelectorUtilities.selectorParameter.rowLayout 					= R.layout.liquids_row;
-					SelectorUtilities.selectorParameter.classToRun 					= LiquidActivity.class;
-					SelectorUtilities.selectorParameter.type 						= StaticData.OBJECT_LIQUIDS;
-					SelectorUtilities.selectorParameter.sort						= false;
-					SelectorUtilities.selectorParameter.backMethodDefinition 		= new MethodDefinition<LiquidActivity> (LiquidActivity.class,"BackKeyAction");
-					SelectorUtilities.selectorParameter.customMethodDefinition 		= new MethodDefinition<LiquidActivity> (LiquidActivity.class,"AddAction");
-					SelectorUtilities.selectorParameter.customLegend 				= getString (R.string.add);
-					SelectorUtilities.selectorParameter.longSelectMethodDefinition 	= new MethodDefinition<LiquidActivity> (LiquidActivity.class,"ProcessAction");
-					SelectorUtilities.selectorParameter.selectMethodDefinition 		= new MethodDefinition<LiquidActivity> (LiquidActivity.class,"SelectAction");
-					SelectorUtilities.selectorParameter.swipeMethodDefinition 		= new MethodDefinition<LiquidActivity> (LiquidActivity.class,"SwipeAction");
-					// -------------------------------------------------------------
-					// 24/09/2016 ECU show the drawable to start processing
-					// --------------------------------------------------------------
-					SelectorUtilities.selectorParameter.drawableInitial 			= R.drawable.liquid_long_press;
-					// -------------------------------------------------------------
-					SelectorUtilities.StartSelector (this,StaticData.OBJECT_LIQUIDS);
+					initialiseDisplay (this);
 					// -------------------------------------------------------------
 				}
 			}
@@ -138,6 +114,40 @@ public class LiquidActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 		}
 	}
+	//==============================================================================
+	@Override
+	public void onActivityResult (int theRequestCode, int theResultCode, Intent theIntent) 
+	{
+		// ------------------------------------------------------------------------
+		// 10/04/2018 ECU called when an activity returns a result. In this case
+		//                the only activity that will be returning a result is
+		//                FileChooser which is activated by PickAFile which is
+		//                being used to select a photo file for the liquid being
+		//                added.
+		// ------------------------------------------------------------------------	
+		// 10/04/2018 ECU check if the correct activity is returning a result
+		// ------------------------------------------------------------------------
+		if (theRequestCode == StaticData.REQUEST_CODE_FILE)
+		{
+			// --------------------------------------------------------------------
+			// 10/04/2018 ECU check if a file was selected
+			// --------------------------------------------------------------------
+			if (theResultCode == RESULT_OK)
+			{
+				// ----------------------------------------------------------------
+				// 10/04/2018 ECU get the path of the selected photograph - this is
+				//                stored in the returned intent
+				// ----------------------------------------------------------------
+				liquidPhotoPath = theIntent.getStringExtra (StaticData.PARAMETER_FILE_PATH);
+				// -----------------------------------------------------------------
+		 		// 10/04/2018 ECU display the selected photograph
+		 		// -----------------------------------------------------------------
+		 		Utilities.displayAnImage (liquidPhotoButton,liquidPhotoPath);
+		 		// -------------------------------------------------------------------------
+			}
+			// --------------------------------------------------------------------
+		}
+	}
 	// =============================================================================
 	@Override
 	public void onBackPressed () 
@@ -153,7 +163,7 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-    private static View.OnClickListener buttonListener = new View.OnClickListener() 
+    View.OnClickListener buttonListener = new View.OnClickListener() 
 	{
     	// -------------------------------------------------------------------------
 		@Override
@@ -161,20 +171,22 @@ public class LiquidActivity extends DibosonActivity
 		{	
 			//----------------------------------------------------------------------
 			// 17/03/2015 ECU now process depending on which button pressed
+			// 10/04/2018 ECU changed to be 'non static'
 			//----------------------------------------------------------------------
 			switch (theView.getId()) 
 			{
 				// -----------------------------------------------------------------
 				case R.id.liquid_actions_button:
-					DialogueUtilities.multilineTextInput (context,
-							 							  context.getString (R.string.panic_alarm_actions_title),
-							 							  context.getString (R.string.action_command_summary),
-							 							  5,
-							 							  "",
-							 							  Utilities.createAMethod (LiquidActivity.class,"LiquidActions",""),
-							 							  null,
-							 							  StaticData.NO_RESULT,
-							 							  context.getString (R.string.press_to_define_command));
+					DialogueUtilitiesNonStatic.multilineTextInput (context,
+														  		   activity,
+														  		   getString (R.string.panic_alarm_actions_title),
+														  		   getString (R.string.action_command_summary),
+														  		   5,
+														  		   StaticData.BLANK_STRING,
+														  		   Utilities.createAMethod (LiquidActivity.class,"LiquidActions",StaticData.BLANK_STRING),
+														  		   null,
+														  		   StaticData.NO_RESULT,
+														  		   getString (R.string.press_to_define_command));
 					break;
 				// -----------------------------------------------------------------
 				case R.id.liquid_clear:
@@ -182,7 +194,7 @@ public class LiquidActivity extends DibosonActivity
 					// 31/05/2016 ECU clear the stored liquids
 					// -------------------------------------------------------------
 					PublicData.storedData.liquids = new ArrayList<Liquid>();
-					Utilities.popToastAndSpeak (context.getString (R.string.liquids_cleared), true);
+					Utilities.popToastAndSpeak (getString (R.string.liquids_cleared), true);
 					// -------------------------------------------------------------
 					// 19/09/2016 ECU hide the process button
 					// -------------------------------------------------------------
@@ -194,7 +206,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 31/05/2016 ECU display the stored liquids
 					// -------------------------------------------------------------
-					String summary = "";
+					String summary = StaticData.BLANK_STRING;
 					// -------------------------------------------------------------
 					// 31/05/2016 ECU check if there are any stored liquids
 					// 16/06/2016 ECU added the check on null
@@ -208,7 +220,7 @@ public class LiquidActivity extends DibosonActivity
 					}
 					else
 					{
-						summary = context.getString (R.string.liquid_none_stored);
+						summary = getString (R.string.liquid_none_stored);
 					}
 					// -------------------------------------------------------------
 					Utilities.popToast (theView,summary);
@@ -229,7 +241,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 19/09/2016 ECU clear any fields
 					// -------------------------------------------------------------
-					liquidName.setText (context.getString (R.string.blank_textview));
+					liquidName.setText (getString (R.string.blank_textview));
 					// -------------------------------------------------------------
 					// 19/09/2016 ECU hide the photograph
 					// -------------------------------------------------------------
@@ -261,18 +273,19 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 31/05/2016 ECU set the tolerance
 					// -------------------------------------------------------------
-					DialogueUtilities.sliderChoice (context,
-							  						context.getString (R.string.liquid_tolerance_title),
-							  						context.getString (R.string.liquid_tolerance_summary),
-							  						R.drawable.liquid,
-							  						null,
-							  						(int) PublicData.storedData.liquidTolerance,
-							  						0,
-							  						(int) (3 * StaticData.LIQUID_TOLERANCE),
-							  						context.getString (R.string.press_to_confirm),
-							  						Utilities.createAMethod (LiquidActivity.class,"SetToleranceMethod",0),
-							  						"",
-							  						null);
+					DialogueUtilitiesNonStatic.sliderChoice (context,
+															 activity,
+															 getString (R.string.liquid_tolerance_title),
+															 getString (R.string.liquid_tolerance_summary),
+															 R.drawable.liquid,
+															 null,
+															 (int) PublicData.storedData.liquidTolerance,
+															 0,
+															 (int) (3 * StaticData.LIQUID_TOLERANCE),
+															 getString (R.string.press_to_confirm),
+															 Utilities.createAMethod (LiquidActivity.class,"SetToleranceMethod",0),
+															 StaticData.BLANK_STRING,
+															 null);
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -281,7 +294,7 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	};
 	// =============================================================================
-	private static View.OnLongClickListener buttonListenerLong = new View.OnLongClickListener () 
+	View.OnLongClickListener buttonListenerLong = new View.OnLongClickListener () 
 	{		
 		@Override
 		public boolean onLongClick (View theView) 
@@ -296,9 +309,18 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 19/09/2016 ECU added to select a photo to associate with the
 					//                liquid
+					// 10/04/2017 ECU change from 'Utilities.selectAFile' which 
+					//                passes the selected photograph path using
+					//                a specified 'static' method - am trying to
+					//                get away from using 'static' methods with
+					//                'reflect'. Please note that the final 'true'
+					//                means that the FileChooser activity will immediately
+					//                return the path when a photograph is 'clicked'
 					// -------------------------------------------------------------
-					Utilities.selectAFile (context,StaticData.EXTENSION_PHOTOGRAPH,
-							new MethodDefinition <LiquidActivity> (LiquidActivity.class,"SelectedPhotograph"));
+					Utilities.PickAFile (activity,
+										 PublicData.projectFolder,
+										 StaticData.EXTENSION_PHOTOGRAPH,
+										 true);
 					// -------------------------------------------------------------
 					break;	
 				// -----------------------------------------------------------------
@@ -320,14 +342,8 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
     }
 	// =============================================================================
-	public static void AddAction (int theIndex)
+	public void AddAction (int theIndex)
 	{
-		// -------------------------------------------------------------------------
-		// 24/09/2016 ECU add a new liquid
-		// -------------------------------------------------------------------------
-		// 24/09/2016 ECU terminate the selector activity
-		// -------------------------------------------------------------------------
-		Selector.Finish();
 		// -------------------------------------------------------------------------
 		// 24/09/2016 ECU display the layout required to register a new liquid
 		// -------------------------------------------------------------------------
@@ -335,46 +351,10 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void BackKeyAction (int theIndex)
-	{
-		// -------------------------------------------------------------------------
-		// 24/09/2016 ECU created to be called when the back key pressed
-		//            ECU just 'finish' this activity
-		// -------------------------------------------------------------------------
-		activity.finish ();
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static ArrayList<ListItem> BuildList ()
-	{
-		// -------------------------------------------------------------------------
-		// 24/09/2016 ECU build up the list of liquids
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem> ();
-		// -------------------------------------------------------------------------
-		for (int theIndex = 0; theIndex < PublicData.storedData.liquids.size(); theIndex++)
-		{
-			// ---------------------------------------------------------------------
-			// 03/08/2016 ECU populate the list that will be displayed
-			// 25/09/2016 ECU changed to use the resource
-			//            ECU add the image path
-			// ---------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-									PublicData.storedData.liquids.get(theIndex).photographPath,
-									PublicData.storedData.liquids.get(theIndex).name,
-									PublicData.storedData.liquids.get(theIndex).actions,
-									String.format (context.getString (R.string.liquid_scaled_light_level_format),
-														PublicData.storedData.liquids.get(theIndex).ambientLightLevelScaled),
-									theIndex));
-			// ---------------------------------------------------------------------
-		}
-		return SelectorUtilities.selectorParameter.listItems;
-	}
-	// =============================================================================
-	public static void displayLayout ()
+	void displayLayout ()
 	{
 		// -------------------------------------------------------------
-		activity.setContentView (R.layout.activity_liquid);
+		setContentView (R.layout.activity_liquid);
 		// -------------------------------------------------------------
 		// 19/09/2016 ECU set up the process button
 		// -------------------------------------------------------------
@@ -400,7 +380,29 @@ public class LiquidActivity extends DibosonActivity
 	
 	}
 	// =============================================================================
-    public static void LiquidActions (String theActions)
+	void initialiseDisplay (Activity theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 09/04/2018 ECU changed to use 'ListViewSelector' object
+		// 10/04/2018 ECU changed the name to make easier to understand
+		//            ECU changed to have the activity as an argument
+		// -------------------------------------------------------------------------
+		listViewSelector = new ListViewSelector (theActivity,
+				   								 R.layout.liquids_row,
+				   								 Utilities.createAMethod (LiquidActivity.class, "PopulateTheList"),
+				   								 false,
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 Utilities.createAMethod (LiquidActivity.class, "ProcessAction",0),
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 getString (R.string.add),
+				   								 Utilities.createAMethod (LiquidActivity.class, "AddAction",0),
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 Utilities.createAMethod (LiquidActivity.class, "SwipeAction",0)
+				   								);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+    public void LiquidActions (String theActions)
     {
     	// -------------------------------------------------------------------------
     	// 27/11/2015 ECU created to store commands that are required for the panic
@@ -409,18 +411,66 @@ public class LiquidActivity extends DibosonActivity
     	liquidActions.setText (theActions);
     	// -------------------------------------------------------------------------
     }
- // ================================================================================
-   	public static void NoMethod (Object theSelection)
+    // =============================================================================
+   	public void NoMethod (Object theSelection)
    	{
    	}
+	// =============================================================================
+	public ArrayList<ListItem> PopulateTheList ()
+	{
+		// -------------------------------------------------------------------------
+		// 24/09/2016 ECU build up the list of liquids
+		// -------------------------------------------------------------------------
+		ArrayList<ListItem> listItems = new ArrayList<ListItem> ();
+		// -------------------------------------------------------------------------
+		for (int theIndex = 0; theIndex < PublicData.storedData.liquids.size(); theIndex++)
+		{
+			// ---------------------------------------------------------------------
+			// 03/08/2016 ECU populate the list that will be displayed
+			// 25/09/2016 ECU changed to use the resource
+			//            ECU add the image path
+			// 10/04/2018 ECU check if there is a path to a photgraph - if not then
+			//                display the icon
+			// ---------------------------------------------------------------------
+			if (PublicData.storedData.liquids.get(theIndex).photographPath == null)
+			{
+				// -----------------------------------------------------------------
+				// 10/04/2018 ECU no photograph has been specified so use the liquid
+				//                icon
+				// -----------------------------------------------------------------
+				listItems.add (new ListItem  (R.drawable.liquid,
+										      PublicData.storedData.liquids.get(theIndex).name,
+										      PublicData.storedData.liquids.get(theIndex).actions,
+										      String.format (getString (R.string.liquid_scaled_light_level_format),
+										    		  PublicData.storedData.liquids.get(theIndex).ambientLightLevelScaled),
+											  theIndex));
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 10/04/2018 ECU a photograph has been specified so pass this through
+				//                to the display adapter
+				// -----------------------------------------------------------------
+				listItems.add (new ListItem  (PublicData.storedData.liquids.get(theIndex).photographPath,
+						 					  PublicData.storedData.liquids.get(theIndex).name,
+						 					  PublicData.storedData.liquids.get(theIndex).actions,
+						 					  String.format (getString (R.string.liquid_scaled_light_level_format),
+						 							  PublicData.storedData.liquids.get(theIndex).ambientLightLevelScaled),
+						 					  theIndex));
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		return listItems;
+		// -------------------------------------------------------------------------
+	}
    	// =============================================================================
-   	public static void ProcessAction (int theIndex)
+   	public void ProcessAction (int theIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 24/09/2016 ECU process the 'long select' action
 		// -------------------------------------------------------------------------
-   		Selector.Finish();
-   		// -------------------------------------------------------------------------
    		// 24/09/2016 ECU display the normal processing layout
    		// 25/09/2016 ECU changed to go straight to the processing bit
    		// -------------------------------------------------------------------------
@@ -429,7 +479,7 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static boolean processLightLevel (float theLightLevel)
+	 boolean processLightLevel (float theLightLevel)
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2016 ECU process the light level
@@ -448,7 +498,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 24/09/2016 ECU changed to use the resource
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak (context.getString (R.string.liquid_detected) + liquid.name);	
+					Utilities.popToastAndSpeak (getString (R.string.liquid_detected) + liquid.name);	
 					// -------------------------------------------------------------
 					// 31/05/2016 ECU remember this liquid so that do not repeat
 					// -------------------------------------------------------------
@@ -500,7 +550,7 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 31/05/2016 ECU clear the name field
 		// -------------------------------------------------------------------------
-		liquidName.setText ("");
+		liquidName.setText (StaticData.BLANK_STRING);
 		// -------------------------------------------------------------------------
 		// 18/09/2016 ECU indicate no match found
 		// -------------------------------------------------------------------------
@@ -508,7 +558,7 @@ public class LiquidActivity extends DibosonActivity
 		// --------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void processTheLiquids ()
+	void processTheLiquids ()
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2016 ECU created to process the selection of stored liquid information
@@ -528,7 +578,7 @@ public class LiquidActivity extends DibosonActivity
 		((Button) activity.findViewById (R.id.liquid_process_button)).setOnClickListener (buttonListener);
 		// -------------------------------------------------------------------------
 		liquidName 	  = (EditText) activity.findViewById (R.id.liquid_name);
-		liquidName.setHint (context.getString (R.string.detected_liquid_display));
+		liquidName.setHint (getString (R.string.detected_liquid_display));
 		// -------------------------------------------------------------------------
 		// 19/09/2016 ECU set up the view for the photograph and initially make
 		//                invisible
@@ -543,7 +593,7 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void registerALiquid ()
+	void registerALiquid ()
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2016 ECU created to process the registration of liquid information
@@ -573,11 +623,11 @@ public class LiquidActivity extends DibosonActivity
 		// 18/05/2016 ECU set up the handler which will display the ambient light
 		//                level value
 		// -------------------------------------------------------------------------
-		updateHandler.sendEmptyMessage(StaticData.MESSAGE_AMBIENT_LIGHT);
+		updateHandler.sendEmptyMessage (StaticData.MESSAGE_AMBIENT_LIGHT);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void registerTheLiquid ( )
+	void registerTheLiquid ( )
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2016 ECU check if the list of liquids has been initialised
@@ -594,7 +644,7 @@ public class LiquidActivity extends DibosonActivity
 		// 18/09/2016 ECU check if a name has been given for this liquid
 		//            ECU use 'trim' in case the user enters a field of spaces
 		// -------------------------------------------------------------------------
-		if (!localLiquidName.trim().equals (""))
+		if (!localLiquidName.trim().equals (StaticData.BLANK_STRING))
 		{
 			// ---------------------------------------------------------------------
 			// 18/09/2016 ECU a name has been given - check if it has already
@@ -607,7 +657,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 18/09/2016 ECU tell the user what is going to happen
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak (String.format (context.getString (R.string.liquid_being_replaced_format),localLiquidName), true);
+					Utilities.popToastAndSpeak (String.format (getString (R.string.liquid_being_replaced_format),localLiquidName), true);
 					// -------------------------------------------------------------
 					// 18/09/2016 ECU the liquid already exists so replace the record
 					// 19/09/2016 ECU added the path to an associated photo
@@ -644,11 +694,11 @@ public class LiquidActivity extends DibosonActivity
 			// 18/09/2016 ECU finish this activity before restarting this app - just
 			//                being lazy at the moment
 			// ---------------------------------------------------------------------
-			activity.finish ();
+			finish ();
 			// ---------------------------------------------------------------------
 			// 18/09/2016 ECU restart this activity
 			// ---------------------------------------------------------------------
-			Intent localIntent = activity.getIntent ();
+			Intent localIntent = getIntent ();
 			activity.startActivity (localIntent);
 			// ---------------------------------------------------------------------
 		}
@@ -657,25 +707,12 @@ public class LiquidActivity extends DibosonActivity
 			// --------------------------------------------------------------------
 			// 18/09/2016 ECU indicate that no name has been given
 			// --------------------------------------------------------------------
-			Utilities.popToastAndSpeak (context.getString (R.string.liquid_no_name), true);
+			Utilities.popToastAndSpeak (getString (R.string.liquid_no_name), true);
 			// --------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
- 	public static void SelectedPhotograph (String theFileName)
- 	{
- 		// -------------------------------------------------------------------------
- 		// 19/09/2016 ECU created to be called when a file is selected in the dialogue
- 		// -------------------------------------------------------------------------
- 		liquidPhotoPath = theFileName;  	
- 		// -------------------------------------------------------------------------
- 		// 19/09/2016 ECU display the selected photo
- 		// -------------------------------------------------------------------------
- 		Utilities.displayAnImage (liquidPhotoButton,liquidPhotoPath);
- 		// -------------------------------------------------------------------------
- 	}
-	// =============================================================================
-	public static void SetToleranceMethod (int theTolerance)
+	public void SetToleranceMethod (int theTolerance)
 	{
 		// -------------------------------------------------------------------------
 		// 31/05/2016 ECU created to set the detection tolerance
@@ -684,22 +721,25 @@ public class LiquidActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void SwipeAction (int theIndex)
+	public void SwipeAction (int theIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 24/09/2016 ECU process the swipe action
+		// 10/04/2018 ECU changed to be 'non static'
+		// 07/06/2019 ECU changed from 'R.string.liquid_delete_format'
 		// -------------------------------------------------------------------------
-		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-				   				 String.format (Selector.context.getString (R.string.liquid_delete_format), 
-						   				PublicData.storedData.liquids.get (theIndex).name),
-						   		 (Object) theIndex,
-						   		 Utilities.createAMethod (LiquidActivity.class,"YesMethod",(Object) null),
-						   		 Utilities.createAMethod (LiquidActivity.class,"NoMethod",(Object) null)); 
+		DialogueUtilitiesNonStatic.yesNo (context,
+										  activity,
+										  "Item Deletion",
+										  String.format (getString (R.string.delete_confirmation_format), 
+										  PublicData.storedData.liquids.get (theIndex).name),
+										  (Object) theIndex,
+										  Utilities.createAMethod (LiquidActivity.class,"YesMethod",(Object) null),
+										  Utilities.createAMethod (LiquidActivity.class,"NoMethod",(Object) null)); 
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	@SuppressLint("HandlerLeak")
-	static class UpdateHandler extends Handler
+	class UpdateHandler extends Handler
 	{
 		@Override
 	    public void handleMessage (Message theMessage) 
@@ -724,7 +764,7 @@ public class LiquidActivity extends DibosonActivity
 						// ---------------------------------------------------------
 						// 18/09/2016 ECU tell the user what is going on
 						// ---------------------------------------------------------
-						Utilities.popToastAndSpeak (context.getString (R.string.press_another_liquid), true);
+						Utilities.popToastAndSpeak (getString (R.string.press_another_liquid), true);
 						// ---------------------------------------------------------
 					}
 				break;
@@ -733,7 +773,7 @@ public class LiquidActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 18/05/2016 ECU measure the default ambient light
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak (context.getString (R.string.default_light_level_measurement),true);
+					Utilities.popToastAndSpeak (getString (R.string.default_light_level_measurement),true);
 					// -------------------------------------------------------------
 					sleep (StaticData.MESSAGE_REFRESH,5000);
 					break;
@@ -750,18 +790,26 @@ public class LiquidActivity extends DibosonActivity
 						// ---------------------------------------------------------
 						// 18/09/2016 ECU changed to use resource
 						// ---------------------------------------------------------
-						Utilities.popToastAndSpeak (String.format (context.getString (R.string.ambient_light_level_format),
+						Utilities.popToastAndSpeak (String.format (getString (R.string.ambient_light_level_format),
 																		Math.round (SensorService.lightLevel)), true);
 						// ---------------------------------------------------------
 						// 18/05/2016 ECU now kick off the monitoring of the liquid
 						// --------------------------------------------------------
 						if (status)
 						{
+							// -----------------------------------------------------
+							// 10/04/2018 ECU tell the user about changing the photograph
+							// -----------------------------------------------------
+							Utilities.popToastAndSpeak (getString (R.string.photograph_long_press), true);
+							// -----------------------------------------------------
 							sleep (StaticData.MESSAGE_SLEEP,2000);
+							// -----------------------------------------------------
 						}
 						else
 						{
-							Utilities.popToastAndSpeak (context.getString (R.string.press_when_ready), true);
+							// -----------------------------------------------------
+							Utilities.popToastAndSpeak (getString (R.string.press_when_ready), true);
+							// -----------------------------------------------------
 						}
 						// ---------------------------------------------------------
 					}
@@ -773,7 +821,7 @@ public class LiquidActivity extends DibosonActivity
 					//                the current light level
 					// 20/09/2016 ECU change to use resource format
 					// -------------------------------------------------------------
-					ambientLightValueTextView.setText (String.format (context.getString (R.string.liquid_ambient_light_format),
+					ambientLightValueTextView.setText (String.format (getString (R.string.liquid_ambient_light_format),
 																			SensorService.lightLevel));
 					// -------------------------------------------------------------
 					// 18/05/2016 ECU keep looping
@@ -812,7 +860,7 @@ public class LiquidActivity extends DibosonActivity
 	    }
 	};
 	// =============================================================================
-   	public static void YesMethod (Object theSelection)
+   	public void YesMethod (Object theSelection)
    	{
    		// -------------------------------------------------------------------------
    		// 24/09/2016 ECU the selected item can be deleted
@@ -825,10 +873,8 @@ public class LiquidActivity extends DibosonActivity
    		if (PublicData.storedData.liquids.size () > 0)
    		{
    			// ---------------------------------------------------------------------
-   			// 03/08/2016 ECU rebuild and then display the updated list view
+   			listViewSelector.refresh ();
    			// ---------------------------------------------------------------------
-   			Selector.Rebuild();
-   			// ----------------------------------------------------------------------
    		}
    		else
    		{
@@ -838,13 +884,9 @@ public class LiquidActivity extends DibosonActivity
    			// ---------------------------------------------------------------------
    			Utilities.popToastAndSpeak (activity.getString (R.string.liquid_all_deleted));
    			// ---------------------------------------------------------------------
-   			// 03/08/2016 ECU finish the selector activity
-   			// ---------------------------------------------------------------------
-   			Selector.Finish ();
-   			// ---------------------------------------------------------------------
    			// 03/08/2016 ECU terminate this activity
    			// ---------------------------------------------------------------------
-   			activity.finish ();
+   			finish ();
    			// ---------------------------------------------------------------------
    		}
    		// -------------------------------------------------------------------------
