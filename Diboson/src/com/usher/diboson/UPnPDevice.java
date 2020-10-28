@@ -1,9 +1,11 @@
 package com.usher.diboson;
 
-import java.io.Serializable;
+import android.graphics.Bitmap;
+
 import org.cybergarage.upnp.Action;
 import org.cybergarage.upnp.Device;
-import android.graphics.Bitmap;
+
+import java.io.Serializable;
 
 public class UPnPDevice implements Serializable
 {
@@ -79,8 +81,9 @@ public class UPnPDevice implements Serializable
 		 // ------------------------------------------------------------------------
 		 // 13/09/2016 ECU check if an error has occurred
 		 //            ECU only allow only 'recursion'
+		 // 12/09/2020 ECU added the check on null
 		 // ------------------------------------------------------------------------
-		 if (actionResponse.contains ("Error") && !theRecursiveState)
+		 if ((actionResponse != null) && actionResponse.contains ("Error") && !theRecursiveState)
 		 {
 			 // --------------------------------------------------------------------
 			 // 13/09/2016 ECU it appears that an error occurred when performing the
@@ -138,7 +141,7 @@ public class UPnPDevice implements Serializable
 			{
 				upnpDevice = PublicData.upnpDevices.get(index);
 				
-				if (upnpDevice.deviceFriendlyName.equalsIgnoreCase(theFriendlyName))
+				if (upnpDevice.deviceFriendlyName.equalsIgnoreCase (theFriendlyName))
 				{
 					if (upnpDevice.deviceState != theState && !theCheckFlag)
 					{

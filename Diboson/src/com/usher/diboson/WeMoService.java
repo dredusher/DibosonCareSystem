@@ -1,15 +1,17 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import com.belkin.wemo.localsdk.WeMoDevice;
-import com.belkin.wemo.localsdk.WeMoSDKContext;
-import com.belkin.wemo.localsdk.WeMoSDKContext.NotificationListener;
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
 import android.annotation.SuppressLint;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+
+import com.belkin.wemo.localsdk.WeMoDevice;
+import com.belkin.wemo.localsdk.WeMoSDKContext;
+import com.belkin.wemo.localsdk.WeMoSDKContext.NotificationListener;
+
+import java.util.ArrayList;
 
 public class WeMoService extends Service implements NotificationListener
 {
@@ -79,7 +81,7 @@ public class WeMoService extends Service implements NotificationListener
 		// -------------------------------------------------------------------------
 		// 17/02/2015 ECU called the main onCreate
 		// -------------------------------------------------------------------------
-		super.onCreate();
+		super.onCreate ();
 		// -------------------------------------------------------------------------
 		// 17/02/2015 ECU called when the service is first created
 		// -------------------------------------------------------------------------
@@ -115,6 +117,7 @@ public class WeMoService extends Service implements NotificationListener
 		WeMoActivity.serviceRunning = true;
 		// -------------------------------------------------------------------------
 	    return Service.START_STICKY;
+	    // -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
 	@Override
@@ -268,6 +271,7 @@ public class WeMoService extends Service implements NotificationListener
 		// 18/02/2015 ECU indicates if the WeMo activity is to receive notifications
 		// -------------------------------------------------------------------------
 		activityListening = theState;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static ArrayList<WeMoDevice> getDevices ()
@@ -343,7 +347,7 @@ public class WeMoService extends Service implements NotificationListener
 				// --------------------------------------------------------------
 				if (activityListening)
 				{
-					WeMoActivity.notifyChange (theEvent,wemoDevice);
+					WeMoActivity.notifyChange (theEvent,wemoDevice);							
 				}
 				// -------------------------------------------------------------
 				// 18/02/2015 ECU only speak if the state is changed
@@ -392,6 +396,7 @@ public class WeMoService extends Service implements NotificationListener
 		// 18/02/2015 ECU return the current list of WeMo devices
 		// -------------------------------------------------------------------------
 		return wemoDevices;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static boolean SetDeviceState (String theFriendlyName,boolean theState)
@@ -403,14 +408,28 @@ public class WeMoService extends Service implements NotificationListener
 		// -------------------------------------------------------------------------
 		for (int theDevice = 0; theDevice < wemoDevices.size(); theDevice++)
 		{
-			if (wemoDevices.get(theDevice).getFriendlyName().equalsIgnoreCase(theFriendlyName))
+			// ---------------------------------------------------------------------
+			if (wemoDevices.get(theDevice).getFriendlyName().equalsIgnoreCase (theFriendlyName))
 			{
 				mWeMoSDKContext.setDeviceState ((theState ? WeMoDevice.WEMO_DEVICE_ON : WeMoDevice.WEMO_DEVICE_OFF), 
-													wemoDevices.get(theDevice).getUDN());
+													wemoDevices.get(theDevice).getUDN ());
 				return true;
+				// -----------------------------------------------------------------
 			}
 		}
 		return false;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+
+	// ==============================================================================
+	public static boolean validation (int theArgument)
+	{
+		// ------------------------------------------------------------------------
+		// 11/08/2020 ECU created to check if this service is allowed to run
+		// ------------------------------------------------------------------------
+		return PublicData.storedData.wemoHandling && WeMoActivity.validation(0);
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

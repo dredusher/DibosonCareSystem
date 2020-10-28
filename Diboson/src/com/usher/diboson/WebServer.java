@@ -1,10 +1,7 @@
 package com.usher.diboson;
 
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.net.ServerSocket;
-import java.net.Socket;
+import android.content.Context;
+
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -26,7 +23,11 @@ import org.apache.http.protocol.ResponseContent;
 import org.apache.http.protocol.ResponseDate;
 import org.apache.http.protocol.ResponseServer;
 
-import android.content.Context;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
 
 public class WebServer 
 {
@@ -46,22 +47,22 @@ public class WebServer
 	private ServerSocket 				serverSocket;
 	private boolean                     webThreadRunning = false;
 	// =============================================================================
-	public WebServer(Context context) 
+	public WebServer (Context context) 
 	{
+		// -------------------------------------------------------------------------
 		this.setContext (context);
-
+		// -------------------------------------------------------------------------
 		httpproc	 	= new BasicHttpProcessor ();
-
 		httpContext 	= new BasicHttpContext ();
-
+		// -------------------------------------------------------------------------
 		httpproc.addInterceptor (new ResponseDate ());
 		httpproc.addInterceptor (new ResponseServer ());
 		httpproc.addInterceptor (new ResponseContent ());
 		httpproc.addInterceptor (new ResponseConnControl ());
-
+		// -------------------------------------------------------------------------
 		httpService = new HttpService (httpproc,
 		    new DefaultConnectionReuseStrategy(), new DefaultHttpResponseFactory());
-
+		// -------------------------------------------------------------------------
 		registry = new HttpRequestHandlerRegistry();
 		// -------------------------------------------------------------------------
 		// 31/12/2014 ECU indicate which URL's are to be handled locally
@@ -69,29 +70,45 @@ public class WebServer
 		registry.register (HANDLE_PATTERN,new RequestHandler(context));
 		// -------------------------------------------------------------------------
 		httpService.setHandlerResolver (registry);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	void webServerAsThread ()
 	{
 		try 
 		{
+			// ---------------------------------------------------------------------
+			// 20/10/2019 ECU Note - open to the socket that is being used for the
+			//                       web server
+			// ---------------------------------------------------------------------
 			serverSocket = new ServerSocket (PublicData.socketNumberForWeb);
-
-			serverSocket.setReuseAddress(true);
-
+			// ---------------------------------------------------------------------
+			// 20/10/2019 ECU Note - want to cause a connection even if the previous
+			//                       connection is in a 'timeout' state
+			// ---------------------------------------------------------------------
+			serverSocket.setReuseAddress (true);
+			// ---------------------------------------------------------------------
+			// 20/10/2019 ECU Note - keep looping waiting for a connection
+			// ---------------------------------------------------------------------
 			while (webThreadRunning) 
 			{
 				try 
 				{
-					final Socket socket = serverSocket.accept();
-
-					serverConnection = new DefaultHttpServerConnection();
+					// -------------------------------------------------------------
+					// 20/10/2019 ECU Note - accept an incoming connection
+					// -------------------------------------------------------------
+					final Socket socket = serverSocket.accept ();
+					// -------------------------------------------------------------
+					serverConnection = new DefaultHttpServerConnection ();
 
 					serverConnection.bind (socket,new BasicHttpParams());
 					// -------------------------------------------------------------
 					httpService.handleRequest (serverConnection,httpContext);
-
+					// -------------------------------------------------------------
+					// 20/10/2019 ECU Note - close down the connection
+					// -------------------------------------------------------------
 					serverConnection.shutdown();
+					// -------------------------------------------------------------
 				} 
 				catch (Exception theException)
 				{
@@ -106,6 +123,7 @@ public class WebServer
 			// 27/12/2014 ECU close the socket being used
 			// ---------------------------------------------------------------------
 			serverSocket.close();
+			// ---------------------------------------------------------------------
 		} 
 		catch (Exception theException) 
 		{
@@ -153,6 +171,7 @@ public class WebServer
 	// =============================================================================
 	public synchronized void stopServer()
 	{
+		// -------------------------------------------------------------------------
 		webThreadRunning = false;
 		if (serverSocket != null) 
 		{
@@ -165,6 +184,7 @@ public class WebServer
 				theException.printStackTrace();
 			}
 		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public void setContext(Context context) 
@@ -197,7 +217,8 @@ public class WebServer
 		public void handle (HttpRequest request, HttpResponse response,HttpContext httpContext) 
 				throws HttpException, IOException 
 		{
-			URI = request.getRequestLine().getUri();
+			// ---------------------------------------------------------------------
+			URI = request.getRequestLine().getUri ();
 			// ---------------------------------------------------------------------
 			// 31/12/2014 ECU log the page being requested
 			// ---------------------------------------------------------------------
@@ -208,7 +229,8 @@ public class WebServer
 			// ---------------------------------------------------------------------
 			HttpEntity entity = new EntityTemplate (new ContentProducer() 
 			{
-				public void writeTo(final OutputStream outstream) throws IOException 
+				// -----------------------------------------------------------------
+				public void writeTo (final OutputStream outstream) throws IOException
 				{
 					OutputStreamWriter writer = new OutputStreamWriter (outstream, "UTF-8");
 					// -------------------------------------------------------------
@@ -217,7 +239,9 @@ public class WebServer
 					writer.write (WebUtilities.getPage (context,URI));
 					// -------------------------------------------------------------
 					writer.flush();
+					// -------------------------------------------------------------
 				}
+				// -----------------------------------------------------------------
 			});
 			// ---------------------------------------------------------------------
 			response.setHeader ("Content-Type", "text/html");

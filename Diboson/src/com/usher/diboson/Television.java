@@ -1,9 +1,5 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -18,12 +14,17 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.BaseAdapter;
 import android.widget.GridView;
 import android.widget.ImageView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.TextView;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Locale;
 
 public class Television extends DibosonActivity
 {
@@ -52,6 +53,13 @@ public class Television extends DibosonActivity
     private static final int ARDUINO_UNO_R3_USB_PRODUCT_ID 				= 0x43;
     private static final int ARDUINO_MEGA_2560_ADK_R3_USB_PRODUCT_ID 	= 0x44;
     private static final int ARDUINO_MEGA_2560_ADK_USB_PRODUCT_ID 		= 0x3F;
+    // ============================================================================
+    // 06/07/2020 ECU declare the components that are used for entries stored
+    //                in the 'raw' and 'text' files when a channel number needs
+    //                to be changed
+    // ----------------------------------------------------------------------------
+    public static final int	CHANNEL_NAME	=	0;
+	public static final int	CHANNEL_NUMBER	=	1;
     /* ============================================================================ */
     // 17/12/2013 ECU declare device types
     // ----------------------------------------------------------------------------
@@ -141,7 +149,7 @@ public class Television extends DibosonActivity
     															IR_NUMBER_9.function	// 9		
                                                               };
     /* ============================================================================ */
-    public static final String     MESSAGE_TERMINATOR		= "\n";
+    public static final String     MESSAGE_TERMINATOR		= StaticData.NEWLINE;
     // ============================================================================
     // 11/05/2015 ECU declare the remote controllers supported
     // 12/05/2015 ECU added the total
@@ -155,42 +163,15 @@ public class Television extends DibosonActivity
 	// 01/03/2014 ECU array of television channel details
 	// 12/05/2015 ECU add extra channels
     // 07/03/2017 ECU added 'drama' channel
+    // 18/11/2017 ECU changed for an array to a list
+    //            ECU the initialisation of the array is performed in 'initialiseTVChannels'
 	// -----------------------------------------------------------------------------
-	public static TelevisionChannel [] televisionChannels =   
-												{
-													new TelevisionChannel ("bbc one",1),
-													new TelevisionChannel ("bbc two",2),
-													new TelevisionChannel ("bbc four",9),
-													new TelevisionChannel ("bbc news",130),
-													new TelevisionChannel ("challenge",46),
-													new TelevisionChannel ("channel 4",4),
-													new TelevisionChannel ("channel 5",5),
-													new TelevisionChannel ("dave",12),
-													new TelevisionChannel ("drama",20),
-													new TelevisionChannel ("e4",28),
-													new TelevisionChannel ("film 4",15),
-													new TelevisionChannel ("film4",15),
-													new TelevisionChannel ("itv1",3),
-													new TelevisionChannel ("itv london",3),
-													new TelevisionChannel ("itv2",6),
-													new TelevisionChannel ("itv3",10),
-													new TelevisionChannel ("london live",8),
-													new TelevisionChannel ("more4 14",11),
-													new TelevisionChannel ("movies4men",48),	
-													new TelevisionChannel ("pic",11),
-													new TelevisionChannel ("pick",11),
-													new TelevisionChannel ("quest",37),
-													new TelevisionChannel ("qvc",16),
-													new TelevisionChannel ("really",17),
-													new TelevisionChannel ("red button",601),
-													new TelevisionChannel ("sky news",132),
-													new TelevisionChannel ("yesterday",19)
-												};
+	public static List<TelevisionChannel> televisionChannels; 
     /* ============================================================================ */
     private static final boolean   USE_BLUETOOTH			= true;
     private static final boolean   USE_USB                  = false;
     /* ============================================================================ */
-    static BlueToothHandler		blueToothHandler;					// 01/03/2014 ECU added
+    static BluetoothHandler blueToothHandler;					// 01/03/2014 ECU added
     static InfraredCodes		codesHitachi;
     static InfraredCodes 		codesSamsung;
     static InfraredCodes 		codesSonyMediaPlayer;
@@ -448,7 +429,7 @@ public class Television extends DibosonActivity
         	// ---------------------------------------------------------------------
         	Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);	
  
-        	setContentView(R.layout.television);
+        	setContentView (R.layout.television);
         	// ---------------------------------------------------------------------
         	// 11/05/2015 ECU save the root view
         	// ---------------------------------------------------------------------
@@ -472,7 +453,7 @@ public class Television extends DibosonActivity
         		// -----------------------------------------------------------------
         		PublicData.currentRemoteController = REMOTE_SAMSUNG_TV;
         		// -----------------------------------------------------------------
-        		televisionGridView.setAdapter(imageAdapter[PublicData.currentRemoteController]);
+        		televisionGridView.setAdapter (imageAdapter[PublicData.currentRemoteController]);
         		// -----------------------------------------------------------------
         	}
         	else
@@ -540,11 +521,16 @@ public class Television extends DibosonActivity
         	// 31/12/2013 ECU close down issues associated with the bluetooth interface
         	// 01/01/2014 ECU took out a lot of code because using a bluetooth service
         	// 01/03/2014 ECU remember to unbind the bluetooth connection
+        	// 15/01/2019 ECU had a timing issue with a NPE so add the check
         	// ---------------------------------------------------------------------
-        	blueToothHandler.UnBind();     
+        	if (blueToothHandler != null)
+        	{
+        		blueToothHandler.UnBind();  
+        	}
+        	// ---------------------------------------------------------------------
         }
     }
-    /* ============================================================ */
+    /* ============================================================================== */
 	@Override
 	public boolean onPrepareOptionsMenu (Menu menu) 
 	{
@@ -607,52 +593,55 @@ public class Television extends DibosonActivity
 		// -------------------------------------------------------------------------
     	return meaningsList;
     }
-	/* ============================================================================ */
+	/* ============================================================================= */
     public static boolean InitialiseHardwareInterface (Context theContext)
     {
-    	// ------------------------------------------------------------------------
+    	// -------------------------------------------------------------------------
     	// 31/12/2013 ECU created to do the initial bits of the interface to the 
     	//                infrared blaster
     	// 15/02/2014 ECU change to return a state as to whether the hardware has
     	//                been set up correctly
-    	// ------------------------------------------------------------------------
+    	// -------------------------------------------------------------------------
         if (hardwareInterface == USE_USB)
         {
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
         	// 31/12/2013 ECU using the USB manager
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
         	// 16/12/2013 ECU register the handler for receive data
-        	// --------------------------------------------------------------------
-            IntentFilter filter = new IntentFilter();
-            filter.addAction(ArduinoCommunicatorService.DATA_RECEIVED_INTENT);
-            filter.addAction(ArduinoCommunicatorService.DATA_SENT_INTERNAL_INTENT);
-            theContext.registerReceiver(serialDataReceiver, filter);
-            // --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
+            IntentFilter filter = new IntentFilter ();
+            filter.addAction (ArduinoCommunicatorService.DATA_RECEIVED_INTENT);
+            filter.addAction (ArduinoCommunicatorService.DATA_SENT_INTERNAL_INTENT);
+            theContext.registerReceiver (serialDataReceiver, filter);
+            // ---------------------------------------------------------------------
             // 16/12/2013 ECU try and find an Arduino card
             // 15/02/2014 ECU return with the state of the Arduino hardware
-            // --------------------------------------------------------------------
-            return FindArduinoDevice(theContext);
+            // ---------------------------------------------------------------------
+            return FindArduinoDevice (theContext);
+            // ---------------------------------------------------------------------
         }
         else
         if (hardwareInterface == USE_BLUETOOTH)
         {
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
         	// 31/12/2013 ECU using the bluetooth module
         	// 01/01/2014 ECU link to the bluetooth service
         	// 01/03/2014 ECU change to use the new class
-        	// --------------------------------------------------------------------
-        	blueToothHandler = new BlueToothHandler (theContext);
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
+        	blueToothHandler = new BluetoothHandler(theContext);
+        	// ---------------------------------------------------------------------
         	// 01/03/2014 ECU return with the state of the handler
-        	// --------------------------------------------------------------------
-        	return blueToothHandler.CheckMessenger();	
+        	// ---------------------------------------------------------------------
+        	return blueToothHandler.CheckMessenger ();	
+        	// ---------------------------------------------------------------------
         }
         else
         {
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
         	// 15/02/2014 ECU if nothing else then indicate a failure
-        	// --------------------------------------------------------------------
+        	// ---------------------------------------------------------------------
         	return false;
+        	// ---------------------------------------------------------------------
         }
     }
 
@@ -683,11 +672,11 @@ public class Television extends DibosonActivity
 		televisionStatusView = (TextView) theView.findViewById (R.id.televisionStatusView);
 		// -------------------------------------------------------------------------
 		// 20/12/2013 ECU set up the image adapter for this grid
-		// 12/05/2015 ECU added theTextflag
+		// 12/05/2015 ECU added the Textflag
 		// -------------------------------------------------------------------------
 		imageAdapter [theRemoteController]= new ImageAdapter(theContext,theRemoteController,theTextFlag);
 		televisionGridView.setAdapter (imageAdapter[theRemoteController]);
- 		/* -------------------------------------------------------------------- */
+ 		/* ------------------------------------------------------------------------- */
 		televisionGridView.setOnItemClickListener (new OnItemClickListener() 
 		{
 			@Override
@@ -697,7 +686,7 @@ public class Television extends DibosonActivity
 				// 20/11/2013 ECU get the code to be actioned
 				// 11/05/2015 ECU changed to use remote controller objects
 				// -----------------------------------------------------------------
-				long codeToAction = remoteControllers[PublicData.currentRemoteController].codes.ReturnTheCode(remoteControllers [PublicData.currentRemoteController].layout[position].function);
+				long codeToAction = remoteControllers [PublicData.currentRemoteController].codes.ReturnTheCode(remoteControllers [PublicData.currentRemoteController].layout[position].function);
 				// -----------------------------------------------------------------
 				// 20/12/2013 ECU only transmit if it is a valid code
 				// -----------------------------------------------------------------
@@ -786,7 +775,7 @@ public class Television extends DibosonActivity
     	// 15/12/2013 ECU changed to reflect whether device found by returning
     	//                true (device found) or false (no device found)
     	// ------------------------------------------------------------------------
-        UsbManager usbManager = (UsbManager) theContext.getSystemService(Context.USB_SERVICE);
+        UsbManager usbManager = (UsbManager) theContext.getSystemService (Context.USB_SERVICE);
         UsbDevice usbDevice = null;
         HashMap<String, UsbDevice> usbDeviceList = usbManager.getDeviceList();
         Iterator<UsbDevice> deviceIterator = usbDeviceList.values().iterator();
@@ -949,7 +938,7 @@ public class Television extends DibosonActivity
     		// ----------------------------------------------------------------------
     		Intent intent = new Intent(ArduinoCommunicatorService.SEND_DATA_INTENT);
     		intent.putExtra (ArduinoCommunicatorService.DATA_EXTRA, localString.getBytes());
-    		theContext.sendBroadcast(intent);
+    		theContext.sendBroadcast (intent);
     	}
     	else
     	if (hardwareInterface == USE_BLUETOOTH)
@@ -991,4 +980,251 @@ public class Television extends DibosonActivity
  		// -------------------------------------------------------------------------
  	}
  	// =============================================================================
+
+
+
+	// =============================================================================
+	public static void changeStoredTVChannels (Context theContext,String theChannelName,int theChannelNumber)
+	{
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU change the stored data for the specified channel
+		// -------------------------------------------------------------------------
+		List<String> TVChannels = Television.getStoredTVChannels
+				(theContext,PublicData.projectFolder + theContext.getString (R.string.tv_channels_file));
+		// -------------------------------------------------------------------------
+		String 	components [];
+		boolean	entryFound = false;
+		// -------------------------------------------------------------------------
+		for (int index = 0; index < TVChannels.size (); index++)
+		{
+			// ---------------------------------------------------------------------
+			components = (TVChannels.get(index)).split (StaticData.ACTION_DELIMITER);
+			// ---------------------------------------------------------------------
+			if ((components.length == 2) && (components [CHANNEL_NAME].equalsIgnoreCase (theChannelName)))
+			{
+				// -----------------------------------------------------------------
+				// 06/07/2020 ECU the entry already exists so update the record
+				// -----------------------------------------------------------------
+				TVChannels.set (index,theChannelName + StaticData.ACTION_DELIMITER + theChannelNumber);
+				// -----------------------------------------------------------------
+				entryFound = true;
+				// -----------------------------------------------------------------
+				// 06/07/2020 ECU the record has been changed so can exit
+				// -----------------------------------------------------------------
+				break;
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU the channel is not already in the list so add it
+		// -------------------------------------------------------------------------
+		if (!entryFound)
+			TVChannels.add (theChannelName + StaticData.ACTION_DELIMITER + theChannelNumber);
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU write the data to disk - the 'true' flag indicates that
+		//                blank entries will not be written to disk
+		// -------------------------------------------------------------------------
+		Utilities.writeAFile (PublicData.projectFolder + theContext.getString (R.string.tv_channels_file),TVChannels,true);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	 public static List<String> getStoredTVChannels (Context theContext,String theFileName)
+	{
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU created to obtain the information from the 'raw' file and
+		//                the 'text' file, with the 'text' file data taking
+		//                precedence.
+		//
+		//                The reason for these files is that the channel number that
+		//                is returned when the EPG is generated may not coincide with
+		//                the channel number that the 'remote controller' needs to
+		//                control the television
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU read in the data from 'raw' file
+		// -------------------------------------------------------------------------
+		List<String> rawTVChannels = Utilities.readRawResourceAsList (theContext,R.raw.tv_channels);
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU read in the data that is stored in the 'text' file
+		// -------------------------------------------------------------------------
+		List<String> textTVChannels = Utilities.readAFileAsList (theFileName);
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU want to combine both lists but the data in the 'text' file
+		//                must take precedence and duplicates are not allowed
+		//            ECU changed to use TVChannelString
+		// -------------------------------------------------------------------------
+		String	  		 rawChannelToDelete;
+		TVChannelString  rawString;
+		TVChannelString  textString;
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU scan through the data for the text file
+		// -------------------------------------------------------------------------
+		for (String textTVChannel : textTVChannels)
+		{
+			// ---------------------------------------------------------------------
+			textString = new TVChannelString (textTVChannel);
+			// ---------------------------------------------------------------------
+			if (textString.validFormat ())
+			{
+				rawChannelToDelete = null;
+				// -----------------------------------------------------------------
+				for (String rawTVChannel : rawTVChannels)
+				{
+					// -------------------------------------------------------------
+					rawString = new TVChannelString (rawTVChannel);
+					// -------------------------------------------------------------
+					if (rawString.validFormat ())
+					{
+						if ((textString.channelName).equalsIgnoreCase (rawString.channelName))
+						{
+							// -----------------------------------------------------
+							// 06/07/2020 ECU there is an entry in both the 'text'
+							//                and 'raw' data
+							// -----------------------------------------------------
+							rawChannelToDelete = rawTVChannel;
+							// -----------------------------------------------------
+						}
+						// ----------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+				// 06/07/2020 ECU check if there is a duplicated record to delete
+				// -----------------------------------------------------------------
+				if (rawChannelToDelete != null)
+				{
+					// -------------------------------------------------------------
+					// 06/07/2020 ECU delete the duplicate entry
+					// -------------------------------------------------------------
+					rawTVChannels.remove (rawChannelToDelete);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU at this point need to combine the lists
+		// -------------------------------------------------------------------------
+		textTVChannels.addAll (rawTVChannels);
+		// -------------------------------------------------------------------------
+		// 06/07/2020 ECU return the combined list
+		// -------------------------------------------------------------------------
+		return textTVChannels;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+ 	public static void initialiseTVChannels (Context theContext,String theFileName)
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 18/11/2017 ECU initialise the inbuilt channels
+ 		// -------------------------------------------------------------------------
+ 		televisionChannels =  new ArrayList<TelevisionChannel> ();
+ 		// -------------------------------------------------------------------------
+ 		// 18/11/2017 ECU set up the known channels
+ 		// -------------------------------------------------------------------------
+ 	 	// 06/07/2020 ECU previously :-
+ 	 	//
+		//					List<String> presetTVChannels
+		//						= Utilities.readRawResourceAsList (theContext,R.raw.tv_channels);
+		//					List<String> inputTVChannels
+		//						= Utilities.readAFileAsList (theFileName);
+		//     				presetTVChannels.addAll (inputTVChannels);
+		//
+		//      		  but this did not allow for duplicated entries so change
+ 	 	// -------------------------------------------------------------------------
+ 	 	List <String> presetTVChannels = getStoredTVChannels (theContext,theFileName);
+ 	 	// -------------------------------------------------------------------------
+ 	 	// 18/11/2017 ECU check all of the data
+ 	 	// -------------------------------------------------------------------------
+ 	 	if (presetTVChannels.size () > 0)
+ 	 	{
+ 	 		// ---------------------------------------------------------------------
+ 	 		// 18/11/2017 ECU there is a file with something to process
+ 	 		// ---------------------------------------------------------------------
+ 	 		// 18/11/2017 ECU loop through all input lines
+ 	 		// ---------------------------------------------------------------------
+ 	 		boolean		channelFound;
+ 	 		String		channelName;
+ 	 		int 		channelNumber;
+ 	 		String [] 	components;
+ 	 		// ---------------------------------------------------------------------
+ 	 		for (int line = 0; line < presetTVChannels.size (); line++)
+ 	 		{
+ 	 			// -----------------------------------------------------------------
+ 	 			// 18/11/2017 ECU each line should have the format
+ 	 			//                 <channel name><ACTION_DELIMITER><channel number>
+ 	 			// -----------------------------------------------------------------
+ 	 			components = presetTVChannels.get (line).split (StaticData.ACTION_DELIMITER);
+ 	 			// -----------------------------------------------------------------
+ 	 			// 18/11/2017 ECU check if the two required components are present
+ 	 			// -----------------------------------------------------------------
+ 	 			if (components.length == 2)
+ 	 			{
+ 	 				try
+ 	 				{
+ 	 					// ---------------------------------------------------------
+ 	 					// 18/11/2017 ECU do any necessary conversions
+ 	 					//            ECU want to store the channel in lower case
+ 	 					// ---------------------------------------------------------
+ 	 					channelNumber	= Integer.parseInt (components [CHANNEL_NUMBER]);
+ 		 				channelName 	= components [CHANNEL_NAME].toLowerCase (Locale.getDefault());
+ 		 				// ---------------------------------------------------------
+ 		 				// 18/11/2017 ECU check whether this channel already exists
+ 		 				// ---------------------------------------------------------
+ 		 				channelFound = false;
+ 		 				for (int channel = 0; channel < televisionChannels.size (); channel++)
+ 		 				{
+ 		 					// -----------------------------------------------------
+ 		 					// 18/11/2017 ECU check if the name is found
+ 		 					// -----------------------------------------------------
+ 		 					if (televisionChannels.get (channel).channelName.equalsIgnoreCase(channelName))
+ 		 					{
+ 		 						// -------------------------------------------------
+ 		 						// 18/11/2017 ECU just change the channel number
+ 		 						// -------------------------------------------------
+ 		 						televisionChannels.get(channel).channel = channelNumber;
+ 		 						// -------------------------------------------------
+ 		 						// 18/11/2017 ECU break out of the loop after indicating
+ 		 						//                it has been found
+ 		 						// -------------------------------------------------
+ 		 						channelFound = true;
+ 		 						break;
+ 		 						// -------------------------------------------------
+ 		 					}
+ 		 					// -----------------------------------------------------
+ 		 				}
+ 		 				// ---------------------------------------------------------
+ 		 				// 18/11/2017 ECU check if channel found
+ 		 				// ---------------------------------------------------------
+ 		 				if (!channelFound)
+ 		 				{
+ 		 					// -----------------------------------------------------
+ 		 					// 18/11/2017 ECU channel not found so add into the array
+ 		 					// -----------------------------------------------------
+ 		 					televisionChannels.add (new TelevisionChannel (channelName,channelNumber));
+ 		 					// -----------------------------------------------------
+ 		 				}
+ 		 				// ---------------------------------------------------------
+ 	 				}
+ 	 				catch (Exception theException)
+ 	 				{
+ 	 					// ---------------------------------------------------------
+ 	 					// 18/11/2017 ECU have an invalid format for the number
+ 	 					// ---------------------------------------------------------
+ 	 					// ---------------------------------------------------------
+ 	 				}		
+ 	 			}
+ 	 			else
+ 	 			{
+ 	 				// -------------------------------------------------------------
+ 	 				// 18/11/2017 ECU the two components are not present
+ 	 				// -------------------------------------------------------------
+ 	 				
+ 	 				// -------------------------------------------------------------
+ 	 			}
+ 	 		}
+ 	 	}
+ 	}
+	// =============================================================================
  }

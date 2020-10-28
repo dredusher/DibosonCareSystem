@@ -1,12 +1,9 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-
-import android.os.Bundle;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.InputType;
 import android.view.View;
 import android.widget.Button;
@@ -14,7 +11,13 @@ import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.TimePicker;
 
-public class TimerActivity extends DibosonActivity 
+import com.usher.diboson.utilities.SelectAnActivity;
+
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+public class TimerActivity extends DibosonActivity
 {
 	// ===============================================================================
 	// 18/06/2013 ECU created
@@ -40,32 +43,46 @@ public class TimerActivity extends DibosonActivity
 	//                the Android OS
 	// 22/10/2015 ECU changed to 'extends DibosonActivity'
 	// 26/01/2017 ECU remove 'menu' handling
+	// 30/04/2017 ECU added handling of _ACTIONS
+	// 17/05/2017 ECU added the 'repeat alarm' - use the current arguments to set a
+	//                different time.
+	//            ECU there used to be a 'private Calendar myCalendar' that was only
+	//                used in 'onClick' - a problem was being caused with today's 
+	//                changes so a fresh instance of the Calendar has been created 
+	//                in 'onClick'
+	// 23/09/2017 ECU when staring an activity then specify its legend (which will be
+	//                stored in the alarm's 'message') rather than its current position
+	//                (which was stored in 'associatedData'). This change was necessary
+	//                to accommodate when the 'sort by usage' option has been selected
+	// 24/11/2017 ECU fix a fault to do with getting an 'index out of range' after
+	//                editing a timer - cause because the alarmIndex was not being
+	//                initialised
+	// 27/11/2017 ECU try and use 'workingAlarmData' rather than individual variables
+	//                because there were so many changes then not all changes have been
+	//                commented
 	//================================================================================
-	/* =============================================================================== */
-	//private static final String 	TAG					  	  = "TimerActivity";
-	/* =============================================================================== */
-	//private static final int 	 MEDICATION_RESULT_CODE  = 4455;
-	/* =============================================================================== */
-	private         int			 action = StaticData.ALARM_ACTION_NONE;
-																// 08/02/2015 ECU added
-																// 11/02/2015 ECU set
+	// =============================================================================== 
+	private static final String 	TAG					  	  = "TimerActivity";
+	// =============================================================================== 
+	
+	// =============================================================================== 
+	private			CheckBox     actionsCheckBox;				// 30/04/2017 ECU added
 	private 		CheckBox 	 activityCheckBox;				// 28/11/2014 ECU added
-	private			int			 alarmIndex = StaticData.NO_RESULT;
-																// 07/02/2015 ECU added
-	private static	int			 associatedData = StaticData.NO_RESULT;
-																// 08/03/2015 ECU changed to static 
+	private static	int			 alarmIndex;					// 07/02/2015 ECU added
 	private static  Context		 context;						// 09/03/2016 ECU added
+	private 		DatePicker   datePicker;
 	private			CheckBox     emailMessageCheckBox;			// 14/07/2015 ECU added
-	private         String		 message = null;				// 09/02/2015 ECU added
 	private			CheckBox     messageCheckBox;				// 09/02/2015 ECU added
-	private			Calendar     myCalendar;
-	private 		DatePicker   myDatePicker;
-	private 		TimePicker   myTimePicker;
 	private			CheckBox     phoneCheckBox;
-	private	static	int 		 requestCode	=	0;			// 06/02/2015 ECU added		
 	private			CheckBox     slideshowCheckBox;
 	private			CheckBox     tabletCheckBox;
-	private static  Object       timerObject = null;			// 09/03/2016 ECU added
+	private 		TimePicker   timePicker;
+	        static	AlarmData	 workingAlarmData;				// 27/11/2017 ECU added
+	// -----------------------------------------------------------------------------
+	// 26/11/2017 ECU Note - the use of static is so that 'requestCode' is not reset
+	//                       on subsequent calls to this activity
+	// -----------------------------------------------------------------------------
+	private	static	int 		 requestCode;					// 06/02/2015 ECU added		
 	// =============================================================================
 
 	/* ============================================================================= */
@@ -83,13 +100,19 @@ public class TimerActivity extends DibosonActivity
 			// 16/02/2014 ECU set up common activity features
 			// 08/04/2014 ECU changed to use the variable
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity(this,StaticData.ACTIVITY_FULL_SCREEN);
+			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
 
 			setContentView (R.layout.activity_timer);
 			// ---------------------------------------------------------------------
 			// 09/03/2016 ECU remember the context for later use
 			// ---------------------------------------------------------------------
 			context = this;
+			// ---------------------------------------------------------------------
+			// 30/04/2017 ECU preset any of the static variables
+			// 24/11/2017 ECU default the alarmIndex which is static
+			// ---------------------------------------------------------------------
+			alarmIndex		= StaticData.NO_RESULT;
+			requestCode		= 0;
 			// ---------------------------------------------------------------------
 			// 07/02/2015 ECU check if any parameters have fed through
 			// ---------------------------------------------------------------------
@@ -103,15 +126,48 @@ public class TimerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
+			// 27/11/2017 ECU decide whether the working alarm data is to be a fresh
+			//                object or a copy of what has currently been stored
+			// ---------------------------------------------------------------------
+			if (alarmIndex == StaticData.NO_RESULT)
+			{
+				// -----------------------------------------------------------------
+				// 27/11/2017 ECU set up the working alarm data
+				// -----------------------------------------------------------------
+				workingAlarmData = new AlarmData ();
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 27/11/2017 ECU copy across the item currently in the list
+				//                do it via the 'clone' otherwise only a pointer will
+				//                be copied
+				// -----------------------------------------------------------------
+				workingAlarmData = PublicData.alarmData.get (alarmIndex).Clone ();
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+			// 17/05/2017 ECU set up two line text to give information
+			// ---------------------------------------------------------------------
+			((Button) findViewById (R.id.alarmRepeatButton)).setText (Utilities.twoLineButtonLegend (this, 
+						getString (R.string.set_another_alarm_top_line),getString (R.string.set_another_alarm_bottom_line)));
+			// ---------------------------------------------------------------------
 			// 18/06/2013 ECU set up the pointers to the various displayed fields
+			// 17/05/2017 ECU added the 'repeat' button
+			// 18/05/2017 ECU added the 'repeated' button
 			// ---------------------------------------------------------------------
 			((Button) findViewById (R.id.alarmButton)).setOnClickListener (buttonSetAlarm);
+			((Button) findViewById (R.id.alarmRepeatButton)).setOnClickListener (buttonSetAlarm);
+			((Button) findViewById (R.id.alarmRepeatedButton)).setOnClickListener (buttonSetAlarm);
 			// ---------------------------------------------------------------------
 			// 28/11/2014 ECU added the 'activity' stuff
 			// 09/02/2015 ECU added the message check box
 			// 14/07/2015 ECU added the email message check box
+			// 30/04/2017 ECU added 'actions' check box
 			// ---------------------------------------------------------------------
 			activityCheckBox 		= (CheckBox) findViewById (R.id.alarmCheckBox4);
+			actionsCheckBox 		= (CheckBox) findViewById (R.id.alarmCheckBox_actions);
 			emailMessageCheckBox	= (CheckBox) findViewById (R.id.alarmCheckBox6);
 			messageCheckBox			= (CheckBox) findViewById (R.id.alarmCheckBox5);
 			phoneCheckBox 			= (CheckBox) findViewById (R.id.alarmCheckBox1);
@@ -120,34 +176,32 @@ public class TimerActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 09/02/2015 ECU declare the click listeners
 			// ---------------------------------------------------------------------
-			activityCheckBox.setOnClickListener (checkBoxAlarm);
+			activityCheckBox.setOnClickListener    	(checkBoxAlarm);
+			actionsCheckBox.setOnClickListener      (checkBoxAlarm);
 			emailMessageCheckBox.setOnClickListener (checkBoxAlarm);
-			messageCheckBox.setOnClickListener (checkBoxAlarm);
-			phoneCheckBox.setOnClickListener (checkBoxAlarm);
-			slideshowCheckBox.setOnClickListener (checkBoxAlarm);
-			tabletCheckBox.setOnClickListener (checkBoxAlarm);
-			// ---------------------------------------------------------------------
-			//          ECU indicate in the intent what this alarm is for 
-			// ---------------------------------------------------------------------	
-			myCalendar = Calendar.getInstance ();
+			messageCheckBox.setOnClickListener 		(checkBoxAlarm);
+			phoneCheckBox.setOnClickListener 		(checkBoxAlarm);
+			slideshowCheckBox.setOnClickListener 	(checkBoxAlarm);
+			tabletCheckBox.setOnClickListener 		(checkBoxAlarm);
 			// ---------------------------------------------------------------------
 			//          ECU pick up the date and time that has been entered 
 			// ---------------------------------------------------------------------    
-			myDatePicker = (DatePicker) findViewById (R.id.alarmDatePicker);
-			myTimePicker = (TimePicker) findViewById (R.id.alarmTimePicker);
+			datePicker = (DatePicker) findViewById (R.id.alarmDatePicker);
+			timePicker = (TimePicker) findViewById (R.id.alarmTimePicker);
+			// ---------------------------------------------------------------------
+			// 21/07/2020 ECU try and scale the size of the pickers - scale to 75 %
+			// ---------------------------------------------------------------------
+
 			// ---------------------------------------------------------------------
 			// 07/02/2015 ECU indicate the use of a 24 hour clock
 			// ---------------------------------------------------------------------
-			myTimePicker.setIs24HourView(true);
-			// ---------------------------------------------------------------------
-			// 18/06/2013 ECU default to no action to take
-			// ---------------------------------------------------------------------
-			action = StaticData.ALARM_ACTION_NONE; 
+			timePicker.setIs24HourView (true);
 			// ---------------------------------------------------------------------
 			// 07/02/2015 ECU if in edit mode then set the display to the stored values
+			// 26/11/2017 ECU changed to use 'work..' rather than 'PublicData.alarm...'
 			// ---------------------------------------------------------------------
 			if (alarmIndex != StaticData.NO_RESULT)
-				displayTheTimer (PublicData.alarmData.get (alarmIndex));
+				displayTheTimer (workingAlarmData);
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -167,81 +221,126 @@ public class TimerActivity extends DibosonActivity
 		public void onClick (View view) 
 		{
 			// ---------------------------------------------------------------------
-			// 03/12/2013 ECU if the date or time is modified using the keyboard then
-			//                the following commands makes sure that the modified
-			//                values are picked up.
+			//20/07/2020 ECU check if any actions have been defined
 			// ---------------------------------------------------------------------
-			myDatePicker.clearFocus ();
-			myTimePicker.clearFocus ();
-			// ---------------------------------------------------------------------
-			// 03/12/2013 ECU set up a calendar structure using the input values
-			// ---------------------------------------------------------------------
-			myCalendar.set (myDatePicker.getYear (),
-        		       		myDatePicker.getMonth (),
-        		       		myDatePicker.getDayOfMonth (),
-        		       		myTimePicker.getCurrentHour (),
-        		       		myTimePicker.getCurrentMinute (),0);
-			// ---------------------------------------------------------------------
-			// 18/06/2013 ECU initialise the alarm data - use Calendar as the alarm ID
-	        // 04/12/2013 ECU use the constructor rather than the old Initialise method
-	        // 06/02/2015 ECU changed to use the new array list
-	        //            ECU use the size as the requestCode in the alarm data
-			//            ECU changed to use the local requestCode
-			//            ECU include the activityIntent which is only set to non-null
-			//                if the required action is ALARM_ACTION_ACTIVITY
-			// 09/02/2015 ECU added the message
-			// 14/07/2015 ECU added the email message
-			// 09/03/2016 ECU changed to use the object rather than email message
-	        // ---------------------------------------------------------------------
-			AlarmData alarmData = new AlarmData (action,
-												 myCalendar,
-												 myCalendar.getTimeInMillis(),
-												 requestCode++,
-												 associatedData,
-												 message,
-												 timerObject);
-			// ---------------------------------------------------------------------
-			// 07/02/2015 ECU decide whether the alarm is to be added or the data is
-			//                to replace an existing alarm
-			// ---------------------------------------------------------------------
-			if (alarmIndex == StaticData.NO_RESULT)
-				PublicData.alarmData.add (alarmData);
+			if (workingAlarmData.action == 0)
+			{
+				// -----------------------------------------------------------------
+				// 20/07/2020 ECU tell the user that no timer will be set
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.timer_no_actions),true);
+				// -----------------------------------------------------------------
+				// 20/07/2020 ECU take no further actions
+				// -----------------------------------------------------------------
+				finish ();
+				// -----------------------------------------------------------------
+			}
 			else
 			{
 				// -----------------------------------------------------------------
-				// 08/02/2015 ECU an existing timer has been updated so make sure
-				//                then any outstanding alarm is cancelled
-				// 29/01/2017 ECU changed from 'deleteAlarm'
+				// 03/12/2013 ECU if the date or time is modified using the keyboard then
+				//                the following commands makes sure that the modified
+				//                values are picked up.
+				// 17/05/2017 ECU changed to handle the additional button which allows
+				//                additional alarms with the same parameters but a
+				//                different date/time
 				// -----------------------------------------------------------------
-				PublicData.alarmData.get (alarmIndex).cancelAlarm (getBaseContext ());
+				datePicker.clearFocus ();
+				timePicker.clearFocus ();
 				// -----------------------------------------------------------------
-				// 08/02/2015 ECU now update the alarm data
+				// 17/05/2017 ECU get a fresh instance for setting date because when
+				//                creating another alarm with same parameters but different
+				//                date/time then '....getTimeInMillis ()' was remembering
+				//                the first instance of Calendar
+				//            ECU removed 'myCalendar' that was declared as private at
+				//                top of class
 				// -----------------------------------------------------------------
-				PublicData.alarmData.set (alarmIndex, alarmData);
+				Calendar localCalendar = Calendar.getInstance ();
+				// -----------------------------------------------------------------
+				// 03/12/2013 ECU set up a calendar structure using the input values
+				// -----------------------------------------------------------------
+				localCalendar.set (datePicker.getYear (),
+        			       		   datePicker.getMonth (),
+        		    	   		   datePicker.getDayOfMonth (),
+        		       			   timePicker.getCurrentHour (),
+        		       			   timePicker.getCurrentMinute (),0);
+				// -----------------------------------------------------------------
+				// 18/06/2013 ECU initialise the alarm data - use Calendar as the alarm ID
+	        	// 04/12/2013 ECU use the constructor rather than the old Initialise method
+	        	// 06/02/2015 ECU changed to use the new array list
+	        	//            ECU use the size as the requestCode in the alarm data
+				//            ECU changed to use the local requestCode
+				//            ECU include the activityIntent which is only set to non-null
+				//                if the required action is ALARM_ACTION_ACTIVITY
+				// 09/02/2015 ECU added the message
+				// 14/07/2015 ECU added the email message
+				// 09/03/2016 ECU changed to use the object rather than email message
+				// 30/04/2017 ECU added 'actions' as an argument
+				// 17/05/2017 ECU changed to use localCalendar
+				// 18/05/2017 ECU changed 'alarmData' to be 'class wide' rather than
+				//                being declared here
+	        	// -----------------------------------------------------------------
+				workingAlarmData.calendar 		= localCalendar;
+				workingAlarmData.id				= localCalendar.getTimeInMillis();
+				workingAlarmData.requestCode 	= requestCode++;
+				// -----------------------------------------------------------------
+				// 18/05/2017 ECU decide how the acquired data alarm data is to be handled
+				// -----------------------------------------------------------------
+				switch (view.getId ())
+				{
+					// -------------------------------------------------------------
+					case R.id.alarmButton:
+						// ---------------------------------------------------------
+						// 18/05/2017 ECU create a single alarm and then finish the
+						//                activity
+						// ---------------------------------------------------------
+						// 06/10/2020 ECU ensure that this is not a repeat alarm
+						//                - an issue if an existing alarm is being
+						//                edited
+						// ---------------------------------------------------------
+						workingAlarmData.repeatInterval = StaticData.NO_RESULT;
+						// ----------------------------------------------------------
+						storeTheAlarmData ();
+						// ---------------------------------------------------------
+						// 20/03/2019 ECU Note - close this activity
+						// ---------------------------------------------------------
+						finish ();
+						// ---------------------------------------------------------
+						break;
+						// ---------------------------------------------------------
+					// -------------------------------------------------------------
+					case R.id.alarmRepeatButton:
+						// ---------------------------------------------------------
+						// 18/05/2017 ECU define an alarm from the existing data and give
+						//                the ability to define another alarm with the
+						//                same data but different date/time
+						// ---------------------------------------------------------
+						storeTheAlarmData ();
+						// ---------------------------------------------------------
+						// 27/11/2017 ECU want to clone a new copy
+						// ---------------------------------------------------------
+						workingAlarmData = workingAlarmData.Clone ();
+						// ---------------------------------------------------------
+						// 27/11/2017 ECU make sure 'edit mode' is switched off
+						// ---------------------------------------------------------
+						alarmIndex = StaticData.NO_RESULT;
+						// ---------------------------------------------------------
+						break;
+						// ---------------------------------------------------------
+					// -------------------------------------------------------------
+					case R.id.alarmRepeatedButton:
+						// ---------------------------------------------------------
+		        		// 18/05/2017 ECU want to get the 'repeat' arguments
+		        		// ---------------------------------------------------------
+		        		getRepeatArguments (context);
+		        		// ---------------------------------------------------------
+		        		break;
+		        		// ---------------------------------------------------------
+					// -------------------------------------------------------------
+				}
+	        	// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
-			// 18/06/2013 ECU use alarmCounter as a unique request code - currently not used
-			// 06/02/2015 ECU changed to use size+1 as ID needs changing
-	        //            ECU changed to use requestCode
-			// 08/02/2015 ECU changed to use method embedded in the data
-			// ---------------------------------------------------------------------
-			alarmData.createAlarm (getBaseContext());
-	        // ---------------------------------------------------------------------
-	        // 04/12/2013 ECU display the input alarm as confirmation
-	        // 06/02/2015 ECU changed to use local alarmData
-			// 03/04/2016 ECU added the context
-	        // ---------------------------------------------------------------------
-	        Utilities.popToast ("Just to confirm the alarm details \n\n" + alarmData.Print(getBaseContext()));
-	        // ---------------------------------------------------------------------
-	        // 18/06/2013 ECU write the alarm data to disk
-	        // 03/04/2014 ECU changed to use 'AsyncUtilities' rather than 'Utilities'
-	        // 08/02/2015 ECU changed to use ...alarmFileName
-	        // ---------------------------------------------------------------------
-	        AsyncUtilities.writeObjectToDisk (PublicData.alarmFileName,PublicData.alarmData);
-	        // ---------------------------------------------------------------------
-	        // 18/06/2013 ECU just do this one action so finish this activity
-	        // ---------------------------------------------------------------------
-	        finish ();
 		}
 	};
 	/* ============================================================================= */
@@ -256,26 +355,30 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	    // -------------------------------------------------------------------------
 	    // 28/11/2014 ECU added the 'activity' code
+	    // 24/07/2020 ECU remove the code now that a dialogue is being used
 	    // -------------------------------------------------------------------------
-	    if (theRequestCode == StaticData.RESULT_CODE_INTENT)
-	    {
-	    	 if (theResultCode == RESULT_OK) 
-		     {     	
-	    		 // ----------------------------------------------------------------
-	    		 // 28/11/2014 ECU remember the intent that needs to be used
-	    		 //                when starting the activity
-	    		 // ----------------------------------------------------------------
-	    		 associatedData   = theIntent.getIntExtra (StaticData.PARAMETER_POSITION,StaticData.NO_RESULT);
-	    		 // ----------------------------------------------------------------   		
-		     } 
-		     else 
-		     if (theResultCode == RESULT_CANCELED) 
-		     {
-		    	 // ----------------------------------------------------------------
-		    	 // 28/11/2014 ECU added
-		    	 // ----------------------------------------------------------------
-		     }
-	    }
+	    // 24/07/2020 ECU if (theRequestCode == StaticData.RESULT_CODE_INTENT)
+		// 24/07/2020 ECU {
+		// 24/07/2020 ECU 	 if (theResultCode == RESULT_OK)
+		// 24/07/2020 ECU      {
+		// 24/07/2020 ECU 		 // ----------------------------------------------------------------
+		// 24/07/2020 ECU 		 // 28/11/2014 ECU remember the intent that needs to be used
+		// 24/07/2020 ECU 		 //                when starting the activity
+		// 24/07/2020 ECU 		 // 23/09/2017 ECU changed to store the legend of the selected
+		// 24/07/2020 ECU 		 //                activity rather than its current position which
+		// 24/07/2020 ECU 		 //                could change if 'sort by usage' is in use
+		// 24/07/2020 ECU 		 // ----------------------------------------------------------------
+		// 24/07/2020 ECU 		 workingAlarmData.message = theIntent.getStringExtra (StaticData.PARAMETER_LEGEND);
+		// 24/07/2020 ECU 		 // ----------------------------------------------------------------
+		// 24/07/2020 ECU 	 }
+		// 24/07/2020 ECU      else
+		// 24/07/2020 ECU      if (theResultCode == RESULT_CANCELED)
+		// 24/07/2020 ECU      {
+		// 24/07/2020 ECU     	 // ----------------------------------------------------------------
+		// 24/07/2020 ECU     	 // 28/11/2014 ECU added
+		// 24/07/2020 ECU     	 // ----------------------------------------------------------------
+		// 24/07/2020 ECU      }
+		// 24/07/2020 ECU }
 	    // -------------------------------------------------------------------------
 	    if (theRequestCode == StaticData.REQUEST_CODE_FILE)
 	    {
@@ -287,7 +390,7 @@ public class TimerActivity extends DibosonActivity
 	    		// -----------------------------------------------------------------
 	    		// 09/02/2015 ECU store the received message
 	    		// -----------------------------------------------------------------
-	    		message   = theIntent.getStringExtra (StaticData.PARAMETER_MESSAGE);	
+	    		workingAlarmData.message   = theIntent.getStringExtra (StaticData.PARAMETER_MESSAGE);	
 	    		// -----------------------------------------------------------------    		
 	    	}
 	    	else 
@@ -311,14 +414,17 @@ public class TimerActivity extends DibosonActivity
 	    		// -----------------------------------------------------------------
 	    		// 14/07/2015 ECU store the received message
 	    		// 09/03/2016 ECU changed to store in the object
+	    		// 08/10/2020 ECU changed to use 'emailMessage'
 	    		// -----------------------------------------------------------------
-	    		timerObject   = theIntent.getSerializableExtra (StaticData.PARAMETER_EMAIL_MESSAGE);
+	    		workingAlarmData.emailMessage = (EmailMessage) theIntent.getSerializableExtra (StaticData.PARAMETER_EMAIL_MESSAGE);
 	    		// -----------------------------------------------------------------    		
 	    	}
 	    	else 
 	 	    if (theResultCode == RESULT_CANCELED) 
 	 	    {
+	 	    	// -----------------------------------------------------------------
 	 	       // Handle cancel
+	 	       // -------------------------------------------------------------------
 	 	    }
 	    }
 	}
@@ -339,28 +445,49 @@ public class TimerActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 18/06/2013 ECU add in the actions - more than one can occur
 			// 11/02/2015 ECU check if already set and handle if already set
+			// 30/04/2017 ECU added the handling of 'actions'
+			// 08/10/2020 ECU set associated objects to null on 'uncheck'
 			// ---------------------------------------------------------------------
 			if (phoneCheckBox.isChecked())
 			{
 				if (!checkAction (StaticData.ALARM_ACTION_PHONE_CALL))
-					action += StaticData.ALARM_ACTION_PHONE_CALL;
+				{
+					workingAlarmData.action += StaticData.ALARM_ACTION_PHONE_CALL;
+					// -------------------------------------------------------------
+					// 06/10/2020 ECU now ask for the phone number
+					// -------------------------------------------------------------
+					DialogueUtilities.textInput (context,
+							                     getString (R.string.phone_number),
+							                     getString (R.string.enter_phone_number),
+							                     StaticData.HINT + getString (R.string.type_in_phone_number),
+							                     Utilities.createAMethod (TimerActivity.class,"PhoneNumberMethod",StaticData.BLANK_STRING),
+							                     null,
+							                     InputType.TYPE_CLASS_PHONE);
+					// -------------------------------------------------------------
+				}
 			}
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_PHONE_CALL))
-					action -= StaticData.ALARM_ACTION_PHONE_CALL;	
+				{
+					workingAlarmData.action -= StaticData.ALARM_ACTION_PHONE_CALL;
+					workingAlarmData.phoneNumber = null;
+				}
 			}
 			// ---------------------------------------------------------------------
 			if (tabletCheckBox.isChecked ())
 			{
 				if (!checkAction (StaticData.ALARM_ACTION_TABLET_REMINDER))
 				{
-					action += StaticData.ALARM_ACTION_TABLET_REMINDER;
+					workingAlarmData.action += StaticData.ALARM_ACTION_TABLET_REMINDER;
 					// -------------------------------------------------------------
 					// 11/02/2015 ECU start the method to select the required
 					//                medication
 					// 07/03/2016 ECU user MEDICATION_TIMER
 					// 08/03/2016 ECU changed to use the selector method
+					// 25/01/2020 ECU changed to use help method
+					// 06/10/2020 ECU removed the help method - do not know why it
+					//                was added
 					// -------------------------------------------------------------
 					SelectorUtilities.Initialise ();
 					SelectorUtilities.selectorParameter.rowLayout 				= R.layout.selector_medication_row;
@@ -376,19 +503,21 @@ public class TimerActivity extends DibosonActivity
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_TABLET_REMINDER))
-					action -= StaticData.ALARM_ACTION_TABLET_REMINDER;
-				
+				{
+					workingAlarmData.action -= StaticData.ALARM_ACTION_TABLET_REMINDER;
+					workingAlarmData.doseTime = null;
+				}
 			}
 			// ---------------------------------------------------------------------
 			if (slideshowCheckBox.isChecked ())
 			{
 				if (!checkAction (StaticData.ALARM_ACTION_SLIDESHOW))
-					action += StaticData.ALARM_ACTION_SLIDESHOW;
+					workingAlarmData.action += StaticData.ALARM_ACTION_SLIDESHOW;
 			}
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_SLIDESHOW))
-					action -= StaticData.ALARM_ACTION_SLIDESHOW;
+					workingAlarmData.action -= StaticData.ALARM_ACTION_SLIDESHOW;
 				
 			}
 			// ---------------------------------------------------------------------
@@ -397,24 +526,52 @@ public class TimerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				if (!checkAction (StaticData.ALARM_ACTION_ACTIVITY))
 				{
-					action += StaticData.ALARM_ACTION_ACTIVITY;
+					workingAlarmData.action += StaticData.ALARM_ACTION_ACTIVITY;
 					// -------------------------------------------------------------
 					// 02/04/2016 ECU ask the user to select the activity
 					// -------------------------------------------------------------
 					Utilities.popToastAndSpeak (getBaseContext().getString (R.string.select_activity));
 					// -------------------------------------------------------------
 					// 28/11/2014 ECU ask the GridActivity to return the selected intent
+					// 24/07/2020 ECU change to use the way the activity is selected
 					// -------------------------------------------------------------
-					Intent intent = new Intent (getBaseContext(),GridActivity.class);
-					intent.putExtra (StaticData.PARAMETER_INTENT,false);
-					startActivityForResult (intent,StaticData.RESULT_CODE_INTENT);
+					// 24/07/2020 ECU Intent intent = new Intent (getBaseContext(),GridActivity.class);
+					// 24/07/2020 ECU intent.putExtra (StaticData.PARAMETER_INTENT,false);
+					// 24/07/2020 ECU startActivityForResult (intent,StaticData.RESULT_CODE_INTENT);
+					// -------------------------------------------------------------
+					// 24/07/2020 ECU select the required activity using a dialogue
+					// -------------------------------------------------------------
+					SelectAnActivity.ChooseAnActivity (context,
+							Utilities.createAMethod (TimerActivity.class,"SelectedActivity",StaticData.BLANK_STRING));
 					// -------------------------------------------------------------
 				}
 			}
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_ACTIVITY))
-					action -= StaticData.ALARM_ACTION_ACTIVITY;	
+					workingAlarmData.action -= StaticData.ALARM_ACTION_ACTIVITY;	
+			}
+			// ---------------------------------------------------------------------
+			// 30/04/2017 ECU handle the 'actions' option
+			// ---------------------------------------------------------------------
+			if (actionsCheckBox.isChecked ())
+			{
+				// -----------------------------------------------------------------
+				if (!checkAction (StaticData.ALARM_ACTION_ACTIONS))
+				{
+					workingAlarmData.action += StaticData.ALARM_ACTION_ACTIONS;
+					// -------------------------------------------------------------
+					// 30/04/2017 ECU start the wizard to define the actions
+					// -------------------------------------------------------------
+					ActionCommandUtilities.SelectCommand (context,
+							Utilities.createAMethod (TimerActivity.class,"SetActionsMethod",StaticData.BLANK_STRING));
+					// -------------------------------------------------------------
+				}
+			}
+			else
+			{
+				if (checkAction (StaticData.ALARM_ACTION_ACTIONS))
+					workingAlarmData.action -= StaticData.ALARM_ACTION_ACTIONS;	
 			}
 			// ---------------------------------------------------------------------
 			// 09/02/2015 ECU handle the message check box
@@ -424,7 +581,7 @@ public class TimerActivity extends DibosonActivity
 				if (!checkAction (StaticData.ALARM_ACTION_MESSAGE))
 				{
 					// -------------------------------------------------------------
-					action += StaticData.ALARM_ACTION_MESSAGE;
+					workingAlarmData.action += StaticData.ALARM_ACTION_MESSAGE;
 					// -------------------------------------------------------------
 					// 09/02/2015 ECU request the message
 					// -------------------------------------------------------------
@@ -436,7 +593,7 @@ public class TimerActivity extends DibosonActivity
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_MESSAGE))
-					action -= StaticData.ALARM_ACTION_MESSAGE;	
+					workingAlarmData.action -= StaticData.ALARM_ACTION_MESSAGE;	
 			}
 			// ---------------------------------------------------------------------
 			// 14/07/2015 ECU handle the email message check box
@@ -446,7 +603,7 @@ public class TimerActivity extends DibosonActivity
 				if (!checkAction (StaticData.ALARM_ACTION_EMAIL_MESSAGE))
 				{
 					// -------------------------------------------------------------
-					action += StaticData.ALARM_ACTION_EMAIL_MESSAGE;
+					workingAlarmData.action += StaticData.ALARM_ACTION_EMAIL_MESSAGE;
 					// -------------------------------------------------------------
 					// 14/07/2015 ECU request the message
 					// -------------------------------------------------------------
@@ -464,7 +621,10 @@ public class TimerActivity extends DibosonActivity
 			else
 			{
 				if (checkAction (StaticData.ALARM_ACTION_EMAIL_MESSAGE))
-						action -= StaticData.ALARM_ACTION_EMAIL_MESSAGE;	
+				{
+						workingAlarmData.action -= StaticData.ALARM_ACTION_EMAIL_MESSAGE;
+						workingAlarmData.emailMessage = null;
+				}
 			}
 			// ---------------------------------------------------------------------
 		}	
@@ -488,7 +648,7 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 11/02/2015 ECU checks whether the specified action has been set
 		// -------------------------------------------------------------------------
-		return ((action & theAction) == theAction);
+		return ((workingAlarmData.action & theAction) == theAction);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -521,11 +681,12 @@ public class TimerActivity extends DibosonActivity
 			 // 18/06/2013 ECU check the retrieved data
 			 // 06/02/2015 ECU changed to use the new list array structure
 			 // 03/04/2016 ECU added the context to Print
+			 // 27/11/2017 ECU added 'true' to Print to get fuller print
 			 // --------------------------------------------------------------------
 			 for (int alarmIndex = 0; alarmIndex < PublicData.alarmData.size(); alarmIndex++)
 			 {
 				 Utilities.popToast ("Alarm Number = " + alarmIndex + StaticData.NEWLINE + 
-		 					 PublicData.alarmData.get (alarmIndex).Print (theContext)); 
+		 					 PublicData.alarmData.get (alarmIndex).Print (theContext,true)); 
 				 // ----------------------------------------------------------------
 				 // 04/12/2013 ECU create an appropriate alarm from the stored data
 				 // ----------------------------------------------------------------
@@ -558,37 +719,29 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		AsyncUtilities.writeObjectToDisk (PublicData.alarmFileName,PublicData.alarmData);
 		// -------------------------------------------------------------------------
-		// 08/02/2015 ECU just get the list rebuilt - not happy with this
+		// 20/07/2020 ECU check if all of the timers have been deleted
 		// -------------------------------------------------------------------------
-		Selector.customListViewAdapter.RebuildList (AlarmData.BuildList());
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	void DisplayCurrentAlarms ()
-	{
-		// -------------------------------------------------------------------------
-		// 04/12/2013 ECU created to display the currently set alarms
-		// 06/02/2015 ECU changed to use the new array list structure
-		// -------------------------------------------------------------------------
-		if (PublicData.alarmData.size() > 0)
+		if (PublicData.alarmData.size() >0)
 		{
-			for (int alarmIndex = 0; alarmIndex < PublicData.alarmData.size(); alarmIndex++)
-			{
-				// ---------------------------------------------------------------------
-				// 04/12/2013 ECU use the normal context-free popToast
-				// 03/04/2016 ECU added the context to Print
-				// ---------------------------------------------------------------------		 
-				Utilities.popToast ("Alarm Number = " + alarmIndex + StaticData.NEWLINE + 
-									PublicData.alarmData.get (alarmIndex).Print (getBaseContext())); 
-			}
+			// ---------------------------------------------------------------------
+			// 08/02/2015 ECU just get the list rebuilt - not happy with this
+			// ---------------------------------------------------------------------
+			Selector.customListViewAdapter.RebuildList (AlarmData.BuildList());
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
 			// ---------------------------------------------------------------------
-			// 04/12/2013 ECU check if any alarms have been set
-			// ---------------------------------------------------------------------
-			Utilities.popToast ("There are no stored alarms");
-		 }
+			// 20/07/2020 ECU all of the timers have been deleted
+			// ----------------------------------------------------------------------
+			Utilities.popToastAndSpeak (context.getString (R.string.timers_all_deleted));
+			// ----------------------------------------------------------------------
+			// 20/07/2020 ECU just terminate this activity
+			// ----------------------------------------------------------------------
+			Selector.Finish ();
+			// ----------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	void displayTheTimer (AlarmData alarmData)
@@ -596,38 +749,43 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 07/01/2014 ECU display date and time
 		// -------------------------------------------------------------------------	
-		myTimePicker.setCurrentHour  (alarmData.calendar.get (Calendar.HOUR_OF_DAY));
-		myTimePicker.setCurrentMinute(alarmData.calendar.get (Calendar.MINUTE));
+		timePicker.setCurrentHour  (alarmData.calendar.get (Calendar.HOUR_OF_DAY));
+		timePicker.setCurrentMinute(alarmData.calendar.get (Calendar.MINUTE));
 		
-		myDatePicker.init (alarmData.calendar.get (Calendar.YEAR), 
-						   alarmData.calendar.get (Calendar.MONTH), 
-						   alarmData.calendar.get (Calendar.DAY_OF_MONTH),null);
-		
-		if ((alarmData.action & StaticData.ALARM_ACTION_PHONE_CALL) == StaticData.ALARM_ACTION_PHONE_CALL)
-			phoneCheckBox.setChecked(true);
-		if ((alarmData.action & StaticData.ALARM_ACTION_TABLET_REMINDER) == StaticData.ALARM_ACTION_TABLET_REMINDER)
-			tabletCheckBox.setChecked(true);
-		if ((alarmData.action & StaticData.ALARM_ACTION_SLIDESHOW) == StaticData.ALARM_ACTION_SLIDESHOW)
-			slideshowCheckBox.setChecked(true);
-		if ((alarmData.action & StaticData.ALARM_ACTION_ACTIVITY) == StaticData.ALARM_ACTION_ACTIVITY)
-			activityCheckBox.setChecked(true);	
+		datePicker.init (alarmData.calendar.get (Calendar.YEAR), 
+						 alarmData.calendar.get (Calendar.MONTH), 
+						 alarmData.calendar.get (Calendar.DAY_OF_MONTH),null);
+		// -------------------------------------------------------------------------
+		// 24/11/2017 ECU Note - set the check boxes
+		//			  ECU use the new method
+		// -------------------------------------------------------------------------
+		setCheckBox (actionsCheckBox, 		StaticData.ALARM_ACTION_ACTIONS);
+		setCheckBox (activityCheckBox,		StaticData.ALARM_ACTION_ACTIVITY);	
+		setCheckBox (messageCheckBox,		StaticData.ALARM_ACTION_MESSAGE);
+		setCheckBox (emailMessageCheckBox,	StaticData.ALARM_ACTION_EMAIL_MESSAGE);
+		setCheckBox (phoneCheckBox,			StaticData.ALARM_ACTION_PHONE_CALL);
+		setCheckBox (slideshowCheckBox,		StaticData.ALARM_ACTION_SLIDESHOW);
+		setCheckBox (tabletCheckBox,		StaticData.ALARM_ACTION_TABLET_REMINDER);
 		// ------------------------------------------------------------------------
 		// 08/02/2015 ECU there are a couple of variables that need to be set from
 		//                the stored data
+		// 25/11/2017 ECU added 'actions' and 'timerObject'
+		// 27/11/2017 ECU remove move of the variables now that 'workingAlarmData'
+		//                is used throughout
 		// ------------------------------------------------------------------------
-		action 				= alarmData.action;
-		associatedData   	= alarmData.associatedData;
-		// ------------------------------------------------------------------------
+		requestCode	= alarmData.requestCode;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static void DoseAmountMethod (String theDoseAmount)
 	{
 		// -------------------------------------------------------------------------
 		// 09/03/2016 ECU created to handle the chosen dose amount
+		// 08/10/2020 ECU changed to use 'doseTime'
 		// -------------------------------------------------------------------------
 		try
 		{
-			((DoseTime)timerObject).dose.amount =  Float.parseFloat (theDoseAmount);
+			workingAlarmData.doseTime.dose.amount =  Float.parseFloat (theDoseAmount);
 			// ---------------------------------------------------------------------
 			// 26/01/2017 ECU changed to use resources
 			// ---------------------------------------------------------------------
@@ -635,7 +793,7 @@ public class TimerActivity extends DibosonActivity
 										 context.getString (R.string.dose_units),
 										 context.getString (R.string.dose_units_request),
 										 context.getString (R.string.tablets),
-										 Utilities.createAMethod (TimerActivity.class,"DoseUnitsMethod",""),
+										 Utilities.createAMethod (TimerActivity.class,"DoseUnitsMethod",StaticData.BLANK_STRING),
 										 null);
 			// ---------------------------------------------------------------------
 		}
@@ -649,8 +807,9 @@ public class TimerActivity extends DibosonActivity
 	{
 		// -------------------------------------------------------------------------
 		// 09/03/2016 ECU created to handle the chosen dose amount
+		// 08/10/2020 ECU changed to use 'doseTime'
 		// -------------------------------------------------------------------------
-		((DoseTime)timerObject).notes = theDoseNotes;
+		workingAlarmData.doseTime.notes = theDoseNotes;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -658,8 +817,9 @@ public class TimerActivity extends DibosonActivity
 	{
 		// -------------------------------------------------------------------------
 		// 09/03/2016 ECU created to handle the chosen dose amount
+		// 08/10/2020 ECU changed to use 'doseTime'
 		// -------------------------------------------------------------------------
-		((DoseTime)timerObject).dose.units = theDoseUnits;
+		workingAlarmData.doseTime.dose.units = theDoseUnits;
 		// -------------------------------------------------------------------------
 		// 26/01/2017 ECU changed to use resources
 		// -------------------------------------------------------------------------
@@ -668,8 +828,9 @@ public class TimerActivity extends DibosonActivity
 											  context.getString (R.string.dose_notes_request),
 											  3,
 											  StaticData.HINT + context.getString (R.string.dose_notes_enter),
-											  Utilities.createAMethod (TimerActivity.class,"DoseNotesMethod",""),
+											  Utilities.createAMethod (TimerActivity.class,"DoseNotesMethod",StaticData.BLANK_STRING),
 											  null);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static List<AlarmData> generateSummary (long theDate)
@@ -680,7 +841,7 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 28/02/2017 ECU adjust 'theDate' to have only the date bit
 		// -------------------------------------------------------------------------
-		theDate = theDate /StaticData.MILLISECONDS_PER_DAY;
+		theDate = theDate / StaticData.MILLISECONDS_PER_DAY;
 		// -------------------------------------------------------------------------
 		// 28/02/2017 ECU declare a working list for appointments that match the date
 		// -------------------------------------------------------------------------
@@ -698,7 +859,7 @@ public class TimerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 28/02/2017 ECU add this alarm into the list
 				// -----------------------------------------------------------------
-				alarms.add(PublicData.alarmData.get (alarm));
+				alarms.add (PublicData.alarmData.get (alarm));
 				// -----------------------------------------------------------------	
 			}
 			// ---------------------------------------------------------------------
@@ -711,12 +872,97 @@ public class TimerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	static void getRepeatArguments (Context theContext)
+	{
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU created to initiate the request for the 'repeat' parameters
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU request the interval between repeats
+		// -------------------------------------------------------------------------
+		DialogueUtilities.sliderChoice (theContext,
+										theContext.getString (R.string.repeated_alarm_interval),
+										theContext.getString (R.string.repeated_alarm_interval_summary),
+										R.drawable.timer,
+										null,
+										1,
+										1,
+										60 * 24,
+										theContext.getString (R.string.set_time),
+										Utilities.createAMethod (TimerActivity.class,"RepeatIntervalMethod",0),
+										theContext.getString (R.string.cancel_operation));
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void PhoneNumberMethod (String thePhoneNumber)
+	{
+		// -------------------------------------------------------------------------
+		// 08/03/2016 ECU created to handle the chosen medication
+		// 08/10/2020 ECU changed to store the number in 'phoneNumber'
+		// -------------------------------------------------------------------------
+		workingAlarmData.phoneNumber = thePhoneNumber;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void RepeatIntervalMethod (int theInterval)
+	{
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU receive the entered 'interval' and then request the 'number
+		//                of repeats'
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU store the interval in the existing alarm data - remember
+		//                that the argument is in minutes 
+		// -------------------------------------------------------------------------
+		workingAlarmData.repeatInterval = theInterval;
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU now request the number of repeats that are required
+		// -------------------------------------------------------------------------
+		DialogueUtilities.sliderChoice (context,
+										context.getString (R.string.repeated_alarm_number),
+										context.getString (R.string.repeated_alarm_number_summary),
+										R.drawable.number,
+										null,
+										1,
+										1,
+										100,
+										context.getString (R.string.set_number),
+										Utilities.createAMethod (TimerActivity.class,"RepeatNumberMethod",0),
+										context.getString (R.string.cancel_operation));
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void RepeatNumberMethod (int theNumber)
+	{
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU created to store the repeat number, update the record
+		//                and then terminate this activity
+		// -------------------------------------------------------------------------
+		workingAlarmData.repeatNumber = theNumber;
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU update the store alarm data record
+		// -------------------------------------------------------------------------
+		storeTheAlarmData ();
+		// -------------------------------------------------------------------------
+		// 18/05/2017 ECU terminate this activity
+		// -------------------------------------------------------------------------
+		((Activity)context).finish ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void SelectedActivity (String theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 24/07/2020 ECU store the activity
+		// -------------------------------------------------------------------------
+		workingAlarmData.message = theActivity;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
     public static void SelectMedicationMethod (int theMedicationSelected)
     {
     	// -------------------------------------------------------------------------
     	// 08/03/2016 ECU created to handle the chosen medication
     	// -------------------------------------------------------------------------
-    	associatedData = theMedicationSelected;
+    	workingAlarmData.associatedData = theMedicationSelected;
     	// -------------------------------------------------------------------------
     	// 08/03/2016 ECU close the selector dialogue
     	// -------------------------------------------------------------------------
@@ -724,9 +970,10 @@ public class TimerActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     	// 09/03/2016 ECU create the object that will receive the data
     	//			  ECU changed to use timer object
+    	// 08/10/2020 ECU changed to use 'doseTime'
     	// -------------------------------------------------------------------------
-    	timerObject         			= new DoseTime ();
-    	((DoseTime) timerObject).dose 	= new Dose ();
+    	workingAlarmData.doseTime       			= new DoseTime ();
+    	workingAlarmData.doseTime.dose 	= new Dose ();
     	// -------------------------------------------------------------------------
     	// 09/03/2016 ECU request the size of the dose
     	// 26/01/2017 ECU changed to use resources
@@ -735,11 +982,83 @@ public class TimerActivity extends DibosonActivity
     								 context.getString (R.string.dose_amount),
     								 context.getString (R.string.dose_amount_request),
     								 "1",
-    								 Utilities.createAMethod (TimerActivity.class,"DoseAmountMethod",""),
+    								 Utilities.createAMethod (TimerActivity.class,"DoseAmountMethod",StaticData.BLANK_STRING),
     								 null,
     								 InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_DECIMAL);
     	// -------------------------------------------------------------------------
     }
     // =============================================================================
+ 	public static void SetActionsMethod (String theActionCommands)
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 30/04/2017 ECU set up the input actions against the alarm data
+ 		// -------------------------------------------------------------------------
+ 		workingAlarmData.actions = theActionCommands;
+ 		// -------------------------------------------------------------------------
+ 	}
+ 	// =============================================================================
+ 	void setCheckBox (CheckBox theCheckBox,int theAlarmType)
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 24/11/2017 ECU created to set the checkbox if the particular alarm is set
+ 		// -------------------------------------------------------------------------
+ 		if ((workingAlarmData.action & theAlarmType) == theAlarmType)
+			theCheckBox.setChecked (true);
+ 		// -------------------------------------------------------------------------
+ 	}
+ 	// =============================================================================
+ 	static void storeTheAlarmData ()
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 18/05/2017 ECU created to store the created alarm
+ 		// -------------------------------------------------------------------------
+ 		if (alarmIndex == StaticData.NO_RESULT)
+ 		{
+			PublicData.alarmData.add (workingAlarmData);
+ 		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 08/02/2015 ECU an existing timer has been updated so make sure
+			//                that any outstanding alarm is cancelled
+			// 29/01/2017 ECU changed from 'deleteAlarm'
+			// ---------------------------------------------------------------------
+			PublicData.alarmData.get (alarmIndex).cancelAlarm (context);
+			// ---------------------------------------------------------------------
+			// 08/02/2015 ECU now update the alarm data
+			// ---------------------------------------------------------------------
+			PublicData.alarmData.set (alarmIndex,workingAlarmData);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 18/06/2013 ECU use alarmCounter as a unique request code - currently 
+		//                not used
+		// 06/02/2015 ECU changed to use size+1 as ID needs changing
+        //            ECU changed to use requestCode
+		// 08/02/2015 ECU changed to use method embedded in the data
+		// -------------------------------------------------------------------------
+		workingAlarmData.createAlarm (context);
+		// -------------------------------------------------------------------------
+		// 08/06/2017 ECU log details of the new alarm
+		// 27/11/2017 ECU added 'true' to Print to get fuller print
+		// -------------------------------------------------------------------------
+		Utilities.LogToProjectFile (TAG,"SetAnAlarm " + " " + workingAlarmData.Print (context,true));
+        // -------------------------------------------------------------------------
+        // 04/12/2013 ECU display the input alarm as confirmation
+        // 06/02/2015 ECU changed to use local alarmData
+		// 03/04/2016 ECU added the context
+		// 30/04/2017 ECU changed to use resource
+		// 27/11/2017 ECU added 'true' to Print to get fuller print
+        // -------------------------------------------------------------------------
+        Utilities.popToast (context.getString (R.string.alarm_confirmation) + workingAlarmData.Print (context,true));
+        // -------------------------------------------------------------------------
+        // 18/06/2013 ECU write the alarm data to disk
+        // 03/04/2014 ECU changed to use 'AsyncUtilities' rather than 'Utilities'
+        // 08/02/2015 ECU changed to use ...alarmFileName
+        // -------------------------------------------------------------------------
+        AsyncUtilities.writeObjectToDisk (PublicData.alarmFileName,PublicData.alarmData);
+        // -------------------------------------------------------------------------
+ 	}
+ 	// =============================================================================
 }
 

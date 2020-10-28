@@ -1,11 +1,12 @@
 package com.usher.diboson;
 
+import java.io.File;
 import java.lang.reflect.Method;
+
 import android.os.Bundle;
 import android.annotation.SuppressLint;
 import android.content.pm.ActivityInfo;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.MediaController;
@@ -97,60 +98,87 @@ public class VideoViewer extends DibosonActivity
 			// ---------------------------------------------------------------------
 			setContentView (R.layout.activity_video_viewer);
 			// ---------------------------------------------------------------------
-			// 18/06/2013 ECU now try and play the specified video
+			// 28/04/2017 ECU check if the specified file exists
 			// ---------------------------------------------------------------------
-			videoView = (VideoView) findViewById (R.id.surface_view);
-			videoView.setVideoURI (Uri.parse (videoFileName));
-			videoView.setMediaController (new MediaController(this));
-			videoView.requestFocus ();
-			// ---------------------------------------------------------------------
-			// 01/06/2016 ECU tell the user to touch the screen to control the video
-			// ---------------------------------------------------------------------
-			Utilities.popToastAndSpeak (getString (R.string.video_control),true);
-			// ---------------------------------------------------------------------
-			// 01/06/2016 ECU set up a listener to detect when the video has finished
-			// ---------------------------------------------------------------------
-			videoView.setOnCompletionListener (new MediaPlayer.OnCompletionListener() 
+			if ((new File (videoFileName)).exists())
 			{
-			    public void onCompletion (MediaPlayer theMediaPlayer) 
-			    {
-			        // -------------------------------------------------------------
-			    	// 01/06/2016 ECU indicate that the video has finished
-			    	// -------------------------------------------------------------
-			    	Utilities.popToastAndSpeak (getString (R.string.video_finished),true);
-			    	// -------------------------------------------------------------
-			    	// 03/06/2016 ECU check whether there is a method that needs to
-			    	//                be called
-			    	// 24/12/2016 ECU use the method to invoke the 'finish method'
-			    	//                - the method checks if it has been defined
-			    	//            ECU add the 'false' argument
-			    	// -------------------------------------------------------------
-			    	invokeFinishMethod (false);
-			    	// -------------------------------------------------------------
-			    	// 01/06/2016 ECU just finish this activity if required
-			    	// -------------------------------------------------------------
-			    	if (finishActivity)
-			    		finish ();
-			    	// -------------------------------------------------------------
-			    }
-			});
-			// ---------------------------------------------------------------------
-			// 01/06/2016 ECU set up the 'touch' listener
-			// ---------------------------------------------------------------------
-			videoView.setOnTouchListener (new View.OnTouchListener () 
-			{
-				@SuppressLint ("ClickableViewAccessibility")
-				@Override
-				public boolean onTouch (View theView, MotionEvent theMotionEvent) 
+				// -----------------------------------------------------------------
+				// 18/06/2013 ECU now try and play the specified video
+				// 26/04/2017 ECU specify the path to the video using 'setVideoPath'
+				//                rather than '.setVideoURI (Uri.parse (videoFileName))'
+				//                - cannot remember why this was done anyway
+				// -----------------------------------------------------------------
+				videoView = (VideoView) findViewById (R.id.surface_view);
+				videoView.setVideoPath (videoFileName);
+				videoView.setMediaController (new MediaController(this));
+				videoView.requestFocus ();
+				// -----------------------------------------------------------------
+				// 01/06/2016 ECU tell the user to touch the screen to control the video
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.video_control),true);
+				// -----------------------------------------------------------------
+				// 01/06/2016 ECU set up a listener to detect when the video has finished
+				// -----------------------------------------------------------------
+				videoView.setOnCompletionListener (new MediaPlayer.OnCompletionListener() 
 				{
-					return false;
-				}
-			});
-			// ---------------------------------------------------------------------
-			// 01/06/2016 ECU Note - now start the video
-			// ---------------------------------------------------------------------
-			videoView.start ();
-			// ---------------------------------------------------------------------
+					public void onCompletion (MediaPlayer theMediaPlayer) 
+					{
+						// ---------------------------------------------------------
+						// 01/06/2016 ECU indicate that the video has finished
+						// ---------------------------------------------------------
+						Utilities.popToastAndSpeak (getString (R.string.video_finished),true);
+						// ---------------------------------------------------------
+						// 03/06/2016 ECU check whether there is a method that needs to
+						//                be called
+						// 24/12/2016 ECU use the method to invoke the 'finish method'
+						//                - the method checks if it has been defined
+						//            ECU add the 'false' argument
+						// ---------------------------------------------------------
+						invokeFinishMethod (false);
+						// ---------------------------------------------------------
+						// 01/06/2016 ECU just finish this activity if required
+						// ---------------------------------------------------------
+						if (finishActivity)
+							finish ();
+						// ---------------------------------------------------------
+					}
+				});
+				// -----------------------------------------------------------------
+				// 01/06/2016 ECU set up the 'touch' listener
+				// -----------------------------------------------------------------
+				videoView.setOnTouchListener (new View.OnTouchListener () 
+				{
+					@SuppressLint ("ClickableViewAccessibility")
+					@Override
+					public boolean onTouch (View theView, MotionEvent theMotionEvent) 
+					{
+						return false;
+					}
+				});
+				// -----------------------------------------------------------------
+				// 01/06/2016 ECU Note - now start the video
+				// -----------------------------------------------------------------
+				videoView.start ();
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 28/04/2017 ECU the specified file does not exist
+				// -----------------------------------------------------------------
+				Utilities.popToast (String.format (getString (R.string.file_does_not_exist_format),videoFileName),true);
+				// -----------------------------------------------------------------
+				// 23/05/2017 ECU make it look as if the command has been processed
+				//                properly so that the next queued action can be
+				//                handled
+				// -----------------------------------------------------------------
+				invokeFinishMethod (false);
+				// -----------------------------------------------------------------
+				// 28/04/2017 ECU terminate the activity
+				// -----------------------------------------------------------------
+				finish ();
+				// -----------------------------------------------------------------
+			}
 		}
 		else
 		{

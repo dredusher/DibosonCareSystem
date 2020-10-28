@@ -277,11 +277,11 @@ public class WeMoActivity extends DibosonActivity implements OnItemClickListener
 	// =============================================================================
 	public static String DisplayAllDevices ()
 	{
-		String display = "" ;
+		String display = StaticData.BLANK_STRING ;
 		
 		for (int theDevice = 0; theDevice < wemoDevices.size(); theDevice++)
 		{
-			display += "Friendly Name : " + wemoDevices.get(theDevice).getFriendlyName() + "\n" +
+			display += "Friendly Name : " + wemoDevices.get(theDevice).getFriendlyName() + StaticData.NEWLINE +
 					         "State : " + wemoDevices.get(theDevice).getState() + 
 					         "\n===========================\n";		
 		}
@@ -399,14 +399,17 @@ public class WeMoActivity extends DibosonActivity implements OnItemClickListener
 			// ---------------------------------------------------------------------
 			refreshHandler.removeMessages (StaticData.MESSAGE_REFRESH);
 			refreshHandler.sendEmptyMessage (StaticData.MESSAGE_REFRESH);
+			// ---------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
 	static class RefreshHandler extends Handler
     {
+		// -------------------------------------------------------------------------
         @Override
         public void handleMessage (Message theMessage) 
         {  
+        	// ---------------------------------------------------------------------
         	switch (theMessage.what)
         	{
         		// -----------------------------------------------------------------
@@ -452,6 +455,7 @@ public class WeMoActivity extends DibosonActivity implements OnItemClickListener
         			}
         			// -------------------------------------------------------------
         			// 18/02/2015 ECU now sleep for REFRESH_TIME
+        			// -------------------------------------------------------------
         			sleep (REFRESH_TIME);
         			// -------------------------------------------------------------
         			break;
@@ -503,6 +507,11 @@ public class WeMoActivity extends DibosonActivity implements OnItemClickListener
 			// ---------------------------------------------------------------------
 			for (int theIndex = 0; theIndex < theCommands.length; theIndex++)
 			{
+				// -----------------------------------------------------------------
+				// 15/10/2017 ECU Note - the following looks really 'crap' but the
+				//                       voiceCommands (ArrayList<String>) is called
+				//                       by 'VoiceRecognition' and want to be consistent
+				// -----------------------------------------------------------------
 				ArrayList<String> commands = new ArrayList<String> ();
 				// -----------------------------------------------------------------
 				// add each command into the array list

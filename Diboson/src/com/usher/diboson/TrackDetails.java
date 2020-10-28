@@ -154,6 +154,7 @@ public class TrackDetails implements Serializable,Comparable<TrackDetails>
 			// ---------------------------------------------------------------------
 			String localDuration 	
 			   =  MusicPlayer.mediaMetadataRetriever.extractMetadata (MediaMetadataRetriever.METADATA_KEY_DURATION);
+			// ----------------------------------------------------------------------
 			if (localDuration != null)
 			{
 			    duration = Integer.parseInt (localDuration);
@@ -200,12 +201,12 @@ public class TrackDetails implements Serializable,Comparable<TrackDetails>
 		// 19/04/2015 ECU added 'genre'
 		// 02/05/2015 ECU added 'duration'
 		// -------------------------------------------------------------------------
-		return 	"Title : " 		+ title + "\n" +
-				"Artist : " 	+ artist + "\n" +
-				"Album : " 		+ album + "\n" +
-				"Composer : " 	+ composer + "\n" +
-				"File : " 		+ fileName + "\n" +
-				"Genre : " 		+ genre + "\n" + 
+		return 	"Title : " 		+ title + StaticData.NEWLINE +
+				"Artist : " 	+ artist + StaticData.NEWLINE +
+				"Album : " 		+ album + StaticData.NEWLINE +
+				"Composer : " 	+ composer + StaticData.NEWLINE +
+				"File : " 		+ fileName + StaticData.NEWLINE +
+				"Genre : " 		+ genre + StaticData.NEWLINE + 
 				"Duration : "   + duration;
 		// -------------------------------------------------------------------------
 	}
@@ -218,7 +219,7 @@ public class TrackDetails implements Serializable,Comparable<TrackDetails>
 		for (int theIndex = 0; theIndex < theTrackDetails.size(); theIndex++)
 		{
 			Utilities.LogToProjectFile (TAG,"=====================================\n");
-			Utilities.LogToProjectFile (TAG,theTrackDetails.get(theIndex).Print() + "\n");
+			Utilities.LogToProjectFile (TAG,theTrackDetails.get(theIndex).Print() + StaticData.NEWLINE);
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -233,7 +234,7 @@ public class TrackDetails implements Serializable,Comparable<TrackDetails>
 				"' on '" + album + 
 				"' by '" + artist + 
 				"' composed by '" + composer + "'" +
-				((genre == StaticData.NO_RESULT) ? "" : (" genre '" + genreAsString (genre) + "'"));
+				((genre == StaticData.NO_RESULT) ? StaticData.BLANK_STRING : (" genre '" + genreAsString (genre) + "'"));
 	}
 	// -----------------------------------------------------------------------------
 	public static String trackInformation (String theFilename)

@@ -2,7 +2,6 @@ package com.usher.diboson;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-
 import android.content.Context;
 
 public class TVChannel implements Serializable,Comparable<TVChannel>
@@ -49,8 +48,11 @@ public class TVChannel implements Serializable,Comparable<TVChannel>
 		EPGEntries			= new ArrayList<ArrayList<EPGEntry>>();
 		// -------------------------------------------------------------------------
 		// 16/10/2015 ECU set the file name where data is written
+		// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+		//                the former requires a REGEX so not sure why it ever
+		//				  worked
 		// -------------------------------------------------------------------------
-		fileName = PublicData.epgFolder + channelName.replaceAll(" ","_");
+		fileName = PublicData.epgFolder + channelName.replace (" ","_");
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
@@ -154,7 +156,7 @@ public class TVChannel implements Serializable,Comparable<TVChannel>
 		// 16/10/2015 ECU created to parse the URL data into the required internal lists
 		// -------------------------------------------------------------------------
 		int					localDateIndex  = -1;
-		String				localDate		= "";
+		String				localDate		= StaticData.BLANK_STRING;
 		EPGEntry 			localEPGentry;
 		// ------------------------------------------------------------------------
 		// 16/10/2015 ECU initialise the EPG array
@@ -215,7 +217,7 @@ public class TVChannel implements Serializable,Comparable<TVChannel>
 				{
 					tempString = EPGEntries.get(localDateIndex).get (EPGentry).Print ();
 				
-					if (tempString != null) localString += tempString + "\n";
+					if (tempString != null) localString += tempString + StaticData.NEWLINE;
 				}
 			}
 		}
@@ -234,19 +236,19 @@ public class TVChannel implements Serializable,Comparable<TVChannel>
 	// =============================================================================
 	public String Print (boolean theDummyFlag)
 	{
-		String localResponse = Print () + "\n";
+		String localResponse = Print () + StaticData.NEWLINE;
 		
-		localResponse += "Number of Dates " + EPGEntries.size() + "\n";
+		localResponse += "Number of Dates " + EPGEntries.size() + StaticData.NEWLINE;
 		
 		for (int theDate = 0; theDate < EPGEntries.size(); theDate++)
 		{
 			int localSize = EPGEntries.get(theDate).size();
 			
-			localResponse += "     Number of Entries " + localSize + "\n";
+			localResponse += "     Number of Entries " + localSize + StaticData.NEWLINE;
 			
 			for (int theEntry = 0; theEntry < localSize; theEntry++)
 			{
-				localResponse += (EPGEntries.get(theDate)).get(theEntry).Print() + "\n";
+				localResponse += (EPGEntries.get(theDate)).get(theEntry).Print() + StaticData.NEWLINE;
 			}	
 		}
 		return localResponse;
@@ -299,12 +301,28 @@ public class TVChannel implements Serializable,Comparable<TVChannel>
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	void writeToDisk ()
+	void writeToDisk (boolean theAsyncFlag)
 	{
 		// -------------------------------------------------------------------------
 		// 16/10/2015 ECU created to write this object to disk
+		// 14/11/2017 ECU add the async option
 		// -------------------------------------------------------------------------
-		AsyncUtilities.writeObjectToDisk (fileName,this);
+		if (theAsyncFlag)
+		{
+			// ---------------------------------------------------------------------
+			// 14/11/2017 ECU want to write the data asynchronously
+			// ---------------------------------------------------------------------
+			AsyncUtilities.writeObjectToDisk (fileName,this);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 14/11/2017 ECU write the data 'directly'
+			// ---------------------------------------------------------------------
+			Utilities.writeObjectToDisk (fileName,this);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

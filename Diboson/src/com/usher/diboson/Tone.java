@@ -168,9 +168,13 @@ public class Tone implements Serializable
 			// ----------------------------------------------------------------------
 			for (int theEntry = 0; theEntry < theNotes.length; theEntry++)
 			{
-				if (theNote.equalsIgnoreCase(theNotes[theEntry]))
+				if (theNote.equalsIgnoreCase (theNotes[theEntry]))
 				{
+					// -------------------------------------------------------------
+					// 20/08/2015 ECU return the frequency associated with 'theNote'
+					// -------------------------------------------------------------
 					return NOTES [theNoteIndex].frequency;
+					// -------------------------------------------------------------
 				}
 			}
 		}

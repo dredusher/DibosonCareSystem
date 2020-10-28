@@ -49,7 +49,7 @@ public class VoiceCommands
 	/* =========================================================================== */
 	public void Print (Context theContext, TextToSpeech theTextToSpeech)
 	{
-		String theEntry = "Command = " + commandToRun + "\nCommand Data = " + commandData + "\n";
+		String theEntry = "Command = " + commandToRun + "\nCommand Data = " + commandData + StaticData.NEWLINE;
 		
 		for (int entry=0; entry < commandWords.length; entry++)
 		{
@@ -59,7 +59,7 @@ public class VoiceCommands
 			{
 				theEntry += commandWords[entry][index] + " ";
 			}
-			theEntry += "\n";	
+			theEntry += StaticData.NEWLINE;	
 		}
 		// -------------------------------------------------------------------------
 		// 08/11/2013 ECU use the custom toast
@@ -79,7 +79,7 @@ public class VoiceCommands
 		// 03/09/2013 ECU added - although a command can have multiple command words
 		//                only print the first entry
 		// -------------------------------------------------------------------------
-		String theString = "";
+		String theString = StaticData.BLANK_STRING;
 		
 		for (int theIndex = 0; theIndex < commandWords[0].length; theIndex++)
 			theString += commandWords[0][theIndex] + " ";

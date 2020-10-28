@@ -1,23 +1,29 @@
 package com.usher.diboson;
 
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
+import android.text.method.ScrollingMovementMethod;
+import android.view.Menu;
+import android.view.View;
+import android.view.WindowManager;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.TextView;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.util.Arrays;
-
-import android.os.Bundle;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ActivityInfo;
-import android.view.Menu;
-import android.view.View;
-import android.view.WindowManager;
-import android.widget.Button;
 
 public class TCPActivity extends DibosonActivity 
 {
@@ -234,12 +240,15 @@ public class TCPActivity extends DibosonActivity
 					localIntent = new Intent (getBaseContext(),RunActivity.class);		
 					Bundle bundle = new Bundle();  
 					bundle.putSerializable (StaticData.PARAMETER_INTENT_DATA, 
-							new IntentData ("CloneActivity",StaticData.REQUEST_CODE_FINISH,TCPActivity.class,"CloneComplete"));
+												new IntentData ("CloneActivity",
+														StaticData.REQUEST_CODE_FINISH,
+														TCPActivity.class,"CloneComplete"));
 					localIntent.putExtras (bundle);	
 					// -------------------------------------------------------------
 					// 17/10/2014 ECU change to feed through the correct request code
 					// -------------------------------------------------------------
-					startActivityForResult (localIntent,StaticData.REQUEST_CODE_FINISH);		
+					startActivityForResult (localIntent,StaticData.REQUEST_CODE_FINISH);
+					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
 				case R.id.tcp_clone_transmit_button:
@@ -268,8 +277,10 @@ public class TCPActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					if (PublicData.networkMask.equalsIgnoreCase(StaticData.NETWORK_MASK_CLASS_C))
 					{
+						// ---------------------------------------------------------
 						Intent myIntent = new Intent (getBaseContext(),DiscoverNetwork.class);
 						startActivityForResult (myIntent,0);
+						// ---------------------------------------------------------
 					}
 					else
 					{
@@ -288,7 +299,10 @@ public class TCPActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					if (PublicData.monitoredIPAddress != null)
 					{
-						Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_currently_monitoring,Utilities.GetDeviceName (PublicData.monitoredIPAddress))),true);
+						// -------------------------------------------------
+						// 03/07/2020 ECU correct an error in the format
+						// -------------------------------------------------
+						Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_currently_monitoring),Utilities.GetDeviceName (PublicData.monitoredIPAddress)),true);
 					}
 					// -------------------------------------------------------------
 					getIPAddressAndAction (ACTION_MONITOR_A_DEVICE, "Select the Device to be Monitored",true);
@@ -305,7 +319,7 @@ public class TCPActivity extends DibosonActivity
 				   			   					 	  context.getString (R.string.IP_address_request),
 				   			   					 	  context.getString (R.string.enter_IP_address_summary),
 				   			   					 	  PublicData.ipAddress,
-				   			   					 	  Utilities.createAMethod (TCPActivity.class,"ConfirmIPAddress",""),
+				   			   					 	  Utilities.createAMethod (TCPActivity.class,"ConfirmIPAddress",StaticData.BLANK_STRING),
 				   			   					 	  null);
 					// -------------------------------------------------------------
 					break;
@@ -357,7 +371,7 @@ public class TCPActivity extends DibosonActivity
 				   			   					      context.getString (R.string.IP_mask_request),
 				   			   					      context.getString (R.string.enter_IP_mask_summary),
 				   			   					      PublicData.networkMask,
-				   			   					      Utilities.createAMethod (TCPActivity.class,"ConfirmNetworkMask",""),
+				   			   					      Utilities.createAMethod (TCPActivity.class,"ConfirmNetworkMask",StaticData.BLANK_STRING),
 				   			   					      null);
 					// -------------------------------------------------------------
 					break;
@@ -383,12 +397,13 @@ public class TCPActivity extends DibosonActivity
 			 // --------------------------------------------------------------------
 			 if (theResultCode == RESULT_OK)
 			 {
-				transmitTheFile (deviceIPAddress,theIntent.getStringExtra(StaticData.PARAMETER_FILE_PATH));		  		
+				transmitTheFile (deviceIPAddress,theIntent.getStringExtra (StaticData.PARAMETER_FILE_PATH));		  		
 			 }
 			 else 
 		 	 if (theResultCode == RESULT_CANCELED) 
 		 	 {
 		 	 }
+			 // --------------------------------------------------------------------
 		 }
 		 else
 		 // ------------------------------------------------------------------------
@@ -431,52 +446,208 @@ public class TCPActivity extends DibosonActivity
 	 /* ============================================================================ */
 	 public static void clientSide (Context theContext,String theIPAddress,int thePort)
 	 {
+		 // ------------------------------------------------------------------------
+		 // 23/10/2019 ECU change the content view
+		 // ------------------------------------------------------------------------
+		 ((Activity)context).setContentView (R.layout.tcp_server_client);
+		 // ------------------------------------------------------------------------
 		 try 
-		 {         
-			 	PrintWriter output;     
-			 	BufferedReader input;  
-			 	String incomingMessage;
-			 	char [] incomingBuffer = new char [1000];
-			
-			 	InetAddress serverAddress = InetAddress.getByName(theIPAddress);  
-			 	                  
-			 	Socket theSocket = new Socket (serverAddress, thePort);               
-			 
-			 	try 
-			 	{             
-			 		output = new PrintWriter(new BufferedWriter(new OutputStreamWriter(theSocket.getOutputStream())), true);                                
-			 		input = new BufferedReader(new InputStreamReader(theSocket.getInputStream()));  
-			 		
-			 		output.println ("GET /index.html HTTP/1.1\n\n");
-			 		output.flush ();
-			 		int charRead = input.read(incomingBuffer, 0, 1000);
-			 		incomingMessage = new String (incomingBuffer);
-			 		// --------------------------------------------------------------
-			 		// 08/11/2013 ECU use the custom toast
-					// --------------------------------------------------------------
-					Utilities.popToast ("received : " + charRead + "\n" + incomingMessage);			              
-				 } 
-			 	 catch (Exception theException) 
-			 	 {  
-			 		 // ------------------------------------------------------------
-			 		 // 08/11/2013 ECU use the custom toast
-			 		 // ------------------------------------------------------------
-			 		 Utilities.popToast ("Exception Writing : " + theException);            
-				 } 
-			 	 finally
-			 	 {                
-					 theSocket.close();             
-				 }           
+		 {     
+			 // --------------------------------------------------------------------
+			 // 23/10/2019 ECU set up the various views for input and output
+			 // --------------------------------------------------------------------
+			 final Button   clientInputButton 	= (Button)   ((Activity)context).findViewById (R.id.tcp_client_button);
+			 final EditText clientInput   		= (EditText) ((Activity)context).findViewById (R.id.tcp_client_input);
+			 final TextView serverResponse 		= (TextView) ((Activity)context).findViewById (R.id.tcp_server_response);
+			 // --------------------------------------------------------------------
+			 // 23/10/2019 ECU request that the 'client input' field obtains the
+			 //                focus and add the 'text watcher' so that the 'Send' button
+			 //                can be made invisible or not
+			 // --------------------------------------------------------------------
+			 clientInput.requestFocus ();
+			 clientInput.addTextChangedListener(new TextWatcher() 
+			 {
+				 // ----------------------------------------------------------------
+				 @Override
+				 public void afterTextChanged (Editable theText) 
+				 {
+				 }
+				 // ----------------------------------------------------------------
+				 @Override    
+				 public void beforeTextChanged (CharSequence theText, 
+						                        int start,
+						 						int count, 
+						 						int after) 
+				 {
+				 }
+				 // ----------------------------------------------------------------
+				 @Override    
+				 public void onTextChanged (CharSequence theText, 
+						 					int start,
+						 					int before,
+						 					int count) 
+				 {
+					 // ------------------------------------------------------------
+					 // 23/10/2019 ECU make the 'send button' invisible/visible 
+					 //                depending on whether there is any text
+					 // ------------------------------------------------------------
+					 clientInputButton.setVisibility ((theText.length() == 0) ? View.INVISIBLE 
+							  											      : View.VISIBLE);
+					 // -------------------------------------------------------------
+				 }
+			 });
+			 // --------------------------------------------------------------------
+			 // 23/10/2019 ECU set up scrolling of the response field
+			 // --------------------------------------------------------------------
+			 serverResponse.setMovementMethod(new ScrollingMovementMethod());
+			 // --------------------------------------------------------------------
+			 // 23/10/2019 ECU set up the streams for input and output
+			 // --------------------------------------------------------------------
+			 final BufferedReader	 input; 
+			 final PrintWriter 		 output;     
+			 // --------------------------------------------------------------------
+			 // 23/10/2019 ECU create a socket to the TCP server
+			 // --------------------------------------------------------------------
+			 InetAddress serverAddress = InetAddress.getByName (theIPAddress);  	                  
+			 final Socket theSocket    = new Socket (serverAddress, thePort);               
+			 // --------------------------------------------------------------------
+			 try 
+			 {    
+				 // ----------------------------------------------------------------
+				 // 23/10/2019 ECU set up the input and output streams
+				 // ----------------------------------------------------------------
+				 input 	= new BufferedReader (new InputStreamReader (theSocket.getInputStream()));  
+				 output = new PrintWriter (new BufferedWriter (new OutputStreamWriter (theSocket.getOutputStream ())), true);                                
+				 // ----------------------------------------------------------------
+				 // 23/10/2019 display the initial response from the server
+				 // ----------------------------------------------------------------
+				 serverResponse.append (clientSideResponse (input));	
+				 // ----------------------------------------------------------------
+				 // 23/10/2019 ECU set up the button that will send data to the
+				 //                server
+				 // ----------------------------------------------------------------
+				 clientInputButton.setOnClickListener(new View.OnClickListener()
+				 {
+					 // -------------------------------------------------------------
+					 @Override
+					 public void onClick (View view) 
+					 {	
+						 // --------------------------------------------------------
+						 // 23/10/2019 ECU get the text that the user has typed in
+						 // --------------------------------------------------------
+						 String clientInputString = clientInput.getText().toString();
+						 // --------------------------------------------------------
+						 // 23/10/2019 ECU reject any blank fields
+						 // --------------------------------------------------------
+						 if (!clientInputString.equals(StaticData.BLANK_STRING))
+						 {
+							 // ----------------------------------------------------
+							 // 23/10/2019 ECU clear the input field
+							 // ----------------------------------------------------
+							 clientInput.setText (StaticData.BLANK_STRING);
+							 // ----------------------------------------------------
+							 // 23/10/2019 ECU transmit the user's input
+							 // ----------------------------------------------------
+							 output.println (clientInputString);
+							 // ----------------------------------------------------
+							 // 23/10/2019 ECU get the server's response and add to
+							 //                the display
+							 // ----------------------------------------------------
+							 String response = clientSideResponse (input);
+							 serverResponse.append (response);
+							 // ----------------------------------------------------
+							 // 23/10/2019 ECU check if the server has closed the
+							 //                connection
+							 // ----------------------------------------------------
+							 if (response.contains (context.getString (R.string.tcp_server_connection_closing)))
+							 {
+								 try 
+								 {
+									 theSocket.close();
+									 // --------------------------------------------
+									 // 23/10/2019 ECU just close the activity
+									 // --------------------------------------------
+									 ((Activity) context).finish() ;
+									 // --------------------------------------------
+								 } 
+								 catch (IOException theException) 
+								 {
+								 }
+							 }	 
+							 // ----------------------------------------------------
+						 }
+						 else
+						 {
+							 // ----------------------------------------------------
+							 // 23/10/2019 ECU the user hasn't entered any data
+							 // ----------------------------------------------------
+						 }
+						 // --------------------------------------------------------
+					 }
+				 });
+				 // ----------------------------------------------------------------
+				 
 			 } 
-		 	 catch (Exception theException)
-			 { 
-		 		 // ----------------------------------------------------------------
-		 		 // 08/11/2013 ECU use the custom toast
-		 		 // ----------------------------------------------------------------
-		 		 Utilities.popToast ("Exception : " + theException);  
-			 }   
+			 catch (Exception theException) 
+			 {  
+				 // ----------------------------------------------------------------
+				 // 08/11/2013 ECU use the custom toast
+				 // ----------------------------------------------------------------
+				 Utilities.popToast ("Exception Writing : " + theException);  
+				 // ----------------------------------------------------------------
+			 }        
+		 } 
+		 catch (Exception theException)
+		 { 
+			 // --------------------------------------------------------------------
+			 // 08/11/2013 ECU use the custom toast
+			 // --------------------------------------------------------------------
+			 Utilities.popToast ("Exception : " + theException);  
+			 // --------------------------------------------------------------------
+		 }
+		 // ------------------------------------------------------------------------
 	 }
-	 /* ============================================================================ */
+	 // ============================================================================
+	 static String clientSideResponse (BufferedReader theInput)
+	 {
+		 // ------------------------------------------------------------------------
+		 String localResponse = StaticData.BLANK_STRING;
+		 String localInput;
+		 // ------------------------------------------------------------------------
+		 // 23/10/2019 ECU now start pulling in the response
+		 // ------------------------------------------------------------------------
+		 try 
+		 {
+			 // --------------------------------------------------------------------
+			 while (((localInput = theInput.readLine ()) != null))
+			 {
+				 // ----------------------------------------------------------------
+				 // 23/10/2019 ECU do not add blank lines
+				 // ----------------------------------------------------------------
+				 if (!localInput.equalsIgnoreCase(StaticData.BLANK_STRING))
+					 localResponse += localInput + StaticData.NEWLINE;
+				 // ----------------------------------------------------------------
+				 // 23/10/2019 ECU check for 'enter command'
+				 // ----------------------------------------------------------------
+				 if (localInput.contains (context.getString (R.string.tcp_server_enter_command)))
+						 break;
+				 // ---------------------------------------------------------------
+			 }
+			 // --------------------------------------------------------------------
+		 } 
+		 catch (IOException theException) 
+		 {
+			 // --------------------------------------------------------------------
+			 // 08/11/2013 ECU use the custom toast
+			 // --------------------------------------------------------------------
+			 Utilities.popToast ("Exception Response : " + theException);  
+			 // --------------------------------------------------------------------
+		 }
+		 // ------------------------------------------------------------------------
+		 return localResponse;
+		 // ------------------------------------------------------------------------
+	 }
+	 // ============================================================================
 	 public static void CloneComplete (String theMessage)
 	 {
 		 Utilities.logMessage (TAG + " " + theMessage);
@@ -502,11 +673,15 @@ public class TCPActivity extends DibosonActivity
 		 	// ---------------------------------------------------------------------
 		 	case ACTION_DEVICE_NAME:
 		 		// -----------------------------------------------------------------
+		 		// 29/03/2019 ECU display the current 'name' as the default text
+		 		// -----------------------------------------------------------------
 		 		deviceIPAddress =  Devices.returnIPAddress (devices [theIndex]);
-		 		DialogueUtilities.textInput(context,"New Device Name",
-			    		   "Please enter the name that is to be associated with " + deviceIPAddress,
-							Utilities.createAMethod (TCPActivity.class,"ConfirmDeviceName",""),
-							Utilities.createAMethod (TCPActivity.class,"Cancel",""));
+		 		DialogueUtilities.textInput (context,
+		 									 "New Device Name",
+		 									 "Please enter the name that is to be associated with " + deviceIPAddress,
+		 									 Devices.returnName (devices[theIndex]),
+		 									 Utilities.createAMethod (TCPActivity.class,"ConfirmDeviceName",StaticData.BLANK_STRING),
+		 									 Utilities.createAMethod (TCPActivity.class,"Cancel",StaticData.BLANK_STRING));
 			 	// -----------------------------------------------------------------
 		 		break;
 		 	// ---------------------------------------------------------------------
@@ -535,8 +710,10 @@ public class TCPActivity extends DibosonActivity
 		 														  (Object) (false));
 		 				// ---------------------------------------------------------
 		 				// 28/04/2016 ECU tell the user which is going on
+						// 03/07/2020 ECU correct an error in the format
 		 				// ---------------------------------------------------------
-		 				Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_finished,Utilities.GetDeviceName (PublicData.monitoredIPAddress))),true);
+		 				Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_finished),Utilities.GetDeviceName (PublicData.monitoredIPAddress)),true);
+		 				// ---------------------------------------------------------
 		 			}
 		 			// -------------------------------------------------------------
 			 		// 28/04/2016 ECU remember the address of the device to be monitored
@@ -556,13 +733,15 @@ public class TCPActivity extends DibosonActivity
 		 									 null,
 		 									 true,"Process",Utilities.createAMethod (TCPActivity.class,"ActionMonitorDataMethod",(Object) null),
 		 									 true,"Display",null);
+		 			// -------------------------------------------------------------
 		 		}
 		 		else
 		 		{
 		 			// -------------------------------------------------------------
 		 			// 28/04/2016 ECU tell the user that monitoring is being switched off
+					// 03/07/2020 ECU correct an error in the format
 		 			// -------------------------------------------------------------
-		 			Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_finished,Utilities.GetDeviceName (PublicData.monitoredIPAddress))),true);
+		 			Utilities.popToastAndSpeak (String.format (context.getString (R.string.monitor_device_finished),Utilities.GetDeviceName (PublicData.monitoredIPAddress)),true);
 		 			// -------------------------------------------------------------
 		 			// 28/04/2016 ECU want to reset the address to indicate monitoring
 		 			//                is cancelled
@@ -625,10 +804,14 @@ public class TCPActivity extends DibosonActivity
 	 {
 		 // ------------------------------------------------------------------------
 		 // 17/03/2015 ECU created to rename the device using dialogue methods
+		 // 16/11/2019 ECU it is important thet the name does not contain '(' or ')'
+		 // ------------------------------------------------------------------------
+		 theName = theName.replace ("(","[").replace (")","]");
 		 // ------------------------------------------------------------------------
 		 Utilities.setDeviceName (context,deviceIPAddress,theName);
 		 // ------------------------------------------------------------------------
 		 Utilities.popToast ("Device " + deviceIPAddress + " has been renamed to " + theName);
+		 // ------------------------------------------------------------------------
 	 }
 	 // ============================================================================
 	 public static void ConfirmIPAddress (String theIPAddress)
@@ -714,10 +897,12 @@ public class TCPActivity extends DibosonActivity
 		 // ------------------------------------------------------------------------
 		 // 16/03/2015 ECU changed to use dialogue option
 		 // ------------------------------------------------------------------------
-		 DialogueUtilities.singleChoice(TCPActivity.this, theTitle,
-				 						(devices = Utilities.deviceListAsArray(theAllDevicesFlag)),0, 
-				 						Utilities.createAMethod(TCPActivity.class,"Confirm",0),
-				 						Utilities.createAMethod(TCPActivity.class,"Cancel",0));
+		 devices = Utilities.deviceListAsArray (theAllDevicesFlag);
+		 // ------------------------------------------------------------------------
+		 DialogueUtilities.singleChoice (context, theTitle,
+				 						 devices,0, 
+				 						 Utilities.createAMethod (TCPActivity.class,"Confirm",0),
+				 						 Utilities.createAMethod (TCPActivity.class,"Cancel",0));
 		 // ------------------------------------------------------------------------	 
 	 }
 	 // ============================================================================
@@ -751,7 +936,7 @@ public class TCPActivity extends DibosonActivity
 		 // 11/12/2013 ECU change to assume that the full path has been entered
 		 // 15/01/2014 ECU just tidy up the file name code - just in case nothing entered
 		 // --------------------------------------------------------------------
-		 if (theFileName.equalsIgnoreCase (""))
+		 if (theFileName.equalsIgnoreCase (StaticData.BLANK_STRING))
 		 {
 			 Utilities.popToast ("You must enter the name of a file to transmit");
 		 }
@@ -759,8 +944,9 @@ public class TCPActivity extends DibosonActivity
 		 {
 			 // ----------------------------------------------------------------
 			 // 15/01/2014 ECU file exists
+			 // 03/06/2019 ECU pass through the context
 			 // ----------------------------------------------------------------
-			 byte [] bigBuffer = Utilities.readAFile(theFileName);
+			 byte [] bigBuffer = Utilities.readAFile(getBaseContext (),theFileName);
 			 // ----------------------------------------------------------------
 			 // 15/01/2014 ECU check if got a proper response
 			 // ----------------------------------------------------------------
@@ -771,19 +957,19 @@ public class TCPActivity extends DibosonActivity
 				 //                format so check this
 				 // ------------------------------------------------------------
 				 byte [] wavFileFormat = new byte [AudioRecorder.WAV_FILE_FORMAT.length];
-				 System.arraycopy(bigBuffer,AudioRecorder.WAV_FILE_FORMAT_OFFSET,wavFileFormat,0,wavFileFormat.length);
-				 if (Arrays.equals(wavFileFormat,AudioRecorder.WAV_FILE_FORMAT))
+				 System.arraycopy (bigBuffer,AudioRecorder.WAV_FILE_FORMAT_OFFSET,wavFileFormat,0,wavFileFormat.length);
+				 if (Arrays.equals (wavFileFormat,AudioRecorder.WAV_FILE_FORMAT))
 				 {
 					 // --------------------------------------------------------
 					 // 02/02/2015 ECU used to play the buffer locally before
 					 //                transmission but not needed any more
 					 // --------------------------------------------------------
-					 // Utilities.playFromBuffer(getBaseContext(), bigBuffer, bigBuffer.length);
+					 // Utilities.playFromBuffer (getBaseContext(), bigBuffer, bigBuffer.length);
 					 // --------------------------------------------------------
 					 // 31/01/2015 ECU changed the method to .... SendTheBuffer
 					 // 21/03/2015 ECU pass the message type as an argument
 					 // --------------------------------------------------------
-					 if (!theIPAddress.startsWith("all"))
+					 if (!theIPAddress.startsWith ("all"))
 					 {				
 						 Utilities.socketMessagesSendTheBuffer 
 						 	(getBaseContext(),

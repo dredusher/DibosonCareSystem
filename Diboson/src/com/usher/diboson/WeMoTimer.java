@@ -15,7 +15,7 @@ public class WeMoTimer implements Serializable
 	// =============================================================================
 	public int 			action			= StaticData.NO_RESULT;
 	public  boolean []	days			= {false,false,false,false,false,false,false};
-	private String		friendlyName	= "";
+	private String		friendlyName	= StaticData.BLANK_STRING;
 	public  int 		hour			= StaticData.NO_RESULT;
 	public  int 		minute			= StaticData.NO_RESULT;
 	// =============================================================================
@@ -116,8 +116,8 @@ public class WeMoTimer implements Serializable
 		// 25/02/2015 ECU print out details of the stored timer
 		// 27/02/2015 ECU changed to use the PrintTime method
 		// -------------------------------------------------------------------------
-		String printString = "Device : " + friendlyName + "\n" +
-			   "Time : " + PrintTime() + "\n";
+		String printString = "Device : " + friendlyName + StaticData.NEWLINE +
+			   "Time : " + PrintTime() + StaticData.NEWLINE;
 		// -------------------------------------------------------------------------
 		// 25/02/2015 ECU print out the days
 		// 11/12/2016 ECU changed to use daysOfTheWeek
@@ -125,7 +125,7 @@ public class WeMoTimer implements Serializable
 		for (int theDay = 0; theDay < days.length; theDay++)
 		{
 			if (days [theDay])
-				printString += PublicData.daysOfTheWeek [theDay] + "\n";
+				printString += PublicData.daysOfTheWeek [theDay] + StaticData.NEWLINE;
 		}
 		// -------------------------------------------------------------------------   
 		return printString + "Action : " + ACTIONS [action];
@@ -144,7 +144,7 @@ public class WeMoTimer implements Serializable
 		// -------------------------------------------------------------------------
 		// 27/02/2015 ECU return a summary of all defined timers
 		// -------------------------------------------------------------------------
-		String printString = "";
+		String printString = StaticData.BLANK_STRING;
 		if (PublicData.storedData.wemoTimers.size() > 0)
 		{
 			for (int theTimer = 0; theTimer < PublicData.storedData.wemoTimers.size(); theTimer++)

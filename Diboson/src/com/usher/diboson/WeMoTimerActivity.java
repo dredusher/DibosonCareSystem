@@ -2,9 +2,7 @@ package com.usher.diboson;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-
 import com.belkin.wemo.localsdk.WeMoDevice;
-
 import android.os.Bundle;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
@@ -52,13 +50,31 @@ public class WeMoTimerActivity extends FragmentActivity
 				// -----------------------------------------------------------------
 				wemoDevices = WeMoService.returnDevices();
 				// -----------------------------------------------------------------
-				// 25/02/2015 ECU display the devices that have been found
+				// 21/03/2017 ECU check if there are any devices to handle
 				// -----------------------------------------------------------------
-				Intent localIntent = new Intent (this,Selector.class);
-				localIntent.putExtra (StaticData.PARAMETER_OBJECT_TYPE,StaticData.OBJECT_WEMO_TIMER);
-				localIntent.putExtra (StaticData.PARAMETER_BACK_KEY,true);
-				localIntent.putExtra (StaticData.PARAMETER_METHOD,new MethodDefinition<WeMoTimerActivity> (WeMoTimerActivity.class,"Timers"));
-				startActivity (localIntent);
+				if (wemoDevices.size() > 0)
+				{
+					// -------------------------------------------------------------
+					// 21/03/2017 ECU there are some devices so can proceed
+					// -------------------------------------------------------------
+					// 25/02/2015 ECU display the devices that have been found
+					// -------------------------------------------------------------
+					Intent localIntent = new Intent (this,Selector.class);
+					localIntent.putExtra (StaticData.PARAMETER_OBJECT_TYPE,StaticData.OBJECT_WEMO_TIMER);
+					localIntent.putExtra (StaticData.PARAMETER_BACK_KEY,true);
+					localIntent.putExtra (StaticData.PARAMETER_METHOD,new MethodDefinition<WeMoTimerActivity> (WeMoTimerActivity.class,"Timers"));
+					startActivity (localIntent);
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 21/03/2017 ECU indicate that there are currently no
+					//                detected WeMo devices
+					// -------------------------------------------------------------
+					Utilities.popToastAndSpeak (getString (R.string.wemo_no_devices),true);
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 				// 27/02/2015 ECU and can exit this activity
 				// -----------------------------------------------------------------
@@ -490,9 +506,29 @@ public class WeMoTimerActivity extends FragmentActivity
 			// ---------------------------------------------------------------------
 			PublicData.storedData.wemoTimers.remove (theTimerIndex);
 			// ---------------------------------------------------------------------
-			// 27/02/2015 ECU need to rebuild the view
+			// 21/03/2017 ECU check if all timers have been deleted
 			// ---------------------------------------------------------------------
-			Selector.Rebuild ();
+			if (PublicData.storedData.wemoTimers.size () > 0)
+			{
+				// -----------------------------------------------------------------
+				// 27/02/2015 ECU need to rebuild the view
+				// -----------------------------------------------------------------
+				Selector.Rebuild ();
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 21/03/2017 ECU all of the timers deleted
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (MainActivity.activity.getString (R.string.wemo_all_timers_deleted),true);
+				// -----------------------------------------------------------------
+				// 21/03/2017 ECU finish the activity so as not to show a blank
+				//                screen
+				// -----------------------------------------------------------------
+				Selector.Finish ();
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
@@ -516,6 +552,24 @@ public class WeMoTimerActivity extends FragmentActivity
 			getDays (PublicData.storedData.wemoTimers.get (editRecordIndex));
 			// ---------------------------------------------------------------------
 		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void HelpTimerHandler (int theIndex)
+	{
+		// -------------------------------------------------------------------------
+		// 24/01/2020 ECU handle the HELP button for a timer
+		// -------------------------------------------------------------------------
+		Utilities.popToast (PublicData.storedData.wemoTimers.get (theIndex).PrintAll());
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void HelpTimersHandler (int theIndex)
+	{
+		// -------------------------------------------------------------------------
+		// 24/01/2020 ECU handle the HELP button for timers
+		// -------------------------------------------------------------------------
+		Utilities.popToast (PublicData.storedData.wemoTimers.get (theIndex).Print());
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -554,18 +608,36 @@ public class WeMoTimerActivity extends FragmentActivity
 		// -------------------------------------------------------------------------
 		friendlyName = wemoDevices.get (theIndex).getFriendlyName ();
 		// -------------------------------------------------------------------------
-		Intent localIntent = new Intent (Selector.context,Selector.class);
-		localIntent.putExtra (StaticData.PARAMETER_OBJECT_TYPE,StaticData.OBJECT_WEMO_TIMERS);
-		localIntent.putExtra (StaticData.PARAMETER_INITIAL_POSITION,theIndex);
-		localIntent.putExtra (StaticData.PARAMETER_BACK_KEY,true);
+		// 21/03/2017 ECU check if there are any timers for this device
 		// -------------------------------------------------------------------------
-		// 28/02/2015 ECU added the method to be actioned when the BACK key is
-		//                pressed
+		int numberOfTimers = WeMoTimer.numberOfTimers(friendlyName);
 		// -------------------------------------------------------------------------
-		localIntent.putExtra (StaticData.PARAMETER_BACK_METHOD,
+		if (numberOfTimers > 0)
+		{
+			// ---------------------------------------------------------------------
+			// 21/03/2017 ECU there are timers so provide edit/delete facilities
+			// ---------------------------------------------------------------------
+			Intent localIntent = new Intent (Selector.context,Selector.class);
+			localIntent.putExtra (StaticData.PARAMETER_OBJECT_TYPE,StaticData.OBJECT_WEMO_TIMERS);
+			localIntent.putExtra (StaticData.PARAMETER_INITIAL_POSITION,theIndex);
+			localIntent.putExtra (StaticData.PARAMETER_BACK_KEY,true);
+			// ---------------------------------------------------------------------
+			// 28/02/2015 ECU added the method to be actioned when the BACK key is
+			//                pressed
+			// ---------------------------------------------------------------------
+			localIntent.putExtra (StaticData.PARAMETER_BACK_METHOD,
 				new MethodDefinition<WeMoTimerActivity> (WeMoTimerActivity.class,"TimersForAllDevices"));
-		Selector.context.startActivity (localIntent);
-		// -------------------------------------------------------------------------
+			Selector.context.startActivity (localIntent);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 21/03/2017 ECU indicate that there are no timers
+			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak(friendlyName + MainActivity.activity.getString(R.string.wemo_device_no_timers),true);
+			// ---------------------------------------------------------------------
+		}
 	}
     // =============================================================================
 	public static void TimersForAllDevices (int theIndex)

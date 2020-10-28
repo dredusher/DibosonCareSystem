@@ -4,7 +4,7 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
-public class WebServerService extends Service 
+public class WebServerService extends Service
 {
 	// =============================================================================
 	// 27/12/2014 ECU created to provide a web server to incoming requests
@@ -39,7 +39,7 @@ public class WebServerService extends Service
 	}
 	// =============================================================================
 	@Override
-	public void onDestroy() 
+	public void onDestroy ()
 	{
 		// -------------------------------------------------------------------------
 		// 27/12/2014 ECU stop the running server
@@ -50,7 +50,7 @@ public class WebServerService extends Service
 	}
 	// =============================================================================
 	@Override
-	public IBinder onBind(Intent intent) 
+	public IBinder onBind (Intent intent)
 	{
 		return null;
 	}

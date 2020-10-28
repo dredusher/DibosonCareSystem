@@ -693,8 +693,8 @@ public class VoiceRecognition extends DibosonActivity implements OnInitListener
 							  context.getString (R.string.spoken_phrase_actions_title),
 							  context.getString (R.string.action_command_summary),
 							  3,
-							  "",
-							  Utilities.createAMethod (VoiceRecognition.class,"SpokenPhraseActions",""),
+							  StaticData.BLANK_STRING,
+							  Utilities.createAMethod (VoiceRecognition.class,"SpokenPhraseActions",StaticData.BLANK_STRING),
 							  null,
 							  StaticData.NO_RESULT,
 							  context.getString (R.string.press_to_define_command));
@@ -709,7 +709,7 @@ public class VoiceRecognition extends DibosonActivity implements OnInitListener
 					// -------------------------------------------------------------
 					// 21/05/2016 ECU maske sure that both fields have been completed
 					// -------------------------------------------------------------
-					if (localSpokenActions.equalsIgnoreCase("") || localSpokenPhrases.equalsIgnoreCase(""))
+					if (localSpokenActions.equalsIgnoreCase(StaticData.BLANK_STRING) || localSpokenPhrases.equalsIgnoreCase(StaticData.BLANK_STRING))
 					{
 						Utilities.popToastAndSpeak (getString (R.string.phrase_actions_needed),true);
 					}

@@ -1,36 +1,36 @@
 package com.usher.diboson;
 
-public class TrackingData 
+// =================================================================================
+public class WiFiStrengthData 
 {
 	// =============================================================================
-	// 20/02/2017 ECU created to be built from stored tracking data
+	// 13/03/2019 ECU created to hold data used when displaying information on WiFi
+	//                channels
 	// =============================================================================
 	
 	// =============================================================================
-	int		accuracy;					// accuracy set when the data was captured
-	String	fileName;					// file name within the directory, NOT full path
-	double	latitude;					// location latitude
-	double  longitude;					// location longitude
-	boolean type;						// type of data
-										//     false ...... recording
-										//     true	....... photograph
+	public 	int		colour;
+	public	String	meaning;
 	// =============================================================================
 	
 	// =============================================================================
-	public TrackingData (double theLatitude,double theLongitude,int theAccuracy,String theFileName)
+	public WiFiStrengthData ()
+	{
+	}
+	// =============================================================================
+	public WiFiStrengthData setData (int theColour,String theMeaning)
 	{
 		// -------------------------------------------------------------------------
-		// 20/02/2017 ECU public constructor to initialise the class data
+		// 13/03/2019 ECU copy across the data
 		// -------------------------------------------------------------------------
-		accuracy	= theAccuracy;
-		fileName	= theFileName;
-		latitude	= theLatitude;
-		longitude	= theLongitude;
+		colour	=	theColour;
+		meaning	=	theMeaning;
 		// -------------------------------------------------------------------------
-		// 20/02/2017 ECU decide the type of data depending on the file name
+		// 13/03/2019 ECU return the updated object
 		// -------------------------------------------------------------------------
-		type = fileName.startsWith (MainActivity.activity.getString (R.string.image_header));
+		return this;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 }
+// =================================================================================

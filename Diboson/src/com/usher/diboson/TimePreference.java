@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.TimePicker;
 
-@SuppressLint("DefaultLocale")
+@SuppressLint ({"DefaultLocale", "InflateParams" })
 public class TimePreference extends DialogPreference 
 {
 	// =============================================================================
@@ -50,7 +50,7 @@ public class TimePreference extends DialogPreference
 		// -------------------------------------------------------------------------
 		// 22/11/2014 ECU release the array - must not use again
 		// -------------------------------------------------------------------------
-		typedArray.recycle();
+		typedArray.recycle ();
 		// -------------------------------------------------------------------------
     }
     // =============================================================================
@@ -75,7 +75,10 @@ public class TimePreference extends DialogPreference
     {	
         if(is24HourFormat) 
         {
-            return (String.format("%02d:%02d",lastHour,lastMinute));
+            // ---------------------------------------------------------------------
+            // 03/12/2019 ECU changed to use TIME...
+            // ---------------------------------------------------------------------
+            return (String.format(StaticData.TIME_FORMAT,lastHour,lastMinute));
         } 
         else 
         {
@@ -84,9 +87,12 @@ public class TimePreference extends DialogPreference
         	// ---------------------------------------------------------------------
             int myHour = lastHour % 12;
             if (myHour == 0) myHour = 12;
-            
-            return (String.format("%02d:%02d",myHour,lastMinute) +     
+            // ---------------------------------------------------------------------
+            // 03/12/2019 ECU changed to use TIME...
+            // ---------------------------------------------------------------------
+            return (String.format(StaticData.TIME_FORMAT,myHour,lastMinute) +
             				((lastHour >= 12) ? " PM" : " AM"));
+            // ---------------------------------------------------------------------
         }
     }
     // =============================================================================
@@ -97,16 +103,17 @@ public class TimePreference extends DialogPreference
     	// 22/11/2014 ECU try and use my own layout so that a subtitle can be
     	//                displayed
     	// -------------------------------------------------------------------------
-    	LayoutInflater layoutInflater = LayoutInflater.from(getContext());
+    	LayoutInflater layoutInflater = LayoutInflater.from (getContext());
 		// -------------------------------------------------------------------------
 		// 20/11/2014 ECU display the custom layout for the seek bar
+    	// 20/07/2019 ECU the 'suppressLint' added because of the use of 'null'
 		// -------------------------------------------------------------------------
-		View view = layoutInflater.inflate(R.layout.time_preference, null);
+		View view = layoutInflater.inflate (R.layout.time_preference, null);
     	// -------------------------------------------------------------------------
     	// 19/11/2014 ECU set up any attributes required of the time picker
     	// -------------------------------------------------------------------------
-		timePicker			= (TimePicker)view.findViewById(R.id.timePicker);
-       	subTitleTextView	= (TextView)view.findViewById(R.id.subTitleText);
+		timePicker			= (TimePicker) view.findViewById (R.id.timePicker);
+       	subTitleTextView	= (TextView) view.findViewById   (R.id.subTitleText);
 		// -------------------------------------------------------------------------
 		// 22/11/2014 ECU sort out the subtitle field
 		// -------------------------------------------------------------------------
@@ -121,6 +128,7 @@ public class TimePreference extends DialogPreference
 		}
 		// -------------------------------------------------------------------------
         return (view);
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
@@ -133,59 +141,90 @@ public class TimePreference extends DialogPreference
         timePicker.setIs24HourView	(is24HourFormat);
         timePicker.setCurrentHour  	(lastHour);
         timePicker.setCurrentMinute	(lastMinute);
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
     public void onBindView (View view) 
     {
+    	// -------------------------------------------------------------------------
         View widgetLayout;
         int childCounter = 0;
+        // -------------------------------------------------------------------------
         do {
-            widgetLayout = ((ViewGroup) view).getChildAt(childCounter);
+            widgetLayout = ((ViewGroup) view).getChildAt (childCounter);
             childCounter++;
-        } while (widgetLayout.getId() != android.R.id.widget_frame); 
+        }
+        // -------------------------------------------------------------------------
+        while (widgetLayout.getId() != android.R.id.widget_frame);
         ((ViewGroup) widgetLayout).removeAllViews();
-        
+        // -------------------------------------------------------------------------
         timeDisplay = new TextView (widgetLayout.getContext());
         timeDisplay.setText (toString());
-        
-        ((ViewGroup) widgetLayout).addView(timeDisplay);
+        // -------------------------------------------------------------------------
+        ((ViewGroup) widgetLayout).addView (timeDisplay);
         super.onBindView (view);
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
     protected void onDialogClosed (boolean positiveResult) 
     {
-        super.onDialogClosed(positiveResult);
         // -------------------------------------------------------------------------
         // 19/11/2014 ECU check whether 'Set' button pressed
+        // 20/07/2019 ECU added the try/catch because getting a NPE on the clear 
+        //                focus and just checking that 'timePicker != null' did
+        //                not solve it
         // -------------------------------------------------------------------------
         if (positiveResult) 
         {
         	// ---------------------------------------------------------------------
-        	// 19/11/2014 ECU make sure that the displayed value is updated
+        	try
+        	{
+        		// -----------------------------------------------------------------
+        		// 19/11/2014 ECU make sure that the displayed value is updated
+        		// -----------------------------------------------------------------
+        		timePicker.clearFocus ();
+        		// -----------------------------------------------------------------
+        		// 19/11/2014 ECU get the input values from the picker
+        		// -----------------------------------------------------------------
+        		lastHour	=	timePicker.getCurrentHour ();
+        		lastMinute	=	timePicker.getCurrentMinute ();
+                // -----------------------------------------------------------------
+                // 03/12/2019 ECU changed to use TIME...
+                // -----------------------------------------------------------------
+        		String time = String.format (StaticData.TIME_FORMAT,lastHour,lastMinute);
+        		// -----------------------------------------------------------------
+        		if (callChangeListener (time)) 
+        		{
+        			// -------------------------------------------------------------
+        			persistString (time);
+        			timeDisplay.setText (toString());
+        			// -------------------------------------------------------------
+        		}
+        		// -----------------------------------------------------------------
+        	}
+        	catch (Exception theException)
+        	{
+        		// -----------------------------------------------------------------
+        		// -----------------------------------------------------------------
+        	}
         	// ---------------------------------------------------------------------
-            timePicker.clearFocus();
-            // ---------------------------------------------------------------------
-            // 19/11/2014 ECU get the input values from the picker
-            // ---------------------------------------------------------------------
-            lastHour=timePicker.getCurrentHour();
-            lastMinute=timePicker.getCurrentMinute();
-            // ---------------------------------------------------------------------
-            String time = String.format ("%02d:%02d",lastHour,lastMinute);
-
-            if (callChangeListener (time)) 
-            {
-                persistString (time);
-                timeDisplay.setText (toString());
-            }
         }
+        // -------------------------------------------------------------------------
+        // 20/07/2019 ECU moved here from the start of this method - because of the
+        //                NPE mentioned above
+        // -------------------------------------------------------------------------
+        super.onDialogClosed (positiveResult);
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
-    protected Object onGetDefaultValue(TypedArray theArray, int theIndex) 
+    protected Object onGetDefaultValue (TypedArray theArray, int theIndex) 
     {
+        // -------------------------------------------------------------------------
         return (theArray.getString(theIndex));
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
     @Override
@@ -208,16 +247,17 @@ public class TimePreference extends DialogPreference
            
             if (shouldPersist()) 
             {
-                persistString (time) ;
+                persistString (time);
             }
         }
         // -------------------------------------------------------------------------
         // 19/11/2014 ECU get the time components from the string
+        // 13/12/2019 ECU changed to use Static....
         // -------------------------------------------------------------------------
-        String[] timeParts=time.split(":");
-        
-        lastHour	=	Integer.parseInt(timeParts[0]);
-        lastMinute	=	Integer.parseInt(timeParts[1]);
+        String[] timeParts = time.split (StaticData.ACTION_DELIMITER);
+        // -------------------------------------------------------------------------
+        lastHour	=	Integer.parseInt (timeParts[0]);
+        lastMinute	=	Integer.parseInt (timeParts[1]);
         // -------------------------------------------------------------------------
     }
     // =============================================================================

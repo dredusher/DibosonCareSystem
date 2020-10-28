@@ -2,14 +2,11 @@ package com.usher.diboson;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.cybergarage.upnp.ControlPoint;
 import org.cybergarage.upnp.Device;
 import org.cybergarage.upnp.DeviceList;
 import org.cybergarage.upnp.Service;
 import org.cybergarage.upnp.ServiceList;
 import org.cybergarage.upnp.UPnP;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.AsyncTask;
@@ -33,6 +30,9 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 	//                This activity is using 'cybergarage' classes but these are
 	//                supplied by the Belkin WeMo SDK and I believe it has been
 	//                modified to only detect WeMo devices.
+	// 15/04/2017 ECU Further investigation showed that the ControlPoint class in
+	//                the CyberGarage package had been modified so that its
+	//                AddDevice method only accepts 'belkin' devices
 	// -----------------------------------------------------------------------------
 	//private final static String		TAG					= "UPnP_Actvity";
 	// =============================================================================
@@ -40,13 +40,12 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 	// =============================================================================
 
 	// =============================================================================
-			static  Adapter			adapter			= null;
-	public  static  Context			context;
-					ControlPoint	controlPoint;
-					DeviceList		deviceList;
-			static 	ListView 		listView 		= null;
-	public 	static 	UPnP_MessageHandler	
-									messageHandler;
+			static  Adapter				adapter			= null;
+	public  static  Context				context;
+					UPnP_ControlPoint	controlPoint;  		// 03/03/2018 ECU changed from ControlPoint
+					DeviceList			deviceList;
+			static 	ListView 			listView 		= null;
+	public 	static 	UPnP_MessageHandler	messageHandler;
 	// =============================================================================
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -126,10 +125,14 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 		// 09/09/2016 ECU added
 		// -------------------------------------------------------------------------
 		// 09/09/2016 ECU stop the UPnP control point
+		// 03/03/2018 ECU IMPORTANT - if have 'controlPoint.stop' then the app
+		//                            seems to freeze - so comment out for time being
+		//                            (see raw/documentation_bugs)
 		// -------------------------------------------------------------------------
-		controlPoint.stop ();
+		// 03/03/2018 controlPoint.stop ();
 		// -------------------------------------------------------------------------
-		super.onDestroy();
+		super.onDestroy ();
+		// -------------------------------------------------------------------------
     }
 	// =============================================================================
 	@Override
@@ -149,19 +152,24 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 		// -------------------------------------------------------------------------
 		public Adapter (Context theContext, int theResource, List<UPnPDevice> theDevices) 
 		{
+			// ---------------------------------------------------------------------
 			super (theContext,theResource,theDevices);
 			adapterDevices = theDevices;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		public View getView (int thePosition, View theConvertView, ViewGroup theParent) 
 		{
+			// ---------------------------------------------------------------------
 			if (theConvertView == null) 
 			{
 				theConvertView = new UPnPListItem (getApplicationContext());
 			}
-			((UPnPListItem) theConvertView).setDevice (adapterDevices.get(thePosition));
-			
+			// ---------------------------------------------------------------------
+			((UPnPListItem) theConvertView).setDevice (adapterDevices.get (thePosition));
+			// ---------------------------------------------------------------------
 			return theConvertView;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		public void Refresh (List<UPnPDevice> theDevices)
@@ -181,7 +189,7 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 				//                at a time
 				// -----------------------------------------------------------------
 				for (int theIndex  = 0; theIndex < theDevices.size(); theIndex++)
-					add (theDevices.get(theIndex));
+					add (theDevices.get (theIndex));
 				// -----------------------------------------------------------------
 			}
 		}
@@ -207,8 +215,9 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 			MessageHandler.popToastAndSpeak (context.getString (R.string.scanning));
 			// ---------------------------------------------------------------------
 			// 07/09/2016 ECU can now update the display in 5 secs
+			// 03/03/2018 ECU changed to use ONE_SECOND
 			// ---------------------------------------------------------------------
-			messageHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,(5 * 1000));
+			messageHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,(5 * StaticData.ONE_SECOND));
 			// ---------------------------------------------------------------------
 		 	return null;
 		 	// ---------------------------------------------------------------------
@@ -276,7 +285,9 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 					// -------------------------------------------------------------
 					controlPoint.search ();
 					// -------------------------------------------------------------
-					this.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,(5 * 1000));
+					// 03/03/2018 ECU changed to use ONE_SECOND
+					// -------------------------------------------------------------
+					this.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,(5 * StaticData.ONE_SECOND));
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -295,11 +306,11 @@ public class UPnP_Activity extends DibosonActivity implements OnItemClickListene
 			{
 				Device device = PublicData.upnpDevices.get (index).upnpDevice; 
 				// -----------------------------------------------------------------
-				ServiceList serviceList = device.getServiceList();
+				ServiceList serviceList = device.getServiceList ();
 				// -----------------------------------------------------------------
 				// 07/09/2016 ECU loop through all returned services
 				// -----------------------------------------------------------------
-				for (int indexx = 0; indexx < serviceList.size(); indexx++)
+				for (int indexx = 0; indexx < serviceList.size (); indexx++)
 				{
 					final Service service = serviceList.getService (indexx);
 					// -------------------------------------------------------------

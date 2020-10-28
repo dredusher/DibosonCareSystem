@@ -159,7 +159,7 @@ public class VoiceCommandPhrases implements Serializable
 		// 04/06/2016 ECU created to return the stored phrases as a NEWLINE delimited
 		//                string
 		// -------------------------------------------------------------------------
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		for (int phraseIndex = 0; phraseIndex < phrases.length; phraseIndex++)
 		{
 			localString += phrases [phraseIndex] + StaticData.NEWLINE;
@@ -177,7 +177,7 @@ public class VoiceCommandPhrases implements Serializable
 		// -------------------------------------------------------------------------
 		// 21/05/2016 ECU created to print the contents of the object
 		// -------------------------------------------------------------------------
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		
 		for (int phraseIndex = 0; phraseIndex < phrases.length; phraseIndex++)
 		{
@@ -239,7 +239,7 @@ public class VoiceCommandPhrases implements Serializable
 		// -------------------------------------------------------------------------
 		// 21/05/2016 ECU print for all spoken phrases
 		// -------------------------------------------------------------------------
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		for (int phraseIndex = 0; phraseIndex < PublicData.voiceCommandPhrases.size(); phraseIndex++)
 		{
 			localString += PublicData.voiceCommandPhrases.get (phraseIndex).Print () + StaticData.NEWLINE + StaticData.NEWLINE;

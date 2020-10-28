@@ -26,6 +26,7 @@ public class TextPreference extends DialogPreference
 	protected int			inputType				= 1;		// 22/02/2016 ECU added
     private   String		subTitle 				= null;		// 22/11/2014 ECU added
     protected TextView		subTitleTextView 		= null;		// 22/11/2014 ECU added
+    protected boolean       useDefaultText          = false;    // 13/02/2020 ECU added
     // =============================================================================
     public TextPreference (Context theContext) 
     {
@@ -53,11 +54,13 @@ public class TextPreference extends DialogPreference
         // 22/02/2016 ECU added .... textInput to specify the type of text input - only
         //                           the additional bits will be specified which need
         //                           to be ORed in to the default text field
+        // 13/02/2020 ECU added .... useDefaultText
         // -------------------------------------------------------------------------
-        defaultText	 = typedArray.getString (R.styleable.TextDialogPreference_defaultText);
-        inputLines	 = typedArray.getInteger(R.styleable.TextDialogPreference_textLines,1);
-        inputType	 = typedArray.getInteger(R.styleable.TextDialogPreference_textInput,InputType.TYPE_CLASS_TEXT);
-		subTitle	 = typedArray.getString (R.styleable.TextDialogPreference_textSubTitle);
+        defaultText	    = typedArray.getString  (R.styleable.TextDialogPreference_defaultText);
+        inputLines	    = typedArray.getInteger (R.styleable.TextDialogPreference_textLines,1);
+        inputType	    = typedArray.getInteger (R.styleable.TextDialogPreference_textInput,InputType.TYPE_CLASS_TEXT);
+		subTitle	    = typedArray.getString  (R.styleable.TextDialogPreference_textSubTitle);
+		useDefaultText  = typedArray.getBoolean (R.styleable.TextDialogPreference_useDefaultText,false);
 		// -------------------------------------------------------------------------
 		// 25/04/2015 ECU release the array - must not use again
 		// -------------------------------------------------------------------------
@@ -176,6 +179,7 @@ public class TextPreference extends DialogPreference
     @Override
     protected void onBindDialogView (View theView) 
     {
+        // -------------------------------------------------------------------------
         super.onBindDialogView (theView);
         // -------------------------------------------------------------------------
         // 25/04/2015 ECU initialise the displayed text field
@@ -201,8 +205,35 @@ public class TextPreference extends DialogPreference
         {
         	// ---------------------------------------------------------------------
         	// 25/04/2015 ECU get the text that has been entered into the field
+        	// 13/02/2020 ECU check if the default is to be used is the field is
+        	//                empty and a default value has been set
         	// ---------------------------------------------------------------------
         	input = inputTextView.getText ().toString();
+        	// ---------------------------------------------------------------------
+        	// 13/02/2020 ECU check if the default is to be returned
+        	// ---------------------------------------------------------------------
+        	if (useDefaultText == true)
+            {
+                //------------------------------------------------------------------
+                // 13/02/2020 ECU check if a default value was set
+                // -----------------------------------------------------------------
+                if (defaultText != null)
+                {
+                    // -------------------------------------------------------------
+                    // 13/02/2020 ECU check if the entered data is empty
+                    // -------------------------------------------------------------
+                    if (Utilities.isStringBlank (input))
+                    {
+                        // ---------------------------------------------------------
+                        // 13/02/2020 ECU set the input to the default value
+                        // ---------------------------------------------------------
+                        input = defaultText;
+                        // ---------------------------------------------------------
+                    }
+                    // -------------------------------------------------------------
+                }
+                // -----------------------------------------------------------------
+            }
             // ---------------------------------------------------------------------
         	// 25/04/2015 ECU set the value from what was entered
         	// ---------------------------------------------------------------------
@@ -239,7 +270,8 @@ public class TextPreference extends DialogPreference
     		// 22/02/2016 ECU get the persisted value or if not found then return the
     		//                default value, which is in the argument
     		// ---------------------------------------------------------------------
-    		input = getPersistedString ((defaultValue == null) ? "" : defaultValue.toString());
+    		input = getPersistedString ((defaultValue == null) ? StaticData.BLANK_STRING 
+    											               : defaultValue.toString());
     		// ---------------------------------------------------------------------
     	}
     	else 
@@ -247,7 +279,8 @@ public class TextPreference extends DialogPreference
     		// ---------------------------------------------------------------------
     		// 22/02/2016 ECU set the preference to the supplied value
     		// ---------------------------------------------------------------------
-    		input = (defaultValue == null) ? "" : defaultValue.toString(); 
+    		input = (defaultValue == null) ? StaticData.BLANK_STRING 
+    									   : defaultValue.toString(); 
     		// ---------------------------------------------------------------------
     		// 22/02/2016 ECU store the value in the shared preferences if required
     		// ---------------------------------------------------------------------

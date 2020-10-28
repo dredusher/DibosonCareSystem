@@ -1,23 +1,21 @@
 package com.usher.diboson;
 
-import java.io.BufferedOutputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.net.InetAddress;
-import java.net.Socket;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.admin.DevicePolicyManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.speech.tts.TextToSpeech.OnInitListener;
+import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.ScaleGestureDetector;
 import android.view.ScaleGestureDetector.SimpleOnScaleGestureListener;
@@ -27,22 +25,34 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Scroller;
 import android.widget.TextView;
-import android.speech.tts.TextToSpeech.OnInitListener;
-import android.speech.tts.TextToSpeech.OnUtteranceCompletedListener;
 
-public class TestActivity extends DibosonActivity implements OnInitListener,OnUtteranceCompletedListener
+import java.io.BufferedOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.net.InetAddress;
+import java.net.Socket;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+public class TestActivity extends LifeCycleActivity implements OnInitListener,OnUtteranceCompletedListener
 {
 	/* ==================================================================== */
 	// 16/09/2013 ECU implemented pinch open/close
 	// 02/11/2015 ECU put in the check as to whether the activity has been created
 	//                anew or is being recreated after having been destroyed by
 	//                the Android OS
+	// 13/03/2018 ECU VERY IMPORTANT - changed from DibosonActivity to
+	//                ==============   LifeCycleActivity so that the lifecycle
+	//                                 of an Android activity can be investigated
 	/* ==================================================================== */
 	public static String TAG = "TestActivity";
 	/* ==================================================================== */
 	static Activity	activity;
 	static String [] actionCommands;
 	static String [] actionParameters;
+	Bitmap			bg;
 	Button			button;
 	static ComponentName
 					componentName;
@@ -57,18 +67,28 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 	ImageView		imageView;	
 	TextView 		marqueeView;
 	TextView 		marquee2View;
+	BroadcastReceiver myReceiver;
 	TextView 		threadView;
 	TextView 		runOnUIView;
 	TextView 		datagramView;
 	ScaleGestureDetector scaleGestureDetector;	// 16/09/2013 ECU added for creating pinch events
 	ScreenHandler   screenHandler = new ScreenHandler ();
+
+	static String [] devices = {"Samsung Level Box mini","Philips BT25"};
+	static int				 devicePointer = 0;
 	// ====================================================================
-	
 
 	/* ==================================================================== */
     static String  [] options;
     static boolean [] initialOptions;
     // ====================================================================
+
+    public TestActivity ()
+    {
+    	
+    }
+    
+    
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -104,10 +124,60 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 			// ---------------------------------------------------------------------
 			marqueeView.setSelected(true);
 			marquee2View.setSelected(true);
-			waitABit (1000);	
+			waitABit (1000);
+
 			
-			button.setOnClickListener (buttonListener);	
-		
+			button.setOnClickListener (buttonListener);
+
+
+
+			// ---------------------------------------------------------------------
+			// 13/07/2020 ECU testing the display of HTML data
+			// ---------------------------------------------------------------------
+			//setContentView(R.layout.help_html_layout);
+			//WebView HTMLview = (WebView) findViewById (R.id.web_view);
+			//String HTMLstring = Utilities.readRawResource (this,R.raw.grid_arithmetic.htm.htm);
+			//HTMLview.loadData(HTMLstring,"text/html; charset=utf-8", "UTF-8");
+			// ---------------------------------------------------------------------
+
+			// ---------------------------------------------------------------------
+			// 11/07/2020 ECU for getting the coords for a postcode
+			// ---------------------------------------------------------------------
+			//try
+			//{
+			//	JSONObject json = HTTPUtilities.JSONGet ("https://api.postcodes.io/postcodes/E113lw");
+			///	JSONObject result = json.getJSONObject ("result");
+			//	activityView.setText ("Longitude : " + result.get("longitude") + StaticData.NEWLINE);
+			//	activityView.append ("Latitude : " + result.get("latitude") + StaticData.NEWLINE);
+			//}
+			//catch (Exception e)
+			//{
+			//}
+			// ---------------------------------------------------------------------
+
+			// ---------------------------------------------------------------------
+			//longDescription.append("First Part Not Bold ");
+			//int start = longDescription.length();
+			//longDescription.append("BOLD");
+			//longDescription.setSpan(new ForegroundColorSpan(0xFFCC5500), start, longDescription.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			//longDescription.setSpan(new StyleSpan(android.graphics.Typeface.BOLD), start, longDescription.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+			//longDescription.append(" rest not bold");
+			
+			// ---------------------------------------------------------------------
+			// 03/02/2018 ECU Note - the following statement will search for the
+			//                       specified contact and if found then the
+			//                       UniqueMethod will be invoked
+			// ---------------------------------------------------------------------
+			//DatabaseActivity.ContactName(this, "ed usher",Utilities.createAMethod (TestActivity.class,"UniqueMethod",(Object)null));
+			// ---------------------------------------------------------------------
+			
+			// ---------------------------------------------------------------------
+			
+			//Utilities.countdownTimer(30000,
+			//						   10000, 
+			//						   Utilities.createAMethod (TestActivity.class,"TickMethod",(long) 0), 
+			//						   Utilities.createAMethod (TestActivity.class,"FinishMethod"));
+			
 			// ---------------------------------------------------------------------
 	
 			//Utilities.SynchroniseFilesInDirectory (this, PublicData.projectFolder + PublicData.appointmentsSubFolder);
@@ -167,7 +237,7 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 			//		null,new MethodDefinition<TestActivity> (TestActivity.class,"IncomingAlarm"));
 			// ---------------------------------------------------------------------
 			//ActionCommandUtilities.SelectCommand (this,
-			//		Utilities.createAMethod (TestActivity.class,"ActionCommand",""));
+			//		Utilities.createAMethod (TestActivity.class,"ActionCommand",StaticData.BLANK_STRING));
 			// ---------------------------------------------------------------------
 			// 27/11/2015 ECU device administration
 			// ---------------------------------------------------------------------
@@ -205,11 +275,11 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 			//	waitABitMethod (1000,"TESTlog","even faster ");
 			//
 			//Method [] theMethods = {
-			//		Utilities.createAMethod("logMessage",""),
-			//		Utilities.createAMethod("logMessage",""),
-			//		Utilities.createAMethod("logMessage",""),
-			//		Utilities.createAMethod("logMessage",""),
-			//		Utilities.createAMethod("logMessage","")
+			//		Utilities.createAMethod("logMessage",StaticData.BLANK_STRING),
+			//		Utilities.createAMethod("logMessage",StaticData.BLANK_STRING),
+			//		Utilities.createAMethod("logMessage",StaticData.BLANK_STRING),
+			//		Utilities.createAMethod("logMessage",StaticData.BLANK_STRING),
+			//		Utilities.createAMethod("logMessage",StaticData.BLANK_STRING)
 			//		};
 			//
 			//	theMethods [2].invoke(null, new Object [] {"this is a test - method 2"});
@@ -258,8 +328,8 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 	
 			//DialogueUtilities.textInput(this,"Send a regular HELLO message",
 			//		"Just press the button to start sending HELLO messages every 2 minutes",
-			//		Utilities.createAMethod (TestActivity.class,"Confirm",""),
-			//		Utilities.createAMethod (TestActivity.class,"Cancel",""));
+			//		Utilities.createAMethod (TestActivity.class,"Confirm",StaticData.BLANK_STRING),
+			//		Utilities.createAMethod (TestActivity.class,"Cancel",StaticData.BLANK_STRING));
 	      
 			//options = Utilities.deviceListAsArray(true);
 			//initialOptions = new boolean [options.length];
@@ -381,7 +451,22 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
         			break;
         		case 11:
         			Utilities.cancelPhoneCall (context);
-        			break;		
+        			break;	
+        		case 99:
+        			int radius = theMessage.arg1;
+        			
+        			if (radius < 20)
+        			{
+        				 Utilities.popToast("Radius : " + radius);
+        				 Bitmap blurred = Utilities.blurBitMap (bg, 1, radius);
+						 imageView.setImageBitmap(blurred);
+						
+						 Message localMessage = obtainMessage (99, radius+1, theMessage.arg2);
+						 sendMessageDelayed (localMessage,theMessage.arg2);
+        			}
+					 
+        			break;
+        			
         	}			
 	    }
 	    /* ------------------------------------------------------------------------ */
@@ -411,7 +496,8 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 	{
 		Thread thread = new Thread()
 		 {
-		        @Override
+		        @SuppressWarnings("InfiniteLoopStatement")
+				@Override
 		        public void run()
 		        {
 		            try 
@@ -613,8 +699,8 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 	{
 		@Override
 		public void onClick(View view) 
-		{	
-			Utilities.popToast (view,"This is just a popupWindow test");
+		{
+			Utilities.popToast ("This is just a popToast test");
 		}
 	};
 	// =============================================================================
@@ -634,8 +720,10 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 					sleep (StaticData.MILLISECONDS_PER_MINUTE * 2);
 					// -------------------------------------------------------------
 					// 23/03/2015 ECU initiate the multicast 'hello' message
+					// 25/05/2020 ECU changed to use new method for initiating a
+					//                broadcast message to be sent
 					// -------------------------------------------------------------
-					PublicData.broadcastMessage = StaticData.BROADCAST_MESSAGE_HELLO; 
+					BroadcastUtilities.sendBroadcastMessage (StaticData.BROADCAST_MESSAGE_HELLO);
 					// -------------------------------------------------------------
 					// 23/03/2013 ECU confirm the fact to the user
 					// -------------------------------------------------------------
@@ -728,11 +816,11 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 	// =============================================================================
 	public static void ConfirmMultiple (boolean [] theOptions)
 	{
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		
 		for (int theIndex = 0; theIndex < options.length; theIndex++)
 		{
-			localString += "Entry " + options [theIndex] + " " + (theOptions[theIndex] ? "selected" : "not selected") + "\n";
+			localString += "Entry " + options [theIndex] + " " + (theOptions[theIndex] ? "selected" : "not selected") + StaticData.NEWLINE;
 		}
 		Utilities.popToast(localString);
 	}
@@ -792,7 +880,7 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 			// ---------------------------------------------------------------------
 			for (int theLine = 1; theLine <= theNumberOfLines; theLine++)
 			{
-				fileWriter.write ("line number " + theLine + "\n");
+				fileWriter.write ("line number " + theLine + StaticData.NEWLINE);
 			}
 			// ---------------------------------------------------------------------
 			// 10/01/2014 ECU flush out the data and close
@@ -818,6 +906,115 @@ public class TestActivity extends DibosonActivity implements OnInitListener,OnUt
 		
 	}
 	
+	// =============================================================================
+	//public static void FinishMethod ()
+	//{
+	//	Utilities.actionHandler(MainActivity.activity, "speak:all done");
+	//}
+	// =============================================================================
+	//public static void TickMethod (long theTimeLeft)
+	//{
+	//	Utilities.actionHandler(MainActivity.activity, "speak:tick");
+	//}
+	// =============================================================================
 	
+	// =============================================================================
+	//public static void UniqueMethod (Object theUniqueObject)
+	//{
+	//	Utilities.makePhoneCall (context,((ListItem) theUniqueObject).summary.split (StaticData.NEWLINE) [0] );
+	//}
+	// =============================================================================
+	@Override
+	public boolean onCreateOptionsMenu(Menu menu) 
+	{
+	        getMenuInflater().inflate(R.menu.main, menu);
+	        return true;
+	}
+	// =============================================================================
+	@Override
+	public boolean onOptionsItemSelected(MenuItem item) 
+	{
+		switch (item.getItemId()) 
+		{
+			case R.id.action_settings:
+			Utilities.popToast ("Pressed",true);
+			return true;
+		
+			default:
+				return super.onOptionsItemSelected (item);
+		}
+	}  
+	// =============================================================================
+	private class MyReceiver extends BroadcastReceiver
+	{	 
+		@Override
+		public void onReceive (Context theContext, Intent theIntent) 
+		{
 
+		}
+	}
+	// =============================================================================
+	
+	// =============================================================================
+	@Override 
+	protected void onStart () 
+	{
+		// -------------------------------------------------------------------------
+		// 13/03/2018 ECU when the activity enters the 'started' state then the
+		//                system fires this callback
+		// -------------------------------------------------------------------------
+		super.onStart ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	
+	// =============================================================================
+	@Override 
+	protected void onResume() 
+	{ 
+		// -------------------------------------------------------------------------
+		// 13/03/2018 ECU when the activity enters the 'resumed' state then the
+		//                system fires this callback
+		// -------------------------------------------------------------------------
+		myReceiver = new MyReceiver ();
+		IntentFilter intentFilter = new IntentFilter();
+		intentFilter.addAction (StaticData.BROADCAST_TIMER_MINUTE);
+		intentFilter.addAction (StaticData.BROADCAST_TIMER_SECOND);
+		intentFilter.addAction (StaticData.BROADCAST_WEMO_NOTIFY);
+		registerReceiver(myReceiver, intentFilter);
+		// -------------------------------------------------------------------------     		
+		super.onResume(); 
+		// -------------------------------------------------------------------------
+	} 
+	// =============================================================================
+	
+	// ============================================================================= 
+	@Override 
+	protected void onPause () 
+	{
+		// -------------------------------------------------------------------------
+		// 13/03/2018 ECU the system fires this callback at the first indication that
+		//                the user is leaving the activity - it does not always mean 
+		//                that the activity is being destroyed
+		// -------------------------------------------------------------------------
+		unregisterReceiver (myReceiver);
+		// -------------------------------------------------------------------------
+		super.onPause (); 
+		// -------------------------------------------------------------------------
+	} 
+	// =============================================================================
+	
+	// ============================================================================= 
+	@Override 
+	protected void onStop () 
+	{
+		// -------------------------------------------------------------------------
+		// 13/03/2018 ECU when the activity is no longer visible to the user then it
+		//                has entered the 'stopped' state and the system will fire
+		//                this callback
+		// -------------------------------------------------------------------------
+		super.onStop (); 
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 }

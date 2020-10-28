@@ -18,9 +18,11 @@ public class TrackArtist  implements Serializable,Comparable<TrackArtist>
 	// =============================================================================
 	public TrackArtist (String theName,int theFirstTrack)
 	{
+		// -------------------------------------------------------------------------
 		name	=	theName;
 		tracks	= 	new ArrayList <Integer> ();
 		tracks.add (theFirstTrack);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public void addTrack (int theTrackNumber)
@@ -34,16 +36,17 @@ public class TrackArtist  implements Serializable,Comparable<TrackArtist>
 		// -------------------------------------------------------------------------
 		/// 01/04/2015 ECU took out 'toLowerCase'
 		// -------------------------------------------------------------------------
-		return this.name.compareTo (theTrackArtist.name);   
+		return this.name.compareTo (theTrackArtist.name);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public String Print ()
 	{
-		String localString = "Artist : " + name + "\n";
+		String localString = "Artist : " + name + StaticData.NEWLINE;
 		
 		for (int theTrack = 0; theTrack < tracks.size(); theTrack++)
 		{
-			localString += "Track " + tracks.get(theTrack) + "\n";	
+			localString += "Track " + tracks.get(theTrack) + StaticData.NEWLINE;	
 		}
 		return localString;
 	}
@@ -57,8 +60,8 @@ public class TrackArtist  implements Serializable,Comparable<TrackArtist>
 		for (int theTrack = 0; theTrack < tracks.size(); theTrack++)
 		{
 			Utilities.LogToProjectFile 
-					(TAG,"Track " + tracks.get(theTrack) + "\n" +
-							PublicData.musicPlayerData.tracks.get(tracks.get(theTrack)).Print() +	"\n");	
+					(TAG,"Track " + tracks.get(theTrack) + StaticData.NEWLINE +
+							PublicData.musicPlayerData.tracks.get(tracks.get(theTrack)).Print() +	StaticData.NEWLINE);	
 		}
 	}
 	// =============================================================================
@@ -75,6 +78,7 @@ public class TrackArtist  implements Serializable,Comparable<TrackArtist>
 		}
 		// -------------------------------------------------------------------------
 		return localArtists;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

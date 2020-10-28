@@ -10,7 +10,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public class TVChannelFragment extends Fragment 
+@SuppressWarnings("deprecation")
+public class TVChannelFragment extends Fragment
 {
 	// =============================================================================
 	// 03/07/2016 ECU Note - this fragment is associated with a tab which is set up
@@ -73,8 +74,10 @@ public class TVChannelFragment extends Fragment
         return root;
     }
     // =============================================================================
-    public static class TVChannelAdapter extends FragmentPagerAdapter 
+    public class TVChannelAdapter extends FragmentPagerAdapter 
     {
+    	// -------------------------------------------------------------------------
+    	// 13/11/2017 ECU remove the 'static' definition
     	// -------------------------------------------------------------------------
         public TVChannelAdapter (FragmentManager fragmentManager) 
         {
@@ -88,11 +91,12 @@ public class TVChannelFragment extends Fragment
         	// 01/07/2016 ECU Note - return the number of views available
         	// ---------------------------------------------------------------------
         	// 14/10/2015 ECU put in the check on null
+        	// 16/11/2017 ECU changed to use 'OnDisplay' rather than 'Selected'
         	// ---------------------------------------------------------------------
-        	if (ShowEPGActivity.TVChannelsSelected == null)
+        	if (ShowEPGActivity.TVChannelsOnDisplay == null)
         		return 0;
         	else
-        		return ShowEPGActivity.TVChannelsSelected.size ();
+        		return ShowEPGActivity.TVChannelsOnDisplay.size ();
         	// ---------------------------------------------------------------------
         }
         // -------------------------------------------------------------------------
@@ -115,8 +119,9 @@ public class TVChannelFragment extends Fragment
         	// ---------------------------------------------------------------------
         	// 01/07/2016 ECU Note - returns the title of the page pointed to by
         	//                the argument
+        	// 16/11/2017 ECU changed to use 'OnDisplay' rather than 'Selected'
         	// ---------------------------------------------------------------------
-            return ShowEPGActivity.TVChannelsSelected.get (thePosition).channelName;
+            return ShowEPGActivity.TVChannelsOnDisplay.get (thePosition).channelName;
             // ---------------------------------------------------------------------
         }
         // -------------------------------------------------------------------------

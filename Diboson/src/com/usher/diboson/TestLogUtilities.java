@@ -47,7 +47,7 @@ public class TestLogUtilities
 			// ---------------------------------------------------------------------
 			testLogFileWriter = new FileWriter (TEST_LOG_FILE,true);
 			
-			testLogFileWriter.write (simpleDateFormat.format(Calendar.getInstance().getTime()) + " : " + theMessage + "\n");
+			testLogFileWriter.write (simpleDateFormat.format(Calendar.getInstance().getTime()) + " : " + theMessage + StaticData.NEWLINE);
 			// ---------------------------------------------------------------------
 			// 10/01/2014 ECU flush out the data and close
 			// ---------------------------------------------------------------------

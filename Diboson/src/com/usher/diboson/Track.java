@@ -1,21 +1,23 @@
 package com.usher.diboson;
 
-import java.io.File;
-
 import android.content.Intent;
 import android.content.res.Configuration;
 import android.location.Location;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.support.v4.content.FileProvider;
 import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.GestureDetector.OnGestureListener;
 import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import java.io.File;
 
 /* ============================================================================== */
 public class Track extends DibosonActivity implements OnGestureListener 
@@ -68,9 +70,11 @@ public class Track extends DibosonActivity implements OnGestureListener
 							                                          : getString (R.string.On)));
 			// ---------------------------------------------------------------------
 			// 19/02/2017 ECU sort out the record note/image buttons
+			// 12/10/2020 ECU added the 'video' button
 			// ---------------------------------------------------------------------
 			((ImageButton) findViewById (R.id.record_image_button)).setOnClickListener(btnClick);
 			((ImageButton) findViewById (R.id.record_note_button)).setOnClickListener(btnClick);
+			((ImageButton) findViewById (R.id.record_video_button)).setOnClickListener(btnClick);
 			// ---------------------------------------------------------------------
 			// 02/01/2014 ECU set up the listeners for the various buttons
 			// ---------------------------------------------------------------------
@@ -97,9 +101,11 @@ public class Track extends DibosonActivity implements OnGestureListener
 	/* ============================================================================= */
 	private View.OnClickListener btnClick = new View.OnClickListener() 
 	{
+		// -------------------------------------------------------------------------
 		@Override
 		public void onClick (View theView) 
 		{
+			// ---------------------------------------------------------------------
 			switch (theView.getId())
 			{
 				case R.id.track_button:
@@ -122,7 +128,7 @@ public class Track extends DibosonActivity implements OnGestureListener
 					// -------------------------------------------------------------	
 					if (PublicData.trackingMode)
 						Utilities.scanFilesInFolder (getBaseContext(),PublicData.trackFolder);
-			    	   
+			    	// -------------------------------------------------------------
 					break;
 				}
 				case R.id.accuracy_down:
@@ -174,10 +180,41 @@ public class Track extends DibosonActivity implements OnGestureListener
 					//                and then start the activity
 					// -------------------------------------------------------------
 		            Intent localIntent = new Intent (android.provider.MediaStore.ACTION_IMAGE_CAPTURE);
-		            localIntent.putExtra (MediaStore.EXTRA_OUTPUT, Uri.fromFile (photoFile));
+					// -------------------------------------------------------------
+					// 11/10/2020 ECU sort out some issues with using URI
+					// -------------------------------------------------------------
+					Uri photoPathUri;
+					// -------------------------------------------------------------
+					if (Build.VERSION.SDK_INT < 24)
+					{
+						// -----------------------------------------------------------------
+						// 11/102020 ECU can set the URI directly from the file
+						// ------------------------------.----------------------------------
+						photoPathUri = Uri.fromFile (photoFile);
+						// -----------------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 11/10/2020 ECU because the build is >= 'N' then need to get the
+						//                URI set via the 'file provider'
+						// ---------------------------------------------------------
+						photoPathUri = FileProvider.getUriForFile (getBaseContext(),
+								getBaseContext().getApplicationContext().getPackageName() + ".fileprovider",photoFile);
+						// ---------------------------------------------------------
+						// 11/10/2020 ECU also need to grant temporary permission
+						// ---------------------------------------------------------
+						localIntent.setFlags (Intent.FLAG_GRANT_READ_URI_PERMISSION);
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					// 11/10/2020 ECU pass thtough the generated URI
+		            // -------------------------------------------------------------
+		            localIntent.putExtra (MediaStore.EXTRA_OUTPUT,photoPathUri);
 		            startActivityForResult(localIntent,StaticData.REQUEST_CODE_CAMERA);
 					// -------------------------------------------------------------
 					break;
+				// -----------------------------------------------------------------
 				// -----------------------------------------------------------------
 				case R.id.record_note_button:
 					// -------------------------------------------------------------
@@ -188,11 +225,70 @@ public class Track extends DibosonActivity implements OnGestureListener
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case R.id.record_video_button:
+					// -------------------------------------------------------------
+					// 12/10/2020 ECU added to enable a video to be recorded
+					// -------------------------------------------------------------
+					photoPath = getFileName (getString (R.string.video_file_format));
+					File videoFile = new File (photoPath);
+					// -------------------------------------------------------------
+					// 20/02/2017 ECU check if the file already exists
+					// -------------------------------------------------------------
+					if (videoFile.exists())
+					{
+						// ---------------------------------------------------------
+						// 20/02/2017 ECU the file exists so delete it
+						// ---------------------------------------------------------
+						videoFile.delete ();
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					// 20/02/2017 ECU set up the intent, set up the destination file
+					//                and then start the activity
+					// -------------------------------------------------------------
+					Intent videoIntent = new Intent (MediaStore.ACTION_VIDEO_CAPTURE);
+					// -------------------------------------------------------------
+					// 11/10/2020 ECU sort out some issues with using URI
+					// -------------------------------------------------------------
+					Uri videoPathUri;
+					// -------------------------------------------------------------
+					if (Build.VERSION.SDK_INT < 24)
+					{
+						// -----------------------------------------------------------------
+						// 11/102020 ECU can set the URI directly from the file
+						// ------------------------------.----------------------------------
+						videoPathUri = Uri.fromFile (videoFile);
+						// -----------------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 11/10/2020 ECU because the build is >= 'N' then need to get the
+						//                URI set via the 'file provider'
+						// ---------------------------------------------------------
+						videoPathUri = FileProvider.getUriForFile (getBaseContext(),
+								getBaseContext().getApplicationContext().getPackageName() + ".fileprovider",videoFile);
+						// ---------------------------------------------------------
+						// 11/10/2020 ECU also need to grant temporary permission
+						// ---------------------------------------------------------
+						videoIntent.setFlags (Intent.FLAG_GRANT_READ_URI_PERMISSION);
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					// 11/10/2020 ECU pass thtough the generated URI
+					// -------------------------------------------------------------
+					videoIntent.putExtra (MediaStore.EXTRA_OUTPUT,videoPathUri);
+					startActivityForResult(videoIntent,StaticData.REQUEST_CODE_VIDEO);
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
 			}		 
 		}
 	};
 	// =============================================================================
-	@SuppressWarnings("static-access")
+	@SuppressWarnings ("static-access")
 	protected void onActivityResult(int theRequestCode, int theResultCode, Intent data) 
 	{
 		// -------------------------------------------------------------------------
@@ -212,6 +308,17 @@ public class Track extends DibosonActivity implements OnGestureListener
 				PublicData.messageHandler.popToastAndSpeakwithPhoto ("Photo taken",photoPath);
 				// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
+			if (theRequestCode == StaticData.REQUEST_CODE_VIDEO)
+			{
+				// -----------------------------------------------------------------
+				//20/02/2016 ECU the media store intent has returned indicating that
+				//               a photo has been taken
+				// -----------------------------------------------------------------
+				PublicData.messageHandler.popToastAndSpeak ("Video recorded");
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -280,9 +387,9 @@ public class Track extends DibosonActivity implements OnGestureListener
 		// display the current coordinates 
 		// -------------------------------------------------------------------------
 		latitudeCoordinate.setText ("Latitude\n" 
-				+ Location.convert (LocationActivity.currentLatitude,Location.FORMAT_SECONDS)+"\n"+LocationActivity.currentLatitude);
+				+ Location.convert (LocationActivity.currentLatitude,Location.FORMAT_SECONDS)+StaticData.NEWLINE+LocationActivity.currentLatitude);
 		longitudeCoordinate.setText ("Longitude\n" 
-				+ Location.convert (LocationActivity.currentLongitude,Location.FORMAT_SECONDS)+"\n"+LocationActivity.currentLongitude);
+				+ Location.convert (LocationActivity.currentLongitude,Location.FORMAT_SECONDS)+StaticData.NEWLINE+LocationActivity.currentLongitude);
 		// -------------------------------------------------------------------------
 		// 19/10/2014 ECU tell the user
 		// 21/02/2017 ECU change to use resources

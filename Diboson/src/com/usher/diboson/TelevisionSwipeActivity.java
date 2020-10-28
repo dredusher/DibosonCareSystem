@@ -15,7 +15,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 // ==================================================================================
-public class TelevisionSwipeActivity extends FragmentActivity implements ActionBar.TabListener 
+@SuppressWarnings("deprecation")
+public class TelevisionSwipeActivity extends FragmentActivity implements ActionBar.TabListener
 {
 	// =============================================================================
 	// 08/05/2015 ECU created

@@ -40,7 +40,7 @@ public class UPnPListItem extends FrameLayout
 			{
 				// ----------------------------------------------------------------
 				// 07/09/2016 ECU toggle the state of the device
-				// 13/09/2016 ECU the 'false' indicate that this is not a call due
+				// 13/09/2016 ECU the 'false' indicates that this is not a call due
 				//                to 'recursion'
 				// ----------------------------------------------------------------
 				device.changeState (false); 

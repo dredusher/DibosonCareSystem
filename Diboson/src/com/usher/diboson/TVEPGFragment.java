@@ -1,6 +1,5 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
 import android.annotation.SuppressLint;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,16 +17,23 @@ import android.widget.Button;
 import android.widget.ImageButton;
 import android.widget.ListView;
 
+import java.util.ArrayList;
+
 public class TVEPGFragment extends Fragment
 {
 	// =============================================================================
 	// 21/10/2015 ECU put in the check as to whether the activity has been created
 	//                anew or is being recreated after having been destroyed by
 	//                the Android OS
+	// 13/11/2017 ECU Error detected when using DialogueUtilities.listChoice which
+	//                resulted in the app stopping - changes made to listChoice to
+	//  			  dismiss the dialogue
 	// =============================================================================
 	
 	// =============================================================================
-	public			ArrayList<EPGEntry> 		epgInformation;			// 14/02/2017 ECU added
+	public			ArrayList<EPGEntry> 		epgInformation = new ArrayList<EPGEntry> ();			
+																	// 14/02/2017 ECU added
+																	// 18/11/2017 ECU add initialisation
 	public 			EPGListViewAdapter 			listViewAdapter;
 	public static	boolean						showDetails;
 	public static	EPGListViewAdapter 			staticListViewAdapter;
@@ -63,13 +69,27 @@ public class TVEPGFragment extends Fragment
     @Override
     public View onCreateView (LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) 
     {
+    	// -------------------------------------------------------------------------
    		View root = inflater.inflate (R.layout.fragment_channel_epg, container, false);
     	// -------------------------------------------------------------------------
     	if (savedInstanceState == null) 
     	{
     		// ---------------------------------------------------------------------
     		// 21/10/2015 ECU the activity has been created anew
+    		// 30/07/2020 ECU occasionally get a NPE if the app is being restarted
+    		//                by the Android OS. May be because getting here
+    		//                without setting 'fragmentTabHost' in ShowEPGActivity
     		// ---------------------------------------------------------------------
+    		if (ShowEPGActivity.fragmentTabHost == null)
+			{
+				// -----------------------------------------------------------------
+				// 30/07/2020 ECU cannot really proceed with creating tabs so just
+				//                exit
+				// -----------------------------------------------------------------
+				return root;
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
     		int currentTab = ShowEPGActivity.fragmentTabHost.getCurrentTab();
     		// ---------------------------------------------------------------------
     		// 03/07/2016 ECU Note - the selected TV channel is in the bundle
@@ -120,8 +140,16 @@ public class TVEPGFragment extends Fragment
     		// ---------------------------------------------------------------------
     		// 14/02/2017 ECU get the EPG information that is relevant for this
     		//                fragment's display
+    		// 16/11/2017 ECU changed to 'OnDisplay' from 'Selected'
+    		// 18/11/2017 ECU IMPORTANT I had 
+    		//					epgInformation = ShowEPGActivity......
+    		//                but this just copies an address rather than the data
+    		//                and this was causing problems when searching for a
+    		//                string and then resetting the search. So changed to
+    		//                use 'addAll' to actually copy the data
     		// ---------------------------------------------------------------------
-    		epgInformation = ShowEPGActivity.TVChannelsSelected.get (channel).EPGentriesByDate (ShowEPGActivity.EPGdates.get(currentTab));
+    		epgInformation.clear ();
+    		epgInformation.addAll (ShowEPGActivity.TVChannelsOnDisplay.get (channel).EPGentriesByDate (ShowEPGActivity.EPGdates.get(currentTab)));
     		// ---------------------------------------------------------------------
     		// 26/09/2015 ECU pass through the TV channel number (in 'position') to
     		//                which the adapter applies
@@ -261,6 +289,7 @@ public class TVEPGFragment extends Fragment
     	}
 	    // -------------------------------------------------------------------------
         return root;
+        // -------------------------------------------------------------------------
     }
     // =============================================================================
 	private View.OnClickListener buttonListener = new View.OnClickListener() 
@@ -313,11 +342,14 @@ public class TVEPGFragment extends Fragment
 		      		// ---------------------------------------------------------
             		// 27/09/2015 ECU start up the dialogue to get the search 
             		//                string
+					// 18/11/2017 ECU changed to use resources rather than literal
+					//                strings
             		// ---------------------------------------------------------
-            		DialogueUtilities.textInput (ShowEPGActivity.context,"Search String",
-        					"Please enter the text to search for",
-        					Utilities.createAMethod (TVEPGFragment.class,"SearchConfirm",""),
-        					Utilities.createAMethod (TVEPGFragment.class,"SearchCancel",""));
+            		DialogueUtilities.textInput (ShowEPGActivity.context,
+            									 getString (R.string.search_title),
+            									 getString (R.string.search_message),
+            									 Utilities.createAMethod (TVEPGFragment.class,"SearchConfirm",StaticData.BLANK_STRING),
+            									 Utilities.createAMethod (TVEPGFragment.class,"SearchCancel",StaticData.BLANK_STRING));
             		// ---------------------------------------------------------
 					break;
 				// -------------------------------------------------------------
@@ -338,7 +370,7 @@ public class TVEPGFragment extends Fragment
 	private View.OnLongClickListener buttonListenerLong = new View.OnLongClickListener() 
 	{		
 		@Override
-		public boolean onLongClick(View view) 
+		public boolean onLongClick (View view) 
 		{	
 			// ---------------------------------------------------------------------
 			// 07/01/2014 ECU now process depending on which button pressed
@@ -365,15 +397,22 @@ public class TVEPGFragment extends Fragment
 					// 28/06/2016 ECU display the list of channels to select from
 					// 29/06/2016 ECU use the channel names rather than do a rebuild
 					// 02/07/2016 ECU added the method for the cancel task
+					// 13/11/2017 ECU ERROR - an error was detected which caused the
+					//                        app to stop when using this facility. Changes
+					//                        made to 'listChoice'
+					//            ECU make the above changes optional - hence the 
+					//                final 'true' argument
+					// 19/11/2017 changed to use 'channelNamesSelected'
 					// -------------------------------------------------------------
 					DialogueUtilities.listChoice (ShowEPGActivity.context, 
 												  ShowEPGActivity.context.getString (R.string.epg_select_channel),
-												  ShowEPGActivity.channelNames,
+												  ShowEPGActivity.channelNamesSelected,
 												  Utilities.createAMethod (TVEPGFragment.class,"SelectedChannelMethod",0),
 												  ShowEPGActivity.context.getString (R.string.epg_select_all_channels),
 												  Utilities.createAMethod (TVEPGFragment.class,"SelectAllChannelsMethod",0),
 												  ShowEPGActivity.context.getString (R.string.cancel),
-												  Utilities.createAMethod (TVEPGFragment.class,"SelectChannelCancelMethod",0));
+												  Utilities.createAMethod (TVEPGFragment.class,"SelectChannelCancelMethod",0),
+												  true);
 					// -------------------------------------------------------------
 					break;
 				}		
@@ -428,12 +467,14 @@ public class TVEPGFragment extends Fragment
 				// -----------------------------------------------------------------
 				// 19/02/2017 ECU tell the user the situation
 				//            ECU only do if requested
+				// 20/03/2017 ECU pass through .activity as the context
 				// -----------------------------------------------------------------
 				if (ShowEPGActivity.scrolledTimeAnnouncement)
 				{
 					Utilities.SpeakAPhrase (MainActivity.activity,
 											MainActivity.activity.getString (R.string.program_alignment) +
-												Utilities.SpeakingClockConvert (ShowEPGActivity.scrolledTimeHour,
+												Utilities.SpeakingClockConvert (MainActivity.activity,
+														                        ShowEPGActivity.scrolledTimeHour,
 																				ShowEPGActivity.scrolledTimeMinute));
 					// -------------------------------------------------------------
 					// 19/02/2017 ECU indicate announcement made
@@ -461,14 +502,19 @@ public class TVEPGFragment extends Fragment
 		// -------------------------------------------------------------------------
 		// 27/09/2015 ECU sets the string to be used for searching the TV EPG data
 		// 24/07/2016 ECU changed because filter moved to Show....
+		// 16/11/2017 ECU changed to use BLANK_STRING
 		// -------------------------------------------------------------------------
-		if (!theText.equalsIgnoreCase(""))
+		if (!theText.equalsIgnoreCase (StaticData.BLANK_STRING))
 		{
 			ShowEPGActivity.filterString = theText;
 		}
 		else
 		{
-    		ShowEPGActivity.filterString = null;
+			// ---------------------------------------------------------------------
+			// 18/11/2017 ECU changed from setting to 'null'
+			// ---------------------------------------------------------------------
+    		ShowEPGActivity.filterString = StaticData.SEARCH_ALL;
+    		// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 27/09/2015 ECU want to be able to refresh the current view
@@ -486,8 +532,9 @@ public class TVEPGFragment extends Fragment
 		// -------------------------------------------------------------------------
 		// 28/06/2016 ECU created to handle when reset for all channels
 		// 30/06/2016 ECU refreshEPG moved
+		// 20/11/2017 ECU changed from NO_RESULT
 		// -------------------------------------------------------------------------
-		ShowEPGActivity.refreshEPG (StaticData.NO_RESULT);
+		ShowEPGActivity.refreshEPG (StaticData.NOT_SET);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -535,7 +582,23 @@ public class TVEPGFragment extends Fragment
     	if (theVisibilityFlag)
     	{
     		if (listViewAdapter != null)
-    			listViewAdapter.RebuildList (null);
+    		{
+    			// -----------------------------------------------------------------
+    			// 18/11/2017 ECU indicate if the programs are being filtered
+    			//            ECU if set to 'null' then filtering has never been
+    			//                used
+    			// -----------------------------------------------------------------
+    			if (ShowEPGActivity.filterString != null)
+    			{
+    				if (!ShowEPGActivity.filterString.equalsIgnoreCase(StaticData.SEARCH_ALL))
+    					Utilities.popToast (String.format (getString(R.string.search_message_format),ShowEPGActivity.filterString),true);
+    				// -------------------------------------------------------------
+        			// 18/11/2017 ECU only want to rebuild if filtering has been used
+        			// -------------------------------------------------------------
+        			listViewAdapter.RebuildList (null);
+        			// -------------------------------------------------------------
+    			}
+    		}
     		// ---------------------------------------------------------------------
         	// 28/09/2015 ECU refresh the button text
     		// 17/02/2017 ECU changed to use the new method
