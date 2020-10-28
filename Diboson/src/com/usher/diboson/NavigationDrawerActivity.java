@@ -1,21 +1,21 @@
 package com.usher.diboson;
 
-import java.util.List;
-
-import android.os.Bundle;
-import android.content.Intent;
 import android.content.res.Configuration;
+import android.os.Bundle;
+import android.support.v4.app.ActionBarDrawerToggle;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.support.v4.app.ActionBarDrawerToggle;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
 
-public class NavigationDrawerActivity extends DibosonActivity 
+import java.util.List;
+
+@SuppressWarnings("deprecation")
+public class NavigationDrawerActivity extends DibosonActivity
 {
 	// =============================================================================
 	// Revision History
@@ -35,6 +35,8 @@ public class NavigationDrawerActivity extends DibosonActivity
 	// 24/10/2015 ECU put in the check as to whether the activity has been created
 	//                anew or is being recreated after having been destroyed by
 	//                the Android OS
+	// 05/10/2020 ECU change to use 'Utilities.startASpecifiedActivity' rather than
+	//                starting up 'GridActivity.class'
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -185,10 +187,13 @@ public class NavigationDrawerActivity extends DibosonActivity
         	// 13/01/2015 ECU start the activity that has been selected
         	// 15/01/2015 ECU changed to use the 'commandsList' list
         	// ---------------------------------------------------------------------
-        	Intent localIntent = new Intent (getBaseContext(),GridActivity.class);
-			localIntent.putExtra (StaticData.PARAMETER_POSITION,commandsList.get (thePosition).number);
-			localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-			getBaseContext().startActivity (localIntent);
+        	// 05/10/2020 ECU changed from
+        	// 					Intent localIntent = new Intent (getBaseContext(),GridActivity.class);
+			//					localIntent.putExtra (StaticData.PARAMETER_POSITION,commandsList.get (thePosition).number);
+			//					localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			//					getBaseContext().startActivity (localIntent);
+			// ---------------------------------------------------------------------
+			Utilities.startASpecficActivity (commandsList.get (thePosition).number);
 			// ---------------------------------------------------------------------
         }
     }

@@ -6,6 +6,33 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.telephony.SmsMessage;
 
+// =================================================================================
+// 18/10/2019 ECU Up until this point this jandler was just 'for fun' and waa
+//                poorly written. It is not likely to be of any real use but today
+//                have just put it into a better shape.
+//
+//                Messages of interest are introduced by a command :-
+//
+//			      StaticData.SMS_COMMAND
+//                ======================
+//                  The receiving phone will process the associated string as actions.
+//					For example :-
+//                    "Command Speak:hello there;Notification:new notification"
+//				  StaticData.SMS_INVADE
+// 				  =====================
+//                  The receiving phone will be put into a 'pseudo invaded' mode by
+//                  activating InvadeActivity. This is just to demonstrate how easy
+//                  it is to take over a device
+//				  StaticData.SMS_BROADCAST
+// 				  ========================
+//					The receiving phone will broadcast the associated string to all
+//                  of the devices that it finds on its wireless network, including
+//                  itself. On receipt each device will process the received string
+//                  as actions.
+//					For example :-
+//					  "Broadcast Speak:hello there;Notification:new notification"
+// =================================================================================
+
 /* ================================================================================= */
 public class SMSHandler extends BroadcastReceiver
 {
@@ -22,10 +49,6 @@ public class SMSHandler extends BroadcastReceiver
 		// -------------------------------------------------------------------------
 		Bundle bundle = intent.getExtras();
 		// -------------------------------------------------------------------------
-		// 30/05/2013 ECU get the package name
-		// -------------------------------------------------------------------------
-		String thePackageName = context.getPackageName();
-			
 		SmsMessage [] SMSmessages = null;
 		// -------------------------------------------------------------------------
 		// 30/05/2013 ECU check if anything sent across with the intent
@@ -35,47 +58,42 @@ public class SMSHandler extends BroadcastReceiver
 			// ---------------------------------------------------------------------
 			// 30/05/2013 ECU check for SMS (protocol description unit)
 			// ---------------------------------------------------------------------
-			Object[] pdus = (Object[]) bundle.get ("pdus");
-			
+			Object[] pdus = (Object []) bundle.get ("pdus");
+			// ---------------------------------------------------------------------
 			// 30/05/2013 ECU get the number of messages to handle
-			
+			// ---------------------------------------------------------------------
 			SMSmessages = new SmsMessage [pdus.length];
-				
+			// ---------------------------------------------------------------------	
 			// 30/05/2013 ECU process each incoming SMS message
-				
+			// ----------------------------------------------------------------------	
 			for (int index=0; index < SMSmessages.length; index++)
 			{
 				// -----------------------------------------------------------------
 				// 30/05/2013 ECU create the message from the incoming data
 				// -----------------------------------------------------------------
-				SMSmessages [index] = SmsMessage.createFromPdu ((byte[])pdus[index]);
+				SMSmessages [index] = SmsMessage.createFromPdu ((byte[])pdus [index]);
 				// -----------------------------------------------------------------
 				// 29/10/2014 ECU get phone number from the message
 				// -----------------------------------------------------------------
-				incomingPhoneNumber = SMSmessages [index].getOriginatingAddress();
+				incomingPhoneNumber = SMSmessages [index].getOriginatingAddress ();
 				// -----------------------------------------------------------------
 				// 30/05/2013 ECU process the message in some way
 				// 29/10/2014 ECU use the variable 'incomingPhoneNumber'
 				// -----------------------------------------------------------------
 				String theMessage = "SMS from " + incomingPhoneNumber + " \n";
-				String theBody = SMSmessages [index].getMessageBody().toString();
-				theMessage += theBody + "\n";;
+				String theBody = SMSmessages [index].getMessageBody ().toString ();
+				theMessage += theBody + StaticData.NEWLINE;
 				// -----------------------------------------------------------------
 				// 30/05/2013 ECU display the contents of the message
 				// 08/11/2013 ECU use the custom toast
 				// 26/10/2014 ECU add the option to log the incoming message
 				// -----------------------------------------------------------------
-				Utilities.popToastAndLog(theMessage);
+				Utilities.popToastAndLog (theMessage);
 				// -----------------------------------------------------------------
-				// 30/05/2013 ECU decide if any action is to be taken
-				//
-				// 					Check for 'Command<space><activity to run>
-				// 29/10/2014 ECU change to ignore case on 'Command' check
-				//            ECU include the 'Invade' bit
+				// 18/10/2019 ECU check to see if phone is being put into 'invade'
+				//                mode - just a 'jokey' thing
 				// -----------------------------------------------------------------
-				String [] theWords = theBody.split(" ");
-				// -----------------------------------------------------------------
-				if (theWords[0].equalsIgnoreCase("Invade"))
+				if (theBody.startsWith (StaticData.SMS_INVADE))
 				{
 					// -------------------------------------------------------------
 					// 04/11/2014 ECU indicate to the 'invade' program which phone
@@ -83,61 +101,49 @@ public class SMSHandler extends BroadcastReceiver
 					// -------------------------------------------------------------
 	      			Intent localIntent = new Intent (context,InvadeActivity.class);
 	      			localIntent.putExtra (StaticData.PARAMETER_PHONE_NUMBER,incomingPhoneNumber);
-	      			localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+	      			localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
 	  				context.startActivity (localIntent);
 	  				// -------------------------------------------------------------
 				}
 				else
 				// -----------------------------------------------------------------
-				if (theWords[0].equalsIgnoreCase("Command"))
+				// 18/10/2019 ECU check if the SMS message contains a string of
+				//                'actions' to be processed
+				//
+				//                 <SMS_COMMAND><the string containing the actions>
+				// -----------------------------------------------------------------
+				if (theBody.startsWith (StaticData.SMS_COMMAND))
 				{
 					// -------------------------------------------------------------
-					// 30/05/2013 ECU this is only a test and needs more testing
-					//                of incoming parameters
+					// 18/10/2019 ECU remove 'SMS_COMMAND' before doing the actual
+					//                processing
 					// -------------------------------------------------------------
-					// 03/07/2013 ECU the class will be started using the name that is
-					//                supplied in theWords[1], i.e. what comes in is
-					//
-					//                command <name of class> <name of optional parameter> <data associated with parameter>
-					// -------------------------------------------------------------
-					Intent localIntent = new Intent();
-					// -------------------------------------------------------------
-					// 29/10/2014 ECU check that parameters exist 
-					// -------------------------------------------------------------
-					if (theWords.length >= 2)
-						localIntent.setClassName(thePackageName, thePackageName + "." + theWords[1]);
-					else
-					{
-						// ---------------------------------------------------------
-						// 29/10 2014 ECU no class was supplied so set the intent
-						//                to the default activity
-						// 01/09/2015 ECU changed to use StaticData
-						// ---------------------------------------------------------
-						localIntent.setClassName (thePackageName, thePackageName + "." + StaticData.COMMAND_DEFAULT_CLASS);
-						// ---------------------------------------------------------
-						// 29/10/2014 ECU feed through the phone number
-						// ---------------------------------------------------------
-						localIntent.putExtra (StaticData.PARAMETER_PHONE_NUMBER,incomingPhoneNumber);
-						// ---------------------------------------------------------
-					}
-					localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-					// -------------------------------------------------------------
-					// 30/05/2013 ECU if length is >2 then pass the third word across as
-					//                an extra
-					// 26/10/2014 ECU theWords [2] .............. the name of the parameter
-					//                theWords [3] .............. the value of that
-					//                                            parameter
-					// -------------------------------------------------------------
-					if (theWords.length == 4)
-					{
-						localIntent.putExtra (theWords[2],theWords[3]);
-					}
-					// -------------------------------------------------------------
-					// 26/10/2014 ECU now start the activity
-					// -------------------------------------------------------------
-					context.startActivity(localIntent);
+					Utilities.actionHandler (context,theBody.replaceFirst (StaticData.SMS_COMMAND,StaticData.BLANK_STRING));
 					// -------------------------------------------------------------
 				}
+				else
+				// -----------------------------------------------------------------
+				// 18/10/2019 ECU check if the SMA message contains a string of
+				//                'actions' to be broadcast
+				//
+				//                 <SMS_BROADCAST><the string containing the actions>
+				// -----------------------------------------------------------------
+				if (theBody.startsWith (StaticData.SMS_BROADCAST))
+				{
+					// -------------------------------------------------------------
+					// 18/10/2019 ECU remove 'SMS_BROADCAST' before doing the actual
+					//                processing
+					// -------------------------------------------------------------
+					Utilities.sendSocketMessageSendObjectToAllDevices
+									(context,
+									 PublicData.deviceDetails,
+									 PublicData.socketNumberForData,
+									 StaticData.SOCKET_MESSAGE_ACTIONS,
+									 theBody.replaceFirst (StaticData.SMS_BROADCAST,StaticData.BLANK_STRING),
+									 true);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
 			}
 		}
 	}

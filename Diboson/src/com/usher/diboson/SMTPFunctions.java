@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.security.Security;
 import java.util.Properties;
-
 import javax.activation.DataHandler;
 import javax.activation.DataSource;
 import javax.activation.FileDataSource;
@@ -25,19 +24,22 @@ public class SMTPFunctions extends javax.mail.Authenticator
 {
 	/* ============================================================================= */
 	// 04/01/2014 ECU created
-	// 24/04/2015 ECU updated to use mulitple parts so that attachments can be handled
+	// 24/04/2015 ECU updated to use multiple parts so that attachments can be handled
 	/* ============================================================================= */
 	    private String 	SMTPServer;
 	    private String 	user;
 	    private String 	password;
 	    private Session session;
-	/* ============================================================================= */	 
+	/* ============================================================================= */
+
+	// =============================================================================
 	static 
 	{
 		// -------------------------------------------------------------------------
 		// 04/01/2013 ECU add the provider for 'secure socket'
 		// -------------------------------------------------------------------------
 		Security.addProvider(new JSSEProvider());
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public SMTPFunctions (String theSMTPServer,
@@ -54,7 +56,7 @@ public class SMTPFunctions extends javax.mail.Authenticator
 	    // -------------------------------------------------------------------------
 	    // 04/01/2014 ECU build up the properties required when sending the email
 	    // -------------------------------------------------------------------------
-	    Properties properties 	= new Properties();
+	    Properties properties 	= new Properties ();
 	    properties.setProperty	("mail.transport.protocol", "smtp");
 	    properties.setProperty	("mail.host", SMTPServer);
 	    properties.put			("mail.smtp.auth", "true");
@@ -64,15 +66,18 @@ public class SMTPFunctions extends javax.mail.Authenticator
 	    // -------------------------------------------------------------------------
 	    // 04/01/2014 ECU establish a session using the defined properties
 	    // -------------------------------------------------------------------------
-	    session = Session.getDefaultInstance(properties, this);
+	    session = Session.getDefaultInstance (properties,this);
+	    // -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */	 
-	protected PasswordAuthentication getPasswordAuthentication() 
+	protected PasswordAuthentication getPasswordAuthentication ()
 	{
+		// -------------------------------------------------------------------------
 		return new PasswordAuthentication (user, password);
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */ 
-	public synchronized void sendMail (String subject, 
+	public synchronized void sendMail (String subject,
 									   String body, 
 									   String sender, 
 									   String recipients,
@@ -85,12 +90,12 @@ public class SMTPFunctions extends javax.mail.Authenticator
 		// 25/04/2015 ECU changed to be able to have a number of attachments
 		// -------------------------------------------------------------------------
 		MimeMessage message = new MimeMessage (session);
-	    message.setSender  (new InternetAddress(sender));
+	    message.setSender  (new InternetAddress (sender));
 	    message.setSubject (subject);
 	    // -------------------------------------------------------------------------
 	    // 04/01/2014 ECU handle one or multiple recipients
 	    // -------------------------------------------------------------------------
-	    if (recipients.indexOf(',') > 0)
+	    if (recipients.indexOf (',') > 0)
 	    	message.setRecipients (Message.RecipientType.TO, InternetAddress.parse(recipients));
 	    else
 	    	message.setRecipient (Message.RecipientType.TO, new InternetAddress(recipients));
@@ -100,7 +105,7 @@ public class SMTPFunctions extends javax.mail.Authenticator
     	// ---------------------------------------------------------------------
     	Multipart multiPart = new MimeMultipart ();
     	// ---------------------------------------------------------------------
-    	MimeBodyPart messageBodyPart = new MimeBodyPart(); 
+    	MimeBodyPart messageBodyPart = new MimeBodyPart ();
     	messageBodyPart.setContent (body,"text/html"); 
     	multiPart.addBodyPart (messageBodyPart); 
 	    // -------------------------------------------------------------------------
@@ -130,11 +135,11 @@ public class SMTPFunctions extends javax.mail.Authenticator
 	    // -------------------------------------------------------------------------
 	    // 04/01/2014 ECU now send the message using the transport layer
 	    // -------------------------------------------------------------------------
-	    Transport.send(message);
+	    Transport.send (message);
 	    // -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
-	public synchronized void sendMail (String subject, 
+	public synchronized void sendMail (String subject,
 									   String body, 
 									   String sender, 
 									   String recipients) throws Exception 
@@ -147,7 +152,7 @@ public class SMTPFunctions extends javax.mail.Authenticator
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
-	public synchronized void sendMail (String subject, 
+	public synchronized void sendMail (String subject,
 			 						   String body, 
 			 						   String sender, 
 			 						   String recipients,
@@ -161,6 +166,20 @@ public class SMTPFunctions extends javax.mail.Authenticator
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public synchronized void sendMail (String theSender,EmailMessage theEmailMessage) throws Exception
+	{
+		// -------------------------------------------------------------------------
+		// 12/12/2019 ECU created to handle the send of an email when the record
+		//                is provided
+		// -------------------------------------------------------------------------
+		sendMail (theEmailMessage.subject,
+				  theEmailMessage.message,
+				  theSender,
+				  theEmailMessage.recipients,
+				  theEmailMessage.attachments);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public void addAttachment (Multipart theMultiPart,String theFileName) throws Exception 
 	{ 
 		// -------------------------------------------------------------------------
@@ -171,6 +190,7 @@ public class SMTPFunctions extends javax.mail.Authenticator
 		messageBodyPart.setDataHandler (new DataHandler(source)); 
 		messageBodyPart.setFileName (theFileName); 
 		theMultiPart.addBodyPart (messageBodyPart); 
+		// -------------------------------------------------------------------------
 	} 
 	/* ============================================================================= */
 	public class ByteArrayDataSource implements DataSource 

@@ -37,8 +37,9 @@ public class RecordedNote implements Serializable
 	{
 		// -------------------------------------------------------------------------
 		// 26/10/2016 ECU get the duration as a string
+		// 24/07/2017 ECU changed to use ALARM...
 		// -------------------------------------------------------------------------
-		SimpleDateFormat localFormat = new SimpleDateFormat ("HH:mm:ss",Locale.getDefault());
+		SimpleDateFormat localFormat = new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT,Locale.getDefault());
 		localFormat.setTimeZone (TimeZone.getTimeZone ("UTC"));
 		return localFormat.format ((endTime - startTime));
 		// -------------------------------------------------------------------------
@@ -64,8 +65,11 @@ public class RecordedNote implements Serializable
 		// -------------------------------------------------------------------------
 		// 26/10/2016 ECU check if the ':' needs to be changed to '-' - because of
 		//                use in an actions string
+		// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+		//                the former requires a REGEX so not sure why it ever
+		//				  worked
 		// -------------------------------------------------------------------------
-		return (theColonFlag ? (localString.replaceAll(":", "-")) : localString);
+		return (theColonFlag ? (localString.replace (":", "-")) : localString);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

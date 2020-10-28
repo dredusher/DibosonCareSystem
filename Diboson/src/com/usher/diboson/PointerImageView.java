@@ -108,14 +108,16 @@ public class PointerImageView extends ImageView
 			{
 				// -----------------------------------------------------------------
 				// 06/01/2015 ECU store details about the canvas to be manipulated
+				// 05/07/2020 ECU change 'theCanvas.get...' to 'get...'
 				// -----------------------------------------------------------------
-				threadHeight 		= theCanvas.getHeight() / 2;
+				threadHeight 		= getHeight() / 2;
 				threadIncrement		= ((direction) ? -increment : increment);
-				threadWidth  		= theCanvas.getWidth()  / 2;
+				threadWidth  		= getWidth()  / 2;
 				// -----------------------------------------------------------------
 				// 06/01/2015 ECU now start the thread
 				// -----------------------------------------------------------------
 				onDrawThread.start();
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -123,7 +125,8 @@ public class PointerImageView extends ImageView
 				// 06/01/2015 ECU the thread is already running so just adjust
 				//                the canvas by the 'matrix'
 				// -----------------------------------------------------------------
-				theCanvas.concat(matrix);
+				theCanvas.concat (matrix);
+				// -----------------------------------------------------------------
 			}		
 		}
 		else

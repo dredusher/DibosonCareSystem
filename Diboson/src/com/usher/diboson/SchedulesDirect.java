@@ -1,5 +1,8 @@
 package com.usher.diboson;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -15,8 +18,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 import java.util.zip.GZIPInputStream;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public class SchedulesDirect 
 {
@@ -117,18 +118,20 @@ public class SchedulesDirect
 			int programIndex;
 			// ---------------------------------------------------------------------
 			// 21/07/2016 ECU declare variables used when checking dates
+			// 04/08/2017 ECU changed to use BLANK....
 			// ---------------------------------------------------------------------
-			String	localDate			= "";
+			String	localDate			= StaticData.BLANK_STRING;
 			int		localDateIndex  	= StaticData.NO_RESULT;
 			// ---------------------------------------------------------------------
 			// 21/07/2016 ECU loop through each stored schedule
+			// 04/08/2017 ECU changed to use BLANK....
 			// ---------------------------------------------------------------------
 			for (int theSchedule = 0; theSchedule < scheduleList.size(); theSchedule++)
 			{
 				epgFields [StaticData.EPG_DATE] 		= scheduleList.get(theSchedule).date;
 				epgFields [StaticData.EPG_START_TIME] 	= scheduleList.get(theSchedule).time;
 				epgFields [StaticData.EPG_END_TIME] 	= scheduleList.get(theSchedule).endTime;
-				epgFields [StaticData.EPG_DURATION]		= "" + scheduleList.get(theSchedule).duration;
+				epgFields [StaticData.EPG_DURATION]		= StaticData.BLANK_STRING + scheduleList.get(theSchedule).duration;
 				// -----------------------------------------------------------------
 				// 21/07/2016 ECU try and locate the associated program data
 				// -----------------------------------------------------------------
@@ -162,7 +165,7 @@ public class SchedulesDirect
 				// -----------------------------------------------------------------
 				// 25/06/2016 ECU add the entry into the list
 				// -----------------------------------------------------------------
-				TVChannelsActivity.TVChannelsSelected.get(theTVChannelNumber).EPGEntries.get (localDateIndex).add (new EPGEntry (epgFields));
+				TVChannelsActivity.TVChannelsSelected.get (theTVChannelNumber).EPGEntries.get (localDateIndex).add (new EPGEntry (epgFields));
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
@@ -171,8 +174,9 @@ public class SchedulesDirect
 			TVChannelsActivity.sendMessage ("Writing EPG data for " + TVChannelsActivity.TVChannelsSelected.get(theTVChannelNumber).channelName + " to disk");
 			// ---------------------------------------------------------------------
 			// 21/07/2016 ECU write the data to disk
+			// 14/11/2017 ECU add 'true' to indicate async write
 			// ---------------------------------------------------------------------
-			TVChannelsActivity.TVChannelsSelected.get(theTVChannelNumber).writeToDisk();
+			TVChannelsActivity.TVChannelsSelected.get (theTVChannelNumber).writeToDisk (true);
 			// ---------------------------------------------------------------------
 		}	
 	}
@@ -286,8 +290,9 @@ public class SchedulesDirect
 	        					if (numberOfProgramRequests > 0)
 	        					{
 	        						// ---------------------------------------------
+	        						// 04/08/2017 ECU changed to use AddAnS
 	        						// ---------------------------------------------
-	        						TVChannelsActivity.sendMessage ("Requesting information of " + numberOfProgramRequests + " programs");
+	        						TVChannelsActivity.sendMessage ("Requesting information for " + numberOfProgramRequests + " program" + Utilities.AddAnS (numberOfProgramRequests));
 	        						// ---------------------------------------------
 	        						// 22/07/2016 ECU some programs are required so 
 	        						//                request that information
@@ -366,6 +371,10 @@ public class SchedulesDirect
 		// 22/07/2016 ECU changed to use the line up that is stored in the object
 		// -------------------------------------------------------------------------
 		String response = sendGET (String.format (URL_LINEUP_FORMAT, PublicData.storedData.schedulesDirectData.lineUp));
+		// -------------------------------------------------------------------------
+		// 19/11/2017 ECU save the response for later information
+		//--------------------------------------------------------------------------
+		writeToFile (PublicData.storedData.schedulesDirectData.lineUp,response);
 		// -------------------------------------------------------------------------
 		// 22/07/2016 ECU now generate the TV channels from the retrieved information
 		// -------------------------------------------------------------------------
@@ -446,16 +455,17 @@ public class SchedulesDirect
 				// -----------------------------------------------------------------
 				case OBJECT_LINEUP:
 	    			json = new JSONObject (theData);
-	    			JSONArray maps = json.getJSONArray("map");
-
+	    			// -------------------------------------------------------------
+	    			JSONArray maps = json.getJSONArray ("map");
+	    			// -------------------------------------------------------------
 					for (int theMap = 0; theMap < maps.length(); theMap++)
 					{
 						//String stationID = (maps.getJSONObject(theMap)).getString ("stationID");
 						//String channel   = (maps.getJSONObject(theMap)).getString ("channel");
 					}
-
-					JSONArray stationsLineup = json.getJSONArray("stations");
-					
+					// -------------------------------------------------------------
+					JSONArray stationsLineup = json.getJSONArray ("stations");
+					// -------------------------------------------------------------
 					for (int theStation = 0; theStation < stationsLineup.length(); theStation++)
 					{
 						String stationID 	= (stationsLineup.getJSONObject(theStation)).getString ("stationID");
@@ -474,13 +484,13 @@ public class SchedulesDirect
 				case OBJECT_PROGRAMS:
 	    			JSONArray programs = new JSONArray (theData);
 	    			
-	    			String title= "";
+	    			String title= StaticData.BLANK_STRING;
 	    	    			
 	    			for (int theProgram = 0; theProgram < programs.length(); theProgram++)
 					{
 						String programID = (programs.getJSONObject(theProgram)).getString ("programID");
 												
-						JSONArray titles = (programs.getJSONObject(theProgram)).getJSONArray("titles");
+						JSONArray titles = (programs.getJSONObject(theProgram)).getJSONArray ("titles");
 						
 						for (int theTitle = 0; theTitle < titles.length(); theTitle++)
 						{
@@ -488,13 +498,13 @@ public class SchedulesDirect
 						}
 						
 						JSONObject descriptions = (programs.getJSONObject(theProgram)).getJSONObject ("descriptions");
-						JSONArray description = descriptions.getJSONArray("description1000");
+						JSONArray description = descriptions.getJSONArray ("description1000");
 						
 						JSONArray genres = (programs.getJSONObject(theProgram)).getJSONArray ("genres");
 						
-						String genre = genres.getString(0);
+						String genre = genres.getString (0);
 						
-						String desc = "";
+						String desc = StaticData.BLANK_STRING;
 						for (int theDescription = 0; theDescription < description.length(); theDescription++)
 						{
 							desc = (description.getJSONObject(theDescription)).getString ("description");
@@ -514,7 +524,7 @@ public class SchedulesDirect
 					// -------------------------------------------------------------
 					numberOfProgramRequests = 0;
 					programRequests 		= new StringBuffer ();
-	    			programRequests.append("[");
+	    			programRequests.append ("[");
 	    			// -------------------------------------------------------------
 	    			// 21/07/2016 ECU now parse the received data
 	    			// -------------------------------------------------------------
@@ -529,11 +539,11 @@ public class SchedulesDirect
 						// ---------------------------------------------------------
 						// 21/07/2016 ECU get the associated schedules
 						// ---------------------------------------------------------
-						JSONArray programsSchedules = stations.getJSONObject (theStation).getJSONArray("programs");
+						JSONArray programsSchedules = stations.getJSONObject (theStation).getJSONArray ("programs");
 		    			// ---------------------------------------------------------
 						// 21/07/2016 ECU loop through each associated program entry
 						// ---------------------------------------------------------
-						for (int theProgram = 0; theProgram < programsSchedules.length(); theProgram++)
+						for (int theProgram = 0; theProgram < programsSchedules.length (); theProgram++)
 						{
 							// -----------------------------------------------------
 							// 21/07/2016 ECU get the timings of the program
@@ -581,11 +591,13 @@ public class SchedulesDirect
 							// -----------------------------------------------------
 							// 27/10/2016 ECU changed to use dateSimpleFormat rather
 							//                than creating a new one
+							// 24/07/2017 ECU changed to use ALARM...
 							// -----------------------------------------------------
-							scheduleList.add(new SchedulesDirectSchedule (utcDate.getTime(),PublicData.dateSimpleFormat.format(utcDate),
-									   (new SimpleDateFormat ("HH:mm:ss",Locale.getDefault())).format(utcDate),
-									   duration,
-									   programID));
+							scheduleList.add (new SchedulesDirectSchedule (utcDate.getTime(),
+																		   PublicData.dateSimpleFormat.format(utcDate),
+									   			                           (new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT,Locale.getDefault())).format(utcDate),
+									   			                           duration,
+									   			                           programID));
 							// -----------------------------------------------------
 						}
 					}
@@ -630,40 +642,47 @@ public class SchedulesDirect
 	    }
 	}
 	// =============================================================================
-	static String readFromFile(String theFileName)
+	static String readFromFile (String theFileName)
 	{
+		// -------------------------------------------------------------------------
 		String responseString = null;
 		try
 		{
+			// ---------------------------------------------------------------------
 			FileInputStream inputStream = new FileInputStream (PublicData.projectFolder + "SchedulesDirect/" + theFileName);
 			byte [] localBuffer = new byte [500000];
 			int numberRead = inputStream.read (localBuffer);
 			inputStream.close ();	
-			
+			// ---------------------------------------------------------------------
+			// 29/03/2020 ECU set up the string to be returned
+			// ---------------------------------------------------------------------
 			responseString = new String (localBuffer,0,numberRead);
+			// ---------------------------------------------------------------------
 		}
 		catch (Exception theException)
 		{
 		}
 		return responseString;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static String sendGET(String theURL)
+	public static String sendGET (String theURL)
 	{
 		// -------------------------------------------------------------------------
 		// 19/07/2016 ECU created to use the GET method to obtain information
 		// 22/07/2016 ECU changed to use the base URL stored in the data
+		// 16/12/2017 ECU changed to public
 		// -------------------------------------------------------------------------
 		try
 		{
 			URL url = new URL (PublicData.storedData.schedulesDirectData.baseURL + theURL);
 			HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			connection.setRequestMethod("GET");
-			connection.setRequestProperty("token",PublicData.storedData.schedulesDirectData.token);
+			connection.setRequestMethod ("GET");
+			connection.setRequestProperty ("token",PublicData.storedData.schedulesDirectData.token);
 			// ---------------------------------------------------------------------
 			// 19/07/2016 check the response code
 			// ---------------------------------------------------------------------
-			int responseCode = connection.getResponseCode();
+			int responseCode = connection.getResponseCode ();
 			// ---------------------------------------------------------------------
 			if (responseCode == HttpURLConnection.HTTP_OK) 
 			{ 
@@ -678,7 +697,7 @@ public class SchedulesDirect
 				// 07/03/2017 ECU the encoding could return 'null' so check for
 				//                this
 				// -----------------------------------------------------------------
-				String contentEncoding = connection.getContentEncoding();
+				String contentEncoding = connection.getContentEncoding ();
 				if ((contentEncoding != null) && contentEncoding.equalsIgnoreCase ("gzip"))
 				{
 					// -------------------------------------------------------------
@@ -690,7 +709,7 @@ public class SchedulesDirect
 				}
 				// -----------------------------------------------------------------
 				BufferedReader bufferedReader 
-					= new BufferedReader(new InputStreamReader (inputStream));
+					= new BufferedReader (new InputStreamReader (inputStream));
 				// -----------------------------------------------------------------
 				String inputLine;
 				StringBuffer response = new StringBuffer();
@@ -713,7 +732,11 @@ public class SchedulesDirect
 		}
 		catch (Exception theException)
 		{
-			Utilities.LogToProjectFile (TAG,"sendGET : " + theException);
+			// ---------------------------------------------------------------------
+			// 29/03/2020 ECU add the URL to the exception output
+			// ----------------------------------------------------------------------
+			Utilities.LogToProjectFile (TAG,"sendGET : "  + theURL + "  : " + theException);
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 21/07/2016 ECU if get here then an error occurred

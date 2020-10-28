@@ -9,6 +9,10 @@ public class MedicationDetails implements Serializable
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
+	String			actionsConfirmed = null;// 02/08/2019 ECU added - actions to be taken
+											//                when a dose is confirmed
+	String			actionsRejected = null;	// 02/08/2019 ECU added - actions to be taken
+											//                when a dose is rejected
 	String 			name;
 	String 			description;
 	String			form;
@@ -53,10 +57,10 @@ public class MedicationDetails implements Serializable
 		{
 			for (int theIndex = 0; theIndex < PublicData.medicationDetails.size(); theIndex++)
 			{
-				listItems.add (new ListItem (Utilities.AbsoluteFileName(PublicData.medicationDetails.get(theIndex).photo),
+				listItems.add (new ListItem (Utilities.AbsoluteFileName (PublicData.medicationDetails.get(theIndex).photo),
 						PublicData.medicationDetails.get(theIndex).name,
 						PublicData.medicationDetails.get(theIndex).description,
-						"",
+						StaticData.BLANK_STRING,
 						theIndex));
 			}
 		}
@@ -74,6 +78,7 @@ public class MedicationDetails implements Serializable
 		// 27/11/2014 ECU print out the dosages
 		// 11/12/2016 ECU changed to use daysOfTheWeek
 		// 02/03/2017 ECU changed to use StaticData SEPARATOR 
+		// 29/11/2017 ECU added the INSET
 		// -------------------------------------------------------------------------
 		if (dailyDoseTimes != null)
 		{
@@ -82,7 +87,7 @@ public class MedicationDetails implements Serializable
 				if (dailyDoseTimes [index] != null)
 				{
 					theString += StaticData.SEPARATOR_LOWER +
-							PublicData.daysOfTheWeek [index] + "\n" + dailyDoseTimes [index].Print();
+							PublicData.daysOfTheWeek [index] + StaticData.NEWLINE + dailyDoseTimes [index].Print(StaticData.INSET);
 				}
 			}
 		}	
@@ -94,11 +99,12 @@ public class MedicationDetails implements Serializable
 		// ----------------------------------------------------------------------
 		// 11/12/2016 ECU created to just print the medication details - nothing
 		//                about the doses
+		// 29/11/2017 ECU changed to use StaticData
 		// -----------------------------------------------------------------------
-		return	"Medication   : " + name +"\n" +
-				"Description  : " + description + "\n" +
-				"Form         : " + form + "\n" +
-				"Photo        : " + photo + "\n" ;
+		return	"Medication   : " + name 		+ StaticData.NEWLINE +
+				"Description  : " + description + StaticData.NEWLINE +
+				"Form         : " + form 		+ StaticData.NEWLINE +
+				"Photo        : " + photo 		+ StaticData.NEWLINE ;
 		// -----------------------------------------------------------------------
 	}
 	/* ========================================================================== */
@@ -115,7 +121,7 @@ public class MedicationDetails implements Serializable
     	// -------------------------------------------------------------------------
     	if (PublicData.medicationDetails.size() > 0)
     	{
-    		String totalMedicationDetails = "";
+    		String totalMedicationDetails = StaticData.BLANK_STRING;
     		// ---------------------------------------------------------------------
     		// 11/12/2016 ECU decide which type of email is to be sent
     		// 02/03/2017 ECU changed to use StaticData rather than SystemInfoActivity
@@ -126,7 +132,7 @@ public class MedicationDetails implements Serializable
     			for (int theMedication = 0; theMedication < PublicData.medicationDetails.size(); theMedication++)
     			{
     				totalMedicationDetails += StaticData.SEPARATOR + 
-    						PublicData.medicationDetails.get(theMedication).Print();
+    						PublicData.medicationDetails.get (theMedication).Print ();
     			}
     		}
     		else
@@ -156,8 +162,9 @@ public class MedicationDetails implements Serializable
 		//                details
 		//                    theDay ....... day for doses to be included. If set
 		//                                   to NO_RESULT then all days are included
+		// 26/08/2017 ECU changed to use BLANK_STRING
 		// -------------------------------------------------------------------------
-		String summaryString = "";
+		String summaryString = StaticData.BLANK_STRING;
 		// -------------------------------------------------------------------------
 		// 01/03/2017 ECU set up the start and end days
 		// -------------------------------------------------------------------------
@@ -195,8 +202,9 @@ public class MedicationDetails implements Serializable
 				{
 					// -------------------------------------------------------------
 					// 01/03/2017 ECU print out dose details
+					// 29/11/2017 ECU added INSET
 					// -------------------------------------------------------------
-					summaryString += doseDaily.doseTimes.get(dose).Print() + StaticData.NEWLINE;
+					summaryString += doseDaily.doseTimes.get (dose).Print (StaticData.INSET) + StaticData.NEWLINE;
 					// -------------------------------------------------------------
 					// 02/03/2017 ECU add in a separator
 					// -------------------------------------------------------------
@@ -218,4 +226,74 @@ public class MedicationDetails implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
+	public static boolean validateIndices (int theMedication,int theDoseDay,int theDose)
+	{
+		// -------------------------------------------------------------------------
+		// 26/03/2017 ECU created to check that there is an entry for the indices
+		//                that are specified - initially used by MedicationActivity
+		//                which responds to dose alarms
+		// -------------------------------------------------------------------------
+		// 26/03/2017 ECU first check the medication index
+		// -------------------------------------------------------------------------
+		if (PublicData.medicationDetails != null && 
+			PublicData.medicationDetails.size() > 0 &&
+			theMedication < PublicData.medicationDetails.size())
+		{
+			// ---------------------------------------------------------------------
+			// 26/03/2017 ECU there are medication records so can continue
+			// ---------------------------------------------------------------------
+			MedicationDetails localRecord = PublicData.medicationDetails.get (theMedication);
+			// ---------------------------------------------------------------------
+			// 26/03/2017 ECU check if the dose exists
+			// ---------------------------------------------------------------------
+			if (localRecord.DoseExists (theDoseDay))
+			{
+				// -----------------------------------------------------------------
+				// 26/03/2017 ECU get the list of dose for the specified day
+				// -----------------------------------------------------------------
+				DoseDaily doseDaily = localRecord.dailyDoseTimes [theDoseDay];
+				// -----------------------------------------------------------------
+				// 26/03/2017 ECU validate the particular dose
+				// -----------------------------------------------------------------
+				if (doseDaily != null && 
+					doseDaily.doseTimes != null && 
+					doseDaily.doseTimes.size() > 0 && 
+					theDose < doseDaily.doseTimes.size())
+				{
+					// -------------------------------------------------------------
+					// 26/03/2017 ECU everything seems valid so continue
+					// -------------------------------------------------------------
+					return true;
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 26/03/2017 ECU seems to be an invalid index
+					// -------------------------------------------------------------
+					return false;
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 26/03/2017 ECU there are no doses on the specified day
+				// -----------------------------------------------------------------
+				return false;
+				// -----------------------------------------------------------------
+			}
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 26/03/2017 ECU there are no medication records or the requested one
+			//                is outside the bounds of the list
+			// ---------------------------------------------------------------------
+			return false;
+			// ---------------------------------------------------------------------
+		}
+	}
+	// =============================================================================
 }

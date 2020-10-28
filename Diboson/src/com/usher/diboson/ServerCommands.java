@@ -29,26 +29,30 @@ public class ServerCommands extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 24/07/2013 ECU check for the command string in the intent
 			// ---------------------------------------------------------------------
-			Bundle extras = getIntent().getExtras();
-		
+			Bundle extras = getIntent().getExtras ();
+			// ---------------------------------------------------------------------
 			if (extras !=null) 
 			{
-				commandString = extras.getString ("commandString");
-		    
+				// -----------------------------------------------------------------
+				// 19/10/2019 ECU changed to use Static....
+				// -----------------------------------------------------------------
+				commandString = extras.getString (StaticData.PARAMETER_COMMAND_STRING);
+				// -----------------------------------------------------------------
 				if (commandString != null)
 				{
 					// -------------------------------------------------------------
 					// 18/09/2013 ECU log a useful message in debug mode
 					// -------------------------------------------------------------
-					Utilities.debugMessage(TAG, commandString);
+					Utilities.debugMessage (TAG,commandString);
 					// -------------------------------------------------------------
 					// 24/07/2013 ECU parse the incoming command string
 					//                word 0 must be "command"
 					//                word 1 can be  "phone" in which case word 2 is the number to call
 					//                               "message" in which case the rest of the string is the message
 					// 18/03/2015 ECU				 "WeMo" in which case the rest is an action to process
+					// 19/10/2019 ECU changed to use Sta...STRING
 					// -------------------------------------------------------------
-					String [] theWords = commandString.split(" ");
+					String [] theWords = commandString.split (StaticData.SPACE_STRING);
 			
 					if (theWords[0].equalsIgnoreCase (StaticData.SERVER_COMMAND))
 					{
@@ -57,7 +61,7 @@ public class ServerCommands extends DibosonActivity
 						// ---------------------------------------------------------
 						if (theWords[1].equalsIgnoreCase(StaticData.SERVER_COMMAND_PHONE))
 						{
-							Utilities.makePhoneCall(this, theWords[2]);
+							Utilities.makePhoneCall (this,theWords [2]);
 						}
 						// ---------------------------------------------------------
 						// 29/11/2015 ECU check for cancel phone call
@@ -67,7 +71,7 @@ public class ServerCommands extends DibosonActivity
 							Utilities.cancelPhoneCall (this);
 						}
 						// ---------------------------------------------------------
-						if (theWords[1].equalsIgnoreCase (StaticData.SERVER_COMMAND_MESSAGE))
+						if (theWords [1].equalsIgnoreCase (StaticData.SERVER_COMMAND_MESSAGE))
 						{
 							// -----------------------------------------------------
 							// 06/01/2016 ECU tidy up the actual message
@@ -76,9 +80,15 @@ public class ServerCommands extends DibosonActivity
 							//                <phone number><delimiter><message>
 							//                where any spaces in the message have been
 							//                been substituted
+							// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+							//                the former requires a REGEX so not sure why it ever
+							//				  worked
+							// 22/01/2020 ECU added the replacement of the newline
 							// -----------------------------------------------------
 							String [] localWords = theWords [2].split(StaticData.ACTION_DELIMITER);
-							Utilities.sendSMSMessage (this,localWords[0],localWords[1].replaceAll (StaticData.SPACE_REPLACEMENT," "));
+							Utilities.sendSMSMessage (this,localWords [0],
+									localWords[1].replace (StaticData.SPACE_REPLACEMENT,StaticData.SPACE_STRING).replace (StaticData.NEWLINE_REPLACEMENT,StaticData.NEWLINE));
+							// -----------------------------------------------------
 						}
 						// ---------------------------------------------------------
 						if (theWords[1].equalsIgnoreCase (StaticData.ACTION_DESTINATION_WEMO))
@@ -89,6 +99,7 @@ public class ServerCommands extends DibosonActivity
 							//                  theWords [3] = action to take (on/off)
 							// -----------------------------------------------------
 							WeMoActivity.voiceCommands (theWords[2] + " " + theWords [3]);
+							// -----------------------------------------------------
 						}
 						// ---------------------------------------------------------
 					}	
@@ -111,7 +122,7 @@ public class ServerCommands extends DibosonActivity
 	}
 	/* ============================================================================================= */
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
+	public boolean onCreateOptionsMenu (Menu menu) 
 	{
 		return true;
 	}

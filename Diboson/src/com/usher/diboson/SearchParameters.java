@@ -21,13 +21,13 @@ public class SearchParameters implements Serializable
 	{
 		// -------------------------------------------------------------------------
 		searchOptions 	= 	new boolean [theNumberOfOptions];
-		searchString	= 	"";
+		searchString	= 	StaticData.BLANK_STRING;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public String Print ()
 	{
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		for (int theOption=0; theOption<searchOptions.length; theOption++)
 		{
 			localString += " " + searchOptions [theOption];

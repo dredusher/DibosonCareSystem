@@ -1,17 +1,19 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import android.os.BatteryManager;
-import android.os.IBinder;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.hardware.Camera.CameraInfo;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.BatteryManager;
+import android.os.IBinder;
+
+import java.lang.reflect.Method;
 
 public class SensorService extends Service implements SensorEventListener
 {
@@ -24,6 +26,7 @@ public class SensorService extends Service implements SensorEventListener
 	// 14/03/2015 ECU added the monitoring of the battery level
 	// 18/11/2015 ECU added the accelerometer handling rather than having it in the
 	//                FallsActivity
+	// 08/09/2019 ECU set up the handling of the 'brightness by camera'
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -36,8 +39,12 @@ public class SensorService extends Service implements SensorEventListener
 	// -----------------------------------------------------------------------------
 	static	boolean			accelerometerEnabled	= false;		// 18/11/2015 ECU added
 	static  Method			accelerometerMethod		= null;			// 04/12/2015 ECU added
+	static  Object			accelerometerUnderlyingObject		
+													= null;			// 21/03/2018 ECU added
 	static  int				batteryLevelCurrent		= StaticData.NO_RESULT;
 																	// 27/04/2016 ECU added
+	static	BrightnessFromCamera 
+							brightnessFromCamera;					// 09/09/2019 ECU added	
 	static	Context			context;								// 18/11/2015 ECU added
 	static  float			lightLevelCurrent		= StaticData.NO_RESULT;
 	 																// 27/04/2016 ECU added
@@ -76,6 +83,7 @@ public class SensorService extends Service implements SensorEventListener
 		// 02/03/2015 ECU called to return the communication channel to the service
 		// -------------------------------------------------------------------------
 		return null;
+		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
 	@Override
@@ -85,8 +93,7 @@ public class SensorService extends Service implements SensorEventListener
 		// 02/03/2015 ECU called the main onCreate
 		// -------------------------------------------------------------------------
 		super.onCreate();
-		// -------------------------------------------------------------------------
-	
+		// -------------------------------------------------------------------------	
 	}
 	// =============================================================================
 	public void onSensorChanged (SensorEvent sensorEvent) 
@@ -142,12 +149,13 @@ public class SensorService extends Service implements SensorEventListener
 				{
 					try 
 					{ 
-						// -------------------------------------------------------------
+						// ---------------------------------------------------------
 						// 16/03/2015 ECU call up the method that will handle the 
-						//                input text
-						// -------------------------------------------------------------
-						accelerometerMethod.invoke (null,new Object [] {sensorEvent});
-						// -------------------------------------------------------------
+						//                event
+						// 21/03/2018 ECU added the 'underlying object'
+						// ---------------------------------------------------------
+						accelerometerMethod.invoke (accelerometerUnderlyingObject,new Object [] {sensorEvent});
+						// ---------------------------------------------------------
 					} 
 					catch (Exception theException) 
 					{	
@@ -214,19 +222,20 @@ public class SensorService extends Service implements SensorEventListener
 		if (PublicData.storedData.battery == null)
 			PublicData.storedData.battery = new SensorData ();
 		// -------------------------------------------------------------------------
-		// 24/10/2015 ECU only set the trigger to false if the app has been started
-		//                manually
-		// -------------------------------------------------------------------------
-		if (PublicData.startedManually)
-		{
-			PublicData.storedData.setBatteryTriggered (false);
-		}
-		// -------------------------------------------------------------------------
 		// 14/03/2015 ECU register the listener for 'battery level changes'
 		// -------------------------------------------------------------------------
 		this.registerReceiver (this.batteryReceiver, new IntentFilter (Intent.ACTION_BATTERY_CHANGED));
 		// -------------------------------------------------------------------------
+		// 09/09/2019 ECU check if the camera is to be used for brightness - if so
+		//                then start the monitor
+		// -------------------------------------------------------------------------
+		if ((lightSensor == null) && PublicData.storedData.brightnessFromCamera)
+		{
+			startAmbientLightFromCamera ();
+		}
+		// -------------------------------------------------------------------------
 	    return Service.START_STICKY;
+	    // -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
 	@Override
@@ -241,7 +250,13 @@ public class SensorService extends Service implements SensorEventListener
 		// -------------------------------------------------------------------------
 		unregisterReceiver (batteryReceiver);
 		// -------------------------------------------------------------------------
+		// 09/09/2019 ECU check whether the 'brightness from camera' monitor needs
+		//                to be stopped
+		// -------------------------------------------------------------------------
+		stopAmbientLightFromCamera ();;
+		// -------------------------------------------------------------------------
 		super.onDestroy();
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	private BroadcastReceiver batteryReceiver = new BroadcastReceiver ()
@@ -252,11 +267,14 @@ public class SensorService extends Service implements SensorEventListener
 	    @Override
 	    public void onReceive (Context theContext, Intent theIntent) 
 	    {
+
 	    	// ---------------------------------------------------------------------
 	    	// 24/10/2015 ECU only want to monitor the battery if the stored data
 	    	//                has been initialised correctly
+	    	// 08/05/2020 ECU put in the check on 'null'
+	    	//            ECU change to use 'Check....'
 	    	// ---------------------------------------------------------------------
-	    	if (PublicData.storedData.initialised)
+	    	if (StoredData.CheckIfInitialised ())
 	    	{
 	    		// -----------------------------------------------------------------
 	    		// 14/03/2015 ECU obtain the current battery level
@@ -298,7 +316,7 @@ public class SensorService extends Service implements SensorEventListener
 	// =============================================================================
 	
 	// =============================================================================
-	public static void accelerometerEnablement (boolean theEnablementFlag,Method theHandlerMethod,int theSensorRate)
+	public static void accelerometerEnablement (boolean theEnablementFlag,Object theUnderlyingObject,Method theHandlerMethod,int theSensorRate)
 	{
 		// -------------------------------------------------------------------------
 		// 18/11/2015 ECU created to handle the enabling / disabling of the
@@ -308,6 +326,8 @@ public class SensorService extends Service implements SensorEventListener
 		//					                = false disable the listener
 		//
 		// 15/02/2016 ECU added theSensorRate as an argument
+		// 21/03/2018 ECU added 'the underlying object' - if 'null' then the method
+		//                that will be invoked is 'static'
 		// -------------------------------------------------------------------------
 		if (theEnablementFlag)
 		{
@@ -329,6 +349,11 @@ public class SensorService extends Service implements SensorEventListener
 				sensorManager.registerListener ((SensorEventListener) context,
 												sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER),
 												theSensorRate);
+				// -----------------------------------------------------------------
+				// 21/03/2018 ECU remember the underlying object - if 'null' then
+				//                the method is 'static'
+				// -----------------------------------------------------------------
+				accelerometerUnderlyingObject = theUnderlyingObject;
 				// -----------------------------------------------------------------
 				// 04/12/2015 ECU set up the method for the handler
 				// -----------------------------------------------------------------
@@ -359,6 +384,56 @@ public class SensorService extends Service implements SensorEventListener
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------	
+	}
+	// -----------------------------------------------------------------------------
+	public static void accelerometerEnablement (boolean theEnablementFlag,Method theHandlerMethod,int theSensorRate)
+	{
+		// -------------------------------------------------------------------------
+		// 21/03/2018 ECU created to enable the accelerometer and to return the data
+		//                to a 'static' method
+		// -------------------------------------------------------------------------
+		accelerometerEnablement (theEnablementFlag,StaticData.STATIC_METHOD,theHandlerMethod,theSensorRate);
+		//--------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void startAmbientLightFromCamera ()
+	{
+		// -------------------------------------------------------------------------
+		// 09/09/2019 ECU created to start the generation of 'brightness' using the
+		//                camera
+		// -------------------------------------------------------------------------
+		brightnessFromCamera 
+			= new BrightnessFromCamera (context,CameraInfo.CAMERA_FACING_FRONT);
+		// -------------------------------------------------------------------------
+		// 09/09/2019 ECU start up the monitoring
+		// -------------------------------------------------------------------------
+		brightnessFromCamera.startCapture (10 * 1000);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void stopAmbientLightFromCamera ()
+	{
+		// -------------------------------------------------------------------------
+		// 09/09/2019 ECU created to stop the generation of 'brightness' using the
+		//                camera
+		// -------------------------------------------------------------------------
+		if (brightnessFromCamera != null)
+		{
+			brightnessFromCamera.stopCapture ();
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+
+
+	// ==============================================================================
+	public static boolean validation (int theArgument)
+	{
+		// ------------------------------------------------------------------------
+		// 11/08/2020 ECU created to check if this service is allowed to run
+		// ------------------------------------------------------------------------
+		return StaticData.SENSOR_SERVICE;
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

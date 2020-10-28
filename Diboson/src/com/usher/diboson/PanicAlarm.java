@@ -16,6 +16,7 @@ public class PanicAlarm implements Serializable
 	// 10/12/2015 ECU added shake.. parameters
 	// 11/12/2015 ECU added the actions associated with a user's response
 	//            ECU rename actions -> alarmCommands, prompts -> promptCommands
+	// 06/06/2017 ECU changed "\n" to StaticData.NEWLINE
 	// =============================================================================
 	private static final long serialVersionUID = 1L;
 	// =============================================================================
@@ -61,22 +62,22 @@ public class PanicAlarm implements Serializable
 	// =============================================================================
 	public String Print (String theTitle)
 	{
-		return theTitle + "\n" +
-			   "Enabled : " 			+ enabled + "\n" +
-			   "Active : " 				+ active + "\n" +
-			   "Start Time : " 			+ ((startTime == null) ? "unset" : startTime.Print ()) + "\n" +
-			   "End Time : " 			+ ((endTime == null) ? "unset" : endTime.Print ()) + "\n" +
-			   "Next Prompt Time : " 	+ ((nextPromptTime == null) ? "unset" : nextPromptTime.Print ()) + "\n" +
-			   "Interval : " 			+ intervalTime + "\n" +
-			   "Response : " 			+ responseTime + "\n" +
-			   "Prompt Commands : "     + promptCommands + "\n" +
-			   "Response Commands : "   + responseCommands + "\n" +
-			   "Alarm Commands : "		+ alarmCommands + "\n" +
-			   "Security : "            + security + "\n" +
-			   "Shake : "               + shake + "\n" +
-			   "Shake Number : " 		+ shakeNumber + "\n" +
-		 	   "Shake Threshold : " 	+ shakeThreshold + "\n" +
-		 	   "Shake Ignore Period : " + shakeIgnorePeriod + "\n" +
+		return theTitle + StaticData.NEWLINE +
+			   "Enabled : " 			+ enabled + StaticData.NEWLINE +
+			   "Active : " 				+ active + StaticData.NEWLINE +
+			   "Start Time : " 			+ ((startTime == null) ? "unset" : startTime.Print ()) + StaticData.NEWLINE +
+			   "End Time : " 			+ ((endTime == null) ? "unset" : endTime.Print ()) + StaticData.NEWLINE +
+			   "Next Prompt Time : " 	+ ((nextPromptTime == null) ? "unset" : nextPromptTime.Print ()) + StaticData.NEWLINE +
+			   "Interval : " 			+ intervalTime + StaticData.NEWLINE +
+			   "Response : " 			+ responseTime + StaticData.NEWLINE +
+			   "Prompt Commands : "     + promptCommands + StaticData.NEWLINE +
+			   "Response Commands : "   + responseCommands + StaticData.NEWLINE +
+			   "Alarm Commands : "		+ alarmCommands + StaticData.NEWLINE +
+			   "Security : "            + security + StaticData.NEWLINE +
+			   "Shake : "               + shake + StaticData.NEWLINE +
+			   "Shake Number : " 		+ shakeNumber + StaticData.NEWLINE +
+		 	   "Shake Threshold : " 	+ shakeThreshold + StaticData.NEWLINE +
+		 	   "Shake Ignore Period : " + shakeIgnorePeriod + StaticData.NEWLINE +
 		 	   "Shake Reset Period : " 	+ shakeResetPeriod;
 		 
 	}

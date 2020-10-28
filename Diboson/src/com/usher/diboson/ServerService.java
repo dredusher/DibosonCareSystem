@@ -1,27 +1,27 @@
 package com.usher.diboson;
 
-import java.io.IOException;
-import java.net.ServerSocket;
-
-import android.os.Handler;
-import android.os.IBinder;
-import android.os.Message;
-import android.support.v4.app.NotificationCompat;
-import android.widget.Toast;
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Message;
+import android.support.v4.app.NotificationCompat;
+import android.widget.Toast;
+import java.io.IOException;
+import java.net.ServerSocket;
 
-public class ServerService extends Service 
+public class ServerService extends Service
 {
 	/* ============================================================================= */
 	// 08/02/2914 ECU changed to try and run in the foreground to try and fix problems
 	//                when the device goes into standby mode
 	//            ECU make the above changes optional
 	// 12/01/2016 ECU added the message handler facility
+	// 26/05/2020 ECU tidied up to use resources rather than literal strings
 	// =============================================================================
 	final static String TAG = "ServiceService";
 	// =============================================================================
@@ -45,6 +45,7 @@ public class ServerService extends Service
 	{		
 		// -------------------------------------------------------------------------
 		return null;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
@@ -61,7 +62,8 @@ public class ServerService extends Service
 			// ---------------------------------------------------------------------
 			// 08/11/2013 ECU use the custom toast
 			// ---------------------------------------------------------------------
-			Utilities.popToast ("Server Service has been Created", Toast.LENGTH_SHORT); 
+			Utilities.popToast (getString (R.string.server_service_created), Toast.LENGTH_SHORT);
+			// ---------------------------------------------------------------------
 		}	
 		// -------------------------------------------------------------------------
 		// 12/01/2016 ECU create the handler for the message
@@ -87,13 +89,14 @@ public class ServerService extends Service
 		{
 			// ---------------------------------------------------------------------
 			// 08/11/2013 ECU use the custom toast
+			// 26/05/2020 ECU changed to use resource
 			// ---------------------------------------------------------------------
-			Utilities.popToast ("Server Service has started", Toast.LENGTH_SHORT);
+			Utilities.popToast (getString (R.string.server_service_started), Toast.LENGTH_SHORT);
 		}
 		// -------------------------------------------------------------------------
 		// 25/07/2013 ECU get the socket that will be used for TCP communication
 		// -------------------------------------------------------------------------
-		PublicData.socketNumber = this.getResources().getInteger(R.integer.TCP_port_number);
+		PublicData.socketNumber = this.getResources().getInteger (R.integer.TCP_port_number);
 		// -------------------------------------------------------------------------
 		// 30/06/2013 ECU start up the TCP server listening on specified port
 		// -------------------------------------------------------------------------
@@ -133,7 +136,7 @@ public class ServerService extends Service
 	}
 	/* ============================================================================= */
 	@Override
-	public void onDestroy() 
+	public void onDestroy () 
 	{
 		// -------------------------------------------------------------------------
 		// 12/09/2013 ECU include debug mode check
@@ -144,7 +147,8 @@ public class ServerService extends Service
 			// ---------------------------------------------------------------------
 			// 08/11/2013 ECU use the custom toast
 			// ---------------------------------------------------------------------
-			Utilities.popToast ("Server Service has been destroyed");
+			Utilities.popToast (getString (R.string.server_service_destroyed));
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 22/08/2013 ECU make sure that the server threads are ended
@@ -155,19 +159,33 @@ public class ServerService extends Service
 		{
 			// ---------------------------------------------------------------------
 			// 08/11/2013 ECU use the custom toast
+			// 26/05/2020 ECU changed to use the resource
 			// ---------------------------------------------------------------------
-			Utilities.popToast ("Server threads being ended");
+			Utilities.popToast (getString (R.string.server_service_threads_destroyed));
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 10/03/2015 ECU indicate that the threads are to stop
+		// 15/10/2017 ECU put in the checks on null
 		// -------------------------------------------------------------------------
-		serverThread.keepRunning 		= false;
-		serverThreadForData.keepRunning = false;
+		if (serverThread != null)
+			serverThread.keepRunning 		= false;
+		if (serverThreadForData != null)
+			serverThreadForData.keepRunning = false;
 		// -------------------------------------------------------------------------
 		// 26/08/2013 ECU added the multicast server thread
 		// 09/04/2016 ECU changed the name to broadcast
+		// 15/10/2017 ECU put in the check on null
 		// -------------------------------------------------------------------------
-		broadcastServerThread.keepRunning = false;
+		if (broadcastServerThread != null)
+		{
+			// ---------------------------------------------------------------------
+			// 25/05/2020 ECU tell the thread to close via a message rather than a
+			//                'keepRunning' flag
+			// ---------------------------------------------------------------------
+			broadcastServerThread.broadcastRefreshHandler.sendEmptyMessage(StaticData.MESSAGE_FINISH);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 		// 22/07/2013 ECU check if the socket is to be closed
 		// -------------------------------------------------------------------------
@@ -225,11 +243,12 @@ public class ServerService extends Service
 			// ---------------------------------------------------------------------
 			// 24/07/2013 ECU call up the activity to process the command
 			// 06/01/2016 ECU process the string at the top of the queue
+			// 19/10/2019 ECU changed to use Static....
 			// ---------------------------------------------------------------------
 			Intent localIntent = new Intent();
 			localIntent.setClass (this,ServerCommands.class);
 			localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
-			localIntent.putExtra ("commandString",PublicData.stringsToProcess.get (0));
+			localIntent.putExtra (StaticData.PARAMETER_COMMAND_STRING,PublicData.stringsToProcess.get (0));
 			startActivity     (localIntent);
 			// ---------------------------------------------------------------------
 			// 24/07/2013 ECU indicate that everything has been done
@@ -252,8 +271,10 @@ public class ServerService extends Service
 			{
 				// -----------------------------------------------------------------
 				// 08/11/2013 ECU use the custom toast
+				// 26/05/2020 ECU changed to use resource
 				// -----------------------------------------------------------------
-				Utilities.popToast ("Creating Server Socket on Port " + thePort, Toast.LENGTH_SHORT);
+				Utilities.popToast (getString (R.string.server_service_port) + thePort, Toast.LENGTH_SHORT);
+				// -----------------------------------------------------------------
 			}
 			
 			serverSocket = new ServerSocket (thePort);
@@ -262,7 +283,8 @@ public class ServerService extends Service
 			// 22/08/2013 ECU changed to use serverThread
 			// ---------------------------------------------------------------------
 			serverThread = new ServerThread (serverSocket,this);
-			new Thread(serverThread).start();
+			new Thread (serverThread).start();
+			// ---------------------------------------------------------------------
 	     
 		} 
 		catch (Exception theException) 
@@ -279,7 +301,7 @@ public class ServerService extends Service
 			stopSelf ();
 			// ---------------------------------------------------------------------
       	}
-		
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	private void serverActionsForData (int thePort)
@@ -294,8 +316,10 @@ public class ServerService extends Service
 			{
 				// -----------------------------------------------------------------
 				// 08/11/2013 ECU use the custom toast
+				// 26/05/2020 ECU changed to use resource
 				// -----------------------------------------------------------------
-				Utilities.popToast ("Creating Server Socket For Data on Port " + thePort,Toast.LENGTH_SHORT);
+				Utilities.popToast (getString (R.string.server_service_data_port) + thePort,Toast.LENGTH_SHORT);
+				// -----------------------------------------------------------------
 			}
 			serverSocketForData = new ServerSocket(thePort);
 			// ---------------------------------------------------------------------
@@ -332,8 +356,10 @@ public class ServerService extends Service
 		{
 			// ---------------------------------------------------------------------
 			// 08/11/2013 ECU use the custom toast
+			// 26/05/2020 ECU changed to use the resource
 			// ---------------------------------------------------------------------
-			Utilities.popToast ("Creating Server Socket For Broadcast on Port " + thePort, Toast.LENGTH_SHORT);
+			Utilities.popToast (getString (R.string.server_service_broadcast_port) + thePort, Toast.LENGTH_SHORT);
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------	
 		// 26/08/2013 ECU start up the thread that will process incoming broadcast datagrams
@@ -341,11 +367,17 @@ public class ServerService extends Service
 		broadcastServerThread = new BroadcastServerThread (this,thePort);
 		// -------------------------------------------------------------------------
 		// 11/04/2015 ECU only start if successfully bound to socket
+		//            ECU the returned socket is held in
+		//					'PublicData.datagramSocket'
 		// 09/04/2016 ECU changed name from 'multicastSocket'
 		// -------------------------------------------------------------------------
 		if (PublicData.datagramSocket != null)
 		{
-			new Thread (broadcastServerThread).start();
+			// ---------------------------------------------------------------------
+			// 26/08/2013 ECU start up the broadcast thread
+			// ---------------------------------------------------------------------
+			new Thread (broadcastServerThread).start ();
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -389,15 +421,18 @@ public class ServerService extends Service
 				// 24/07/2013 ECU check for requests for TCP services
 				// -----------------------------------------------------------------
 				processServerCommands (getBaseContext());			
-				
+				// -----------------------------------------------------------------
 				sleep (1000);
+				// -----------------------------------------------------------------
 			}
 	    }
 	    /* ------------------------------------------------------------------------ */
 	    public void sleep(long delayMillis)
 	    {		
+	    	// --------------------------------------------------------------------
 	        this.removeMessages(0);
 	        sendMessageDelayed(obtainMessage(0), delayMillis);
+	        // ---------------------------------------------------------------------
 	    }
 	};
 	/* ============================================================================= */
@@ -465,7 +500,7 @@ public class ServerService extends Service
         		case StaticData.MESSAGE_FTP_SERVER:
         			// -----------------------------------------------------------------
         			// 12/01/2016 ECU moved here from MessageHandler
-        			// 15/01/2016 ECU leaave here but is not needed
+        			// 15/01/2016 ECU leave here but is not needed
         			// -----------------------------------------------------------------
         			// -----------------------------------------------------------------
         			break;

@@ -1,20 +1,20 @@
 package com.usher.diboson;
 
-import java.io.File;
-
+import android.annotation.SuppressLint;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.annotation.SuppressLint;
-import android.content.Context;
 import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.GestureDetector.OnGestureListener;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+
+import java.io.File;
 
 
 public class SlideShowActivity extends DibosonActivity implements OnGestureListener
@@ -27,6 +27,7 @@ public class SlideShowActivity extends DibosonActivity implements OnGestureListe
 	//                the Android OS
 	// 22/10/2015 ECU changed to 'extends DibosonActivity'
 	// 13/11/2016 ECU added the microphone icon and the handling of it
+	// 14/12/2018 ECU removed the use of a 'static' context
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -34,7 +35,8 @@ public class SlideShowActivity extends DibosonActivity implements OnGestureListe
 	/* ============================================================================= */
 	//final static String TAG = "SlideShowActivity";
 	/* ============================================================================= */
-			static  Context			context;				// 13/11/2016 ECU added
+					Context			context;				// 13/11/2016 ECU added
+															// 14/12/2018 ECU changed from static
 			static 	File			directory;
 			static 	File[] 			files;
 			static 	int 			filePointer		= StaticData.NO_RESULT;			
@@ -142,7 +144,7 @@ public class SlideShowActivity extends DibosonActivity implements OnGestureListe
     				// 14/01/2015 ECU changed to use the resource
     				// -------------------------------------------------------------
     				Utilities.SpeakAPhrase (this,getString (R.string.photo_unfortunately_no_folder));
-	    	
+	    			// -------------------------------------------------------------
     				Utilities.popToast (PublicData.photosFolder + " does not exist",true);
     				// -------------------------------------------------------------
     			}
@@ -461,7 +463,9 @@ public class SlideShowActivity extends DibosonActivity implements OnGestureListe
 	@Override
 	public boolean onTouchEvent(MotionEvent me) 
 	{
-	    return gestureScanner.onTouchEvent(me);
+		// -------------------------------------------------------------------------
+	    return gestureScanner.onTouchEvent (me);
+	    // -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
@@ -542,8 +546,10 @@ public class SlideShowActivity extends DibosonActivity implements OnGestureListe
 	{
 		// -------------------------------------------------------------------------
 		// 13/11/2016 ECU created to store the end time
+		// 14/12/2018 ECU changed the way getString is accessed - it used to be via
+		//                a 'static' context
 		// -------------------------------------------------------------------------
-		Utilities.popToastAndSpeak (context.getString (R.string.slide_show_continue));
+		Utilities.popToastAndSpeak (MainActivity.activity.getString (R.string.slide_show_continue));
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */

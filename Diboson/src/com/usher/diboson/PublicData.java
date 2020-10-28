@@ -1,15 +1,15 @@
 package com.usher.diboson;
 
+import android.app.AlarmManager;
+import android.bluetooth.BluetoothDevice;
+import android.content.Intent;
+import android.media.MediaPlayer;
+import android.widget.ImageView;
+
 import java.net.DatagramSocket;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.List;
-
-import android.app.AlarmManager;
-import android.media.MediaPlayer;
-import android.widget.ImageView;
-
-import com.usher.diboson.GridActivity.ImageAdapter;
 
 public class PublicData 
 {
@@ -18,7 +18,32 @@ public class PublicData
 	// 23/10/2015 ECU ambientLightTriggered moved into storedData
 	// 20/02/2017 ECU removed data that was used by LocationActivity
 	// 19/03/2017 ECU added 'debuggable' flag
+	// 26/03/2017 ECU added commsHandler
+	// 02/06/2017 ECU added actionIntent
+	// 15/07/2017 ECU added 'visitLogFile' and delete
+	//					public static List<Visit> visits = new ArrayList<Visit>();
+	// 15/01/2018 ECU added audioStreaming
+	// 30/11/2018 ECU added externalSDCard
+	// 27/02/2019 ECU added publicIpAddress
+	// 18/07/2019 ECU move publicIpAddress into stored data
+	// 30/07/2019 ECU added scaleSecondLine and scaleThirdLine
+	// 11/11/2019 ECU added ntpRefreshedStatus
+	// 16/11/2019 ECU added deviceNames
+	// 04/12/2019 ECU added emailMessages
+	// 06/12/2019 ECU added emailHandler
+	// 26/03/2020 ECU added lockFileData
+	// 13/05/2020 ECU added startedByAlarmSource
+	// 18/05/2020 ECU added connectedBluetoothDevices
+	// 30/07/2020 ECU added initialised so that can flag when the variables have
+	//                      been fully initialised
+	// 03/09/2020 ECU added 'actionMediaPlayer' which is used by Utilities.PlayAFileAction
+	// 17/09/2020 ECU removed
+	// 						public static ImageAdapter 	  		imageAdapter;
+	//						public static CustomGridViewAdapter	customGridViewAdapter;
+	//				  which are now declared in GridActivity
 	// =============================================================================
+	public static Intent			actionIntent				= null;
+	public static MediaPlayer       actionMediaPlayer			= null;
 	public static List<String []>	actions						= new ArrayList<String []>();
 																			// 03/05/2016 ECU list of 'actions' to be taken
 	public static List<Agency>	  	agencies 					= new ArrayList<Agency>();
@@ -37,6 +62,7 @@ public class PublicData
 	public static List<AppointmentTypeDetails>
 									appointmentTypes 			= new ArrayList<AppointmentTypeDetails>();
 																			// 06/01/2013 ECU added - appointment types
+	public static boolean			audioStreaming				= false;	// 15/01/2018 ECU added - if audio streaming is on or off
 	public static List<BarCode>	  	barCodes 					= new ArrayList<BarCode>();	
 																			// 15/09/2013 ECU added - declare the bar code data
 																			// 07/02/2014 ECU changed to a list
@@ -46,11 +72,13 @@ public class PublicData
 	public static BluetoothUtilities	
 									bluetoothUtilities			= null;		// 06/09/2013 ECU added - to handle bluetooth
 																			//			      utilities
-	public static String          	broadcastMessage 			= null;		// 27/08/2013 ECU if non-null then indicates multicast message to
+	//public static String         	broadcastMessage 			= null;		// 27/08/2013 ECU if non-null then indicates multicast message to
 																			//                be sent
 																			// 09/04/2016 ECU changed name from multicast..
-	public static boolean		  	broadcastMessages 			= false;	// 22/08/2013 ECU added - checks for multicast messages in TimerService
+																			// 25/05/2020 ECU removed following rewrite of BroadcastServerThread
+	//public static boolean		  	broadcastMessages 			= false;	// 22/08/2013 ECU added - checks for multicast messages in TimerService
 																			// 09/04/2016 ECU changed name from multicast...
+																			// 25/05/2020 ECU removed following rewrite of BroadcastServerThread
 	public static CarePlan		  	carePlan 					= new CarePlan ();	
 																			// 12/01/2014 ECU added - care plan
 	public static String		  	carerLogFile;							// 10/01/2014 ECU added - name of carer log file
@@ -60,18 +88,20 @@ public class PublicData
 	public static boolean         	cellChange 					= false;
 	public static int             	chunkResponse  				= StaticData.NO_RESULT;	
 																			// 07/04/2014 ECU added
-	public static String		  	clonerIPAddress 			= "";		// 16/10/2014 ECU added - the IP address
+	public static String		  	clonerIPAddress 			= StaticData.BLANK_STRING;		
+																			// 16/10/2014 ECU added - the IP address
 																			//                of the cloner device
 	public static boolean		  	cloningInProgress 			= false;	// 06/04/2014 ECU added - cloning is
 																			//                happening
-	public static String    	  	copyrightMessage			= "";		// 12/09/2013 ECU added - holds printable copyright message
+	public static CommsHandler		commsHandler;							// 26/03/2017 ECU added
+	public static List <BluetoothDevice>
+									connectedBluetoothDevices	= null;		// 18/05/2020 ECU added
+	public static String    	  	copyrightMessage			= StaticData.BLANK_STRING;		
+																			// 12/09/2013 ECU added - holds printable copyright message
 																			// 09/03/2017 ECU change initialise
 	public static int			  	currentRemoteController 	= 0;		// 11/05/2015 ECU added - the current remote controller
 	public static long			  	currentTimeAdjustment 		= 0;		// 13/08/2013 ECU added - difference between current time
 																			//				  and NTP time
-	public static CustomGridViewAdapter	
-								  	customGridViewAdapter;					// 26/01/2014 ECU added
-																			// 10/02/2014 ECU move here from GridActivity
 	public static Datagram		  	datagram 					= null;		// 02/08/2013 ECU added
 																			// 21/09/2013 ECU initialised to null
 	public static boolean         	datagramChanged 			= false;	// 19/10/2014 ECU added - datagram has changed
@@ -94,7 +124,8 @@ public class PublicData
 	public static SimpleDateFormat 	dateFormatterFull;						// 11/01/2013 ECU added 
 	public static SimpleDateFormat 	dateFormatterShort;						// 13/01/2013 ECU added 
 	public static SimpleDateFormat 	dateSimpleFormat;						// 27/10/2016 ECU added 
-	public static String          	dateTimeString 				= "";       // 20/11/2013 ECU added - updated by TimerService
+	public static String          	dateTimeString 				= StaticData.BLANK_STRING;       
+																			// 20/11/2013 ECU added - updated by TimerService
 	public static boolean			debuggable					= true;		// 19/03/2017 ECU added
 	                                                                        //                true .... debug version
 																			//                false ... release version
@@ -108,13 +139,19 @@ public class PublicData
 																			//                to get correct discovery is problems occur
 																			//                on initialisation
 	public static String          	deviceID 					= null;		// 03/02/2015 ECU added - unique (?) ID for the device
-	public static String		  	dialogueFolder;							// 20/11/2013 ECU added
+	public static List<DeviceName>	deviceNames 				= new ArrayList<DeviceName>();
+	public static String		  	dialogueFolder;							// 16/11/2019 ECU added
 	public static boolean         	dibosonViewOnDisplay 		= false;	// 15/10/2013 ECU added
 	public static boolean		  	discover_always 			= false;	// 07/11/2013 ECU added
 	public static String			epgFolder					= null;		// 16/10/2015
 	public static EmailDetails   	emailDetails 				= null;		// 04/01/2014 ECU added
+	public static EmailHandler		emailHandler;							// 06/12/2019 ECU added
+	public static List<EmailMessage>
+									emailMessages				= new ArrayList <EmailMessage>();
+	// 02/02/2014 ECU list of files to synchronise
 	public static String		  	errorSoFinishApp 			= null;		// 11/04/2015 ECU added
 	public static boolean         	externalData 				= true;		// 18/06/2013 ECU added
+	public static String			externalSDCard				= null;		// 30/11/2018 ECU added - path to external SD card
 	public static int			  	fileTransferStatus 			= StaticData.NO_RESULT;	
 																			// 14/08/2013 ECU indicates the file transfer state
 	public static List<FileToSynchronise>   
@@ -126,20 +163,22 @@ public class PublicData
 	public static boolean         	gridRebuild 				= false;    // 16/01/2015 ECU added to indicate that GridActivity
 																			//                must rebuild the display
 	public static boolean		  	gridType 					= false;	// 11/10/2014 ECU remember state of displayed grid
-
-	public static ImageAdapter 	  	imageAdapter;							// 02/06/2013 ECU placed here from GridActivity
 	public static SocketMessageHeader 
 								  	incomingSocketMessageHeader;			// 07/08/2013 ECU added
+    public static boolean           initialised                 = false;    // 30/07/2020 ECU added
 	public static String 		 	ipAddress					= null;		// 25/07/2013 ECU added
 	public static long				keyValue					= StaticData.SHARED_PREFERENCES_DEFAULT;
 																			// 08/03/2017 ECU added
-	public static String    	 	lastUpdateDate 				= "";		// the date when the APK was last updated
-	public static String		 	lastUpdateTime 				= "";		// the time when the APK was last updated
+	public static String    	 	lastUpdateDate 				= StaticData.BLANK_STRING;		
+																			// the date when the APK was last updated
+	public static String		 	lastUpdateTime 				= StaticData.BLANK_STRING;		
+																			// the time when the APK was last updated
 	public static int			  	lastVoiceCommand 			= StaticData.NO_RESULT;	
 																			// 17/06/2013 ECU will remember the last voice command actioned
 	public static Devices		  	localDeviceDetails 			= new Devices ();	
 																			// 20/03/2015 ECU added to hold details of this device
-																			// 28/02/2016 ECU initialise the variable       
+																			// 28/02/2016 ECU initialise the variable
+	public static LockFileData		lockFileData				= null;		// 26/03/2020 ECU 'lock file' data
 	public static MediaPlayer     	mediaPlayer 				= null;
 	public static boolean		  	mediaPlayerPaused 			= false; 	// 16/06/2013 ECU added
 	public static List<MedicationDetails>   
@@ -152,6 +191,7 @@ public class PublicData
 																			// 26/04/2016 ECU added - to hold monitor data
 	public static boolean           monitorDataAction			= false;	// 28/04/2016 ECU added - whether incoming monitored data
 																			//                is to actioned or not
+	public static MonitorHandler	monitorHandler;							// 16/12/2019 ECU declare the handler for monitoring
 	public static String			monitorIPAddress			= null;		// 26/04/2016 ECU added - this is the address where monitoring
 																			//                data is sent
 	public static String			monitoredIPAddress			= null;		// 28/04/2016 ECU added - this is the address where monitoring
@@ -160,7 +200,9 @@ public class PublicData
 	public static boolean		  	monitorServiceRunning 		= false;	// 18/11/2014 ECU indicates if monitor service running
 	public static ImageView	      	mpImageView;							// 02/06/2013 ECU used in the MusicPlayer class
 	public static boolean		  	musicFileReadyToPlay 		= false; 	// 19/08/2013 ECU added
-	public static MusicPlayerData 	musicPlayerData				= 	null;	// 21/04/2015 ECU added initialisation 
+	public static MusicPlayerData 	musicPlayerData				= new MusicPlayerData ();	
+																			// 21/04/2015 ECU added initialisation 
+																			// 31/08/2017 ECU changed initialisation to new ...
 	public static boolean         	musicPlayerRemote 			= false;	// 03/08/2013 ECU added - whether the remote player is running
 	public static String		  	musicServer 				= null;		// 03/08/2013 ECU added - the IP address of the device supplying the music
 																			// 21/09/2013 ECU preset to null
@@ -173,6 +215,8 @@ public class PublicData
 																			//                conjunction with NTP_REFRESH_RATE
 																			// 20/12/2015 ECU changed from 0 to 2 because
 																			//                occasionally getting NPE on start up
+	public static boolean			ntpRefreshedStatus			= false;	// 11/11/2019 ECU added to remember how the request to
+																			//                the NTP server worked
 	public static SocketMessageHeader 
 									outgoingSocketMessageHeader;			// 07/08/2013 ECU added
 	public static PatientDetails  	patientDetails 				= null;		// 05/01/2014 ECU added - patient details
@@ -195,6 +239,8 @@ public class PublicData
 	public static int			 	remoteTrackCounter 			= 0;		// 10/08/2013 ECU added - counter of remote tracks played
 	public static String          	requestAddress 				= null;		// 22/03/2015 ECU added - to send details
 	public static int			  	requestSecond;							// 22/03/2015 ECU added - send when requestAddress will be sent
+	public static float				scaleSecondLine				= 0f;		// 30/07/2019 ECU added - used in Utilities.threeLine...
+	public static float				scaleThirdLine				= 0f;		// 30/07/2019 ECU added - used in Utilities.threeLine...
 	public static int			 	screenHeight;							// 07/07/2013 ECU added
 	public static int			  	screenWidth;							// 07/07/2013 ECU added
 	public static List<SearchStringAndReplace>
@@ -220,14 +266,17 @@ public class PublicData
 																			//                the app was started by an alarm
 																			//                true ... started by alarm
 																			//                false .. started by user or OS
+	public static String			startedByAlarmSource		= null;		// 13/05/2020 ECU the source of the alarm that started the app
 	public static boolean           startedManually     		= false;	// 06/10/2015 ECU added to indicate how
 																			//                the app was started
 																			//                true ... by the user
 																			//                false .. by Android OS following a destroy
 	public static boolean         	startStreaming 				= false;    // 06/08/2013 ECU added - tells the timer service to start
 																			//                audio streaming
-	public static String			startUpMessage				= "";		// 17/10/2015 ECU added - contains details of when
+	public static String			startUpMessage				= StaticData.BLANK_STRING;		
+																			// 17/10/2015 ECU added - contains details of when
 																			//                and how activity was started
+	public static long				startUpTime					= 0;		// 08/08/2018 ECU start up time in milliseconds
 	public static DeviceStatus	  	status 						= new DeviceStatus ();	
 																			// 02/05/2015 ECU added - contains the active status of
 																			//                this device
@@ -251,8 +300,8 @@ public class PublicData
 	public static boolean			userInterfaceRunning		= false;	// 28/11/2015 ECU added - to indicate that the user
 																			//                interface (in GridActivity) is up
 																			//                and running
-	public static List<Visit>	  	visits 						= new ArrayList<Visit>();
-																			// 11/01/2014 ECU added - list of visits
+	public static String			visitLogFile;							// 15/07/2017 ECU added - to hold a record of carer
+																			//                visits
 	public static List<VoiceCommandPhrases>   
 									voiceCommandPhrases 		= new ArrayList<VoiceCommandPhrases>();
 																			// 21/05/2016 ECU added - user defined voice commands
@@ -260,6 +309,9 @@ public class PublicData
 	public static String		  	webFolder;								// 24/12/2014 ECU added - folder where
 	            															//                html pages stored
 	public static String		  	wemoServer 					= null;		// 18/03/2015 ECU added
+	public static long				westminsterChimeLast		= StaticData.NOT_SET;	
+																			// 25/07/2017 ECU added
+																			// 27/07/2017 ECU changed from NO_RESULT
 	public static boolean 		  	writeDataOnDestroy 			= true;  	// 06/04/2014 ECU write out any data
 															   				//                when activity is
     																		//                destroyed

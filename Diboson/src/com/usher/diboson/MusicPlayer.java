@@ -1,5 +1,28 @@
 package com.usher.diboson;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
+import android.media.MediaPlayer;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
+import android.widget.TableLayout;
+import android.widget.TextView;
+
+import com.usher.diboson.utilities.MediaPlayerUtilities;
+
 import java.io.File;
 import java.io.FileFilter;
 import java.util.ArrayList;
@@ -7,32 +30,8 @@ import java.util.Collections;
 import java.util.Locale;
 import java.util.Random;
 
-import android.media.MediaMetadataRetriever;
-import android.media.MediaPlayer;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
-import android.annotation.SuppressLint;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.graphics.drawable.Drawable;
-import android.view.GestureDetector;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.GestureDetector.OnGestureListener;
-import android.widget.ImageButton;
-import android.widget.ImageView;
-import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.TableLayout;
-import android.widget.TextView;
-import android.widget.Toast;
-
 // =================================================================================
-public class MusicPlayer extends DibosonActivity implements OnGestureListener
+public class MusicPlayer extends DibosonActivity
 {
 	/* ============================================================================= */
 	// 31/05/2013 ECU Created
@@ -52,16 +51,59 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	// 14/02/2016 ECU put in the check as to whether the activity has been created
 	//                anew or is being recreated after having been destroyed by
 	//                the Android OS. Do not understand why I didn't do this when
-	//                the other activities were changed in November 2015,
+	//                the other activities were changed in November 2015.
+	// 21/03/2017 ECU have a tidy up
+	//            ECU have a long look at the timeout checks on the remote device
+	// 23/03/2017 ECU put in some debug handling - ability to log useful information
+	//                - IMPORTANT - the device needs to be in debug mode for this
+	//                facility to be available.
+	// 05/04/2017 ECU took out the implementation of OnGestureListener and associated
+	//                methods. Also removed the 'gestureScanner' variable
+	// 03/01/2018 ECU some tidying up following a problem that was highlighted when
+	//                'repeat mode' switched on - namely that the handler is still
+	//                running after some of the work in Exit () has started
+	//            ECU started a major re-write of the app to use the 'onCompletion'
+	//                listener to detect when a track finishes playing rather than
+	//                just looping until the media player stops playing
+	// 04/01/2018 ECU a basic rewrite to avoid using threads - instead use handlers
+	//                and associated message handling
+	// 14/01/2018 ECU everything seems to be working so start removing the code
+	//                that were added to help with debugging
+	// 22/03/2018 ECU changed DialogueUtilities.context to DialogueUtilitiesNonStatic.context
+	// 13/07/2018 ECU fixed a problem whereby if the 'timed music player' is running
+	//                when this activity is re-entered then 'duration' keeps
+	//                decrementing as a negative number.
+	// 03/09/2020 ECU TidyUp - reset 'musicRefreshHandler' - it is used by PlayOrPause
+	//                and, being public and static it was causing problems when called
+	//                by the text to speech service
+	// 26/10/2020 ECU TidyUp - make sure that any album art and track information is
+	//                removed
 	// =============================================================================
 	// Testing
 	// =======
 	/* ============================================================================= */
-	//private static final String TAG = "MusicPlayer";
+	private static final String TAG = "MusicPlayer";
 	/* ============================================================================= */	
 	private static final int 	MENU_REMOTE					= 1;
 	private static final int	MENU_CHANGE_ROOT			= 2;			// 06/04/2015 ECU added
 	private static final int	MENU_MARQUEE				= 3;			// 12/04/2015 ECU added
+	private static final int    MENU_LOG					= 4;			// 23/04/2017 ECU added
+	// -----------------------------------------------------------------------------
+	// 08/01/2018 ECU declare the states that are used for the remote music player
+	// 13/01/2018 ECU added SEND_NEXT_...
+	// -----------------------------------------------------------------------------
+	private static final int    REMOTE_STATUS_CANCEL				= 0;
+	private static final int	REMOTE_STATUS_DEVICE_CAN_PLAY		= 1;
+	private static final int	REMOTE_STATUS_DEVICE_CANNOT_PLAY	= 2;
+	private static final int	REMOTE_STATUS_DEVICE_NONE			= 3;
+	private static final int	REMOTE_STATUS_FILE_ACK				= 4;
+	private static final int	REMOTE_STATUS_FILE_NAK				= 5;
+	private static final int	REMOTE_STATUS_PLAY					= 6;
+	private static final int	REMOTE_STATUS_PLAY_AT_TRACK_END		= 7;
+	private static final int	REMOTE_STATUS_SEND					= 8;
+	private static final int	REMOTE_STATUS_SEND_FILE				= 9;
+	private static final int	REMOTE_STATUS_SEND_NEXT_FILE		= 10;
+	private static final int	REMOTE_STATUS_TRACK_ENDED			= 11;
 	// -----------------------------------------------------------------------------
 	public static  final int 	SEARCH_PARAMETER_ALBUM		= 0;			// 10/04/2015 ECU added
 	public static  final int 	SEARCH_PARAMETER_ARTIST		= 1;			// 10/04/2015 ECU added
@@ -71,11 +113,14 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	// -----------------------------------------------------------------------------
 	private static final int	MAX_SCALED_VOLUME			= 100;			// 04/04/2015 ECU added - volume is normally 0.0 to 1.0
 																			//                this is scaled by this value
+	private static final int    MONITOR_TIMEOUT				= (30 * StaticData.ONE_SECOND);	
+																			// 21/03/2017 ECU added - timeout when monitoring
 	private static final String	MUSIC_EXTENSION				= "mp3";		// 07/04/2015 ECU added - files that can be played
 	private static final int    PLAY_TIMEOUT				=  StaticData.MILLISECONDS_PER_MINUTE;
 																			// 03/05/2015 ECU added - timeout period to check
 																			//                if remote device has timed out
 																			// 01/09/2015 ECU changed to use StaticData
+	private static final int	RANDOM_TRIES				= 10;			// 05/01/2018 ECU number of random number tries
 	private static final int	SEEKBAR_SCALE				= 1000;			// 22/04/2015 ECU added - for seekbar progress
 	private static final int	SHORT_DELAY					= 300;			// 01/04/2015 ECU added - short delay in milliseconds
 	private static final int	SMALL_SCREEN_DISPLAY		= 750;			// 06/04/2015 ECU added - pixels
@@ -109,20 +154,29 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	static			DisplayHandler 		displayHandler;
 	static 			boolean	       		displayMetadata 	= true;			// 24/06/2013 ECU added false
 																			// 08/05/2015 ECU changed to true
-	private     	GestureDetector 	gestureScanner;
-	static			MusicRefreshHandler musicRefreshHandler ;
+	static			long				duration			= StaticData.NOT_SET;	
+																			// 02/01/2018 ECU added
+																			// 13/07/2018 ECU added the NOT_SET
+	static			boolean				loggingMode			= false;		// 23/03/2017 ECU added
+	public static	MusicRefreshHandler musicRefreshHandler ;
 	static 			TextView			musicTrackTextView;					// 28/03/2015 ECU added
+	static		    boolean				paused = true;						// 05/01/2018 ECU added - whether activity is paused
+	                                                                        //                        MUST be static !!
+																			// 09/01/2018 ECU changed to be true initially
+	static			boolean				playAfterTrackEnds	= false;		// 13/01/2018 ECU added
 	static 			Thread 				populateThread		= null;			// 05/04/2015 ECU added
 	static 			ProgressDialog		progressBar;						// 20/01/2014 ECU added
 	static 			SeekBar				progressSeekBar;					// 03/04/2015 ECU added
-	               	Random          	random       		= new Random ();
+	              	Random          	random       		= new Random ();
 	public static	RecoveryHandler		recoveryHandler;					// 21/04/2015 ECU added
 	static			boolean				recoveryMode		= false;		// 21/04/2015 ECU added
 	static 			String          	remoteFileName		= null;			// 04/08/2013 ECU added - name of the next track to be played
 	static 			boolean         	remoteFirst    		= false;		// 03/08/2013 ECU added - indicate remote mode just switched on
 	static			boolean         	remoteMode     		= false;		// 03/08/2013 ECU added - to select remote player
+	static			int					remoteStatus		= StaticData.NOT_SET;
+																			// 08/01/2018 ECU added = status of remote music player
+	static			boolean				remoteTrackPlaying;					// 09/01/2018 ECU added
 	static         	int                 remoteTrackPlayingNow;				// 02/02/2015 ECU added
-	static	       	int                 remoteTrackPlayingNext;				// 02/02/2015 ECU added
 	static			String				returnedFile;						// 07/04/2015 ECU added
 	static			File				returnedFileAsFile;					// 09/08/2016 ECU added
 	static			String [] 			returnedFiles;						// 07/04/2015 ECU added
@@ -132,7 +186,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	static         	int             	trackPosition;                  	// used when pausing/resuming tracks
 	public static   boolean        	 	trackPaused    		= false;  
 	private static 	Utilities       	utilities;
-	private			int					waitingCounterRemote;				// 02/05/2015 ECU added
+	static          float               volumeCurrent;						// 02/01/2018 ECU added
+	static			float				volumeDecreaseIncrement;			// 02/01/2018 ECU added
+	static			long				volumeDecreaseStart;				// 02/01/2018 ECU added
+	static          boolean             writeToDisk;						// 03/01/2018 ECU added
 	/* ==================================================================== */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -160,6 +217,50 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// 15/03/2015 ECU remember the context for later use
 			// ---------------------------------------------------------------------
 			context = this;
+			// ---------------------------------------------------------------------
+			// 13/07/2018 ECU check if the 'timed music player' is running
+			// ---------------------------------------------------------------------
+			if (duration > 0)
+			{
+				// -----------------------------------------------------------------
+				// 13/07/2018 ECU indicate that the timer option will be cancelled
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.music_player_timer_cancelled),true);
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+			// 28/10/2020 ECU Note - clear any variables associated with the
+			//                       music player being played for a fixed length of time
+			// ---------------------------------------------------------------------
+			duration 			= StaticData.NOT_SET;
+			volumeDecreaseStart = StaticData.NOT_SET;
+			// ---------------------------------------------------------------------
+			// 02/01/2018 ECU preset some static variables
+			// ---------------------------------------------------------------------
+			writeToDisk			= true;
+			// ---------------------------------------------------------------------
+			// 02/01/2018 ECU check if any parameters have been fed through
+			// ---------------------------------------------------------------------
+			Bundle extras = getIntent().getExtras();
+			if (extras != null)
+			{
+				// -----------------------------------------------------------------
+				// 02/01/2018 ECU get the duration for the music to be played and
+				//                the point at which the volume should start being
+				//                decreased. Both are in seconds
+				// -----------------------------------------------------------------
+				duration 			= extras.getLong (StaticData.PARAMETER_MUSIC_DURATION,StaticData.NOT_SET);
+				volumeDecreaseStart = extras.getLong (StaticData.PARAMETER_MUSIC_VOLUME,StaticData.NOT_SET);
+				// -----------------------------------------------------------------
+				// 02/01/2018 ECU if a duration of '0' has been sent then indicate
+				//                'not set'
+				// -----------------------------------------------------------------
+				if (duration == 0)
+					duration = StaticData.NOT_SET;
+				if (volumeDecreaseStart == 0)
+					volumeDecreaseStart = StaticData.NOT_SET;
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 			// 06/04/2015 ECU choose the layout dependent on the screen size
 			// ---------------------------------------------------------------------
@@ -243,7 +344,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------  
 			// Get the Drawable custom_progress_bar 
 			// ---------------------------------------------------------------------
-			Drawable customDrawable = getResources().getDrawable (R.drawable.custom_progress_bar);
+			Drawable customDrawable = getResources ().getDrawable (R.drawable.custom_progress_bar);
 			// ---------------------------------------------------------------------
 			// set the drawable as progress drawable
 			// ---------------------------------------------------------------------
@@ -254,11 +355,11 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			progressSeekBar = (SeekBar) findViewById (R.id.album_track_progress_data);
 			// ---------------------------------------------------------------------
-			progressSeekBar.setProgressDrawable (getResources().getDrawable (R.drawable.custom_seek_bar));
+			progressSeekBar.setProgressDrawable (getResources ().getDrawable (R.drawable.custom_seek_bar));
 			// ---------------------------------------------------------------------
 			// 08/05/2015 ECU set up the event listener for the seekbar
 			// ---------------------------------------------------------------------
-			progressSeekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() 
+			progressSeekBar.setOnSeekBarChangeListener (new OnSeekBarChangeListener() 
 			{   
 				// -----------------------------------------------------------------
 				@Override       
@@ -293,10 +394,6 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// 08/05/2015 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) 
 			// 08/05/2015	progressSeekBar.getThumb ().mutate ().setAlpha (0);
 			// ---------------------------------------------------------------------
-			// 02/06/2013 ECU set up the gesture handling
-			// ---------------------------------------------------------------------
-			gestureScanner = new GestureDetector (this,this);
-			// ---------------------------------------------------------------------
 			utilities = new Utilities ();
 			// ---------------------------------------------------------------------
 			// 30/03/2015 ECU check whether the screen is big enough to display all
@@ -316,12 +413,23 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			if (remoteMode)
 			{
+				// -----------------------------------------------------------------
+				// 215/03/2019 ECU tell remote player that the operation has been 
+				//                      cancelled
+				// -----------------------------------------------------------------
+				Utilities.sendDatagramType (context,PublicData.remoteMusicPlayer,StaticData.SOCKET_MESSAGE_CANCEL_REMOTE_PLAY);
+				// -----------------------------------------------------------------
+				// 25/03/2019 ECU tell the user what is happening
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.remote_player_cancelled),true);
+				// -----------------------------------------------------------------
 				CancelRemote (0);
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			// 21/04/2015 ECU initialise the data used by the music player - all held
-			//                in the 'MainActivity.musicPlayerData' object
+			//                in the 'PublicData.musicPlayerData' object
 			// ---------------------------------------------------------------------
 			if (initialiseData (this))
 			{
@@ -440,18 +548,37 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			PublicData.stopmpPlayer = false;	           // indicate that have not stopped
 			// ---------------------------------------------------------------------
-			// 31/05/2013 ECU initiate a delay which will maintaining the playing
-			//                of the tracks
-			// 21/04/2015 ECU only start the handler if not in a 'recovery state'
+			// 02/01/2018 ECU check if the 'duration' handler is to be started
 			// ---------------------------------------------------------------------
-			if (!recoveryMode)
-				musicRefreshHandler.sleep (SHORT_DELAY);
+			if (duration != StaticData.NOT_SET)
+			{
+				// -----------------------------------------------------------------
+				// 02/01/2018 ECU tell the processor to start
+				// 15/01/2018 ECU remove any outstanding messages - just in case
+				// -----------------------------------------------------------------
+				musicRefreshHandler.removeMessages   (StaticData.MESSAGE_DURATION);
+				musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_DURATION);
+				// -----------------------------------------------------------------
+				// 02/01/2018 ECU check if the volume is to be decreased
+				// -----------------------------------------------------------------
+				if (volumeDecreaseStart != StaticData.NOT_SET)
+				{
+					// -------------------------------------------------------------
+					// 02/01/2018 ECU remember the start volume
+					// -------------------------------------------------------------
+					volumeCurrent = (float) PublicData.musicPlayerData.volume;
+					// -------------------------------------------------------------
+					// 02/01/2018 ECU now calculate the necessary decrement
+					// -------------------------------------------------------------
+					volumeDecreaseIncrement = volumeCurrent / (float) volumeDecreaseStart;
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 			// 23/11/2013 ECU check if any parameters have been passed across
-			// ---------------------------------------------------------------------  
-			Bundle extras = getIntent().getExtras();
-		
-			if (extras !=null) 
+			// --------------------------------------------------------------------- 	
+			if (extras != null) 
 			{
 				// -----------------------------------------------------------------
 				// 23/11/2013 ECU at the moment only looking for a 'finish' command
@@ -482,12 +609,15 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		}
 	}
 	// =============================================================================
+	@Override
 	public void onBackPressed() 
 	{
 		// -------------------------------------------------------------------------
 		// 06/05/2015 ECU created to handle the pressing of the 'back' key
 		// -------------------------------------------------------------------------
-		super.onBackPressed();
+
+		// -------------------------------------------------------------------------
+		super.onBackPressed ();
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -500,8 +630,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		getMenuInflater().inflate(R.menu.music_player, menu);
 		
 		buildMenuOptions (menu);
-		
+		// -------------------------------------------------------------------------
 		return true;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -515,42 +646,27 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 03/06/2013 ECU call the main inDestroy to do all other work
 		// -------------------------------------------------------------------------
 		super.onDestroy ();
-	}
-	/* ============================================================================= */
-	@Override
-	public boolean onDown (MotionEvent theMotionEvent) 
-	{
-		return false;
-	}
-	/* ============================================================================= */
-	@Override
-	public boolean onFling (MotionEvent arg0, MotionEvent arg1, float arg2,float arg3) 
-	{
 		// -------------------------------------------------------------------------
-		// 02/06/2013 ECU cause the next track to be played
-		// 01/04/2015 ECU the code to select next track taken out as it is done
-		//                by a button
-		// -------------------------------------------------------------------------
-		return false;
 	}
 	// ============================================================================= 
 	@Override
 	public boolean onKeyDown(int keyCode, KeyEvent event) 
 	{
+		// -------------------------------------------------------------------------
 	    if( keyCode == KeyEvent.KEYCODE_BACK) 
 	    {
+	    	// ---------------------------------------------------------------------
 	       	super.onKeyDown(keyCode, event);
 	    	return true;
-	    }else
-	    {
-	        return super.onKeyDown(keyCode, event);
+	    	// ---------------------------------------------------------------------
 	    }
-	}
-	// ============================================================================= 
-	@Override
-	public void onLongPress (MotionEvent arg0) 
-	{
-	
+	    else
+	    {
+	    	// ---------------------------------------------------------------------
+	        return super.onKeyDown(keyCode, event);
+	        // ---------------------------------------------------------------------
+	    }
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public boolean onOptionsItemSelected (MenuItem item)
@@ -566,6 +682,14 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 				// 24/01/2015 ECU changed to use the method
 				// -----------------------------------------------------------------
 				changeRootFolderForMusic (this,false);
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
+			case MENU_LOG:
+				// -----------------------------------------------------------------
+				// 23/03/2017 ECU added to toggle the logging mode
+				// -----------------------------------------------------------------
+				loggingMode = !loggingMode;
 				// -----------------------------------------------------------------
 				break;
 			// ---------------------------------------------------------------------
@@ -603,7 +727,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 				{
 					DialogueUtilities.singleChoice (this, 
 													getString (R.string.title_remote_player),
-													(devices = Utilities.deviceListAsArray(false)),0, 
+													(devices = Utilities.deviceListAsArray (false)),0, 
 													Utilities.createAMethod (MusicPlayer.class,"ConfirmRemote",0),
 													Utilities.createAMethod (MusicPlayer.class,"CancelRemote",0));
 				}
@@ -633,54 +757,44 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	protected void onPause() 
 	{
 		// -------------------------------------------------------------------------
+		// 05/01/2018 ECU indicate that the activity has been paused
+		// -------------------------------------------------------------------------
+		paused = true;
+		// -------------------------------------------------------------------------
 		// 05/04/2015 ECU pause the activity
 		// -------------------------------------------------------------------------
-		super.onPause(); 
+		super.onPause ();
+		// -------------------------------------------------------------------------
 	} 
 	// ============================================================================= 
 	@Override
 	public boolean onPrepareOptionsMenu(Menu menu) 
 	{
-		menu.clear();
-
+		// -------------------------------------------------------------------------
+		// 15/01/2018 ECU Note - clear the existing menu
+		// -------------------------------------------------------------------------
+		menu.clear ();
+		// -------------------------------------------------------------------------
+		// 15/01/2018 ECU Note - build a new menu from the supplied information
+		// -------------------------------------------------------------------------
 		buildMenuOptions (menu);
-
-		return super.onPrepareOptionsMenu(menu);
-
+		// -------------------------------------------------------------------------
+		return super.onPrepareOptionsMenu (menu);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override 
 	protected void onResume() 
 	{ 	
 		// -------------------------------------------------------------------------
+		// 05/01/2018 ECU indicate that the activity is no longer paused
+		// -------------------------------------------------------------------------
+		paused = false;
+		// -------------------------------------------------------------------------
 		// 05/04/2015 ECU resume the activity
 		// -------------------------------------------------------------------------
 		super.onResume(); 
 	} 
-	// =============================================================================
-	@Override
-	public boolean onScroll (MotionEvent theMotionEvent0, MotionEvent theMotionEvent1, 
-							 float arg2,float arg3) 
-	{
-		return false;
-	}
-	// ============================================================================= 
-	@Override
-	public void onShowPress (MotionEvent theMotionEvent) 
-	{
-	}
-	// ============================================================================= 
-	@Override
-	public boolean onSingleTapUp (MotionEvent theMotionEvent) 
-	{
-		return false;
-	}
-	// ============================================================================= 
-	@Override
-	public boolean onTouchEvent (MotionEvent theMotionEvent) 
-	{
-	      return gestureScanner.onTouchEvent (theMotionEvent);
-	}
 	// =============================================================================
 	private View.OnClickListener buttonListener = new View.OnClickListener() 
 	{
@@ -706,16 +820,18 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					{
 						// ---------------------------------------------------------
 						// 31/03/2015 ECU indicate that there will be a short delay
+						// 08/01/2018 ECU changed to use 'context'
 						// ---------------------------------------------------------
-						Utilities.SpeakAPhrase (MusicPlayer.this,getString (R.string.build_delay));
+						Utilities.SpeakAPhrase (context,getString (R.string.build_delay));
 						// ---------------------------------------------------------
 						buildArtistList (true);
 					}
 					// -------------------------------------------------------------
 					// 31/03/2015 ECU now select the required artists
 					// 02/04/2015 ECU changed from singleChoice
+					// 08/01/2018 ECU changed to use 'context'
 					// -------------------------------------------------------------
-					DialogueUtilities.listChoice (MusicPlayer.this, 
+					DialogueUtilities.listChoice (context, 
 												  getString (R.string.select_artist),
 												  TrackArtist.returnArtists (PublicData.musicPlayerData.artists), 
 												  Utilities.createAMethod (MusicPlayer.class,"SelectedArtist",0),
@@ -759,8 +875,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					// -------------------------------------------------------------
 					// 28/03/2015 ECU 'next track' button
 					// -------------------------------------------------------------
-					PublicData.mediaPlayer.stop ();
-					// ------------------------------------------------------------- 
+					// 05/01/2018 ECU make it look as if the current track has completed
+					// -------------------------------------------------------------
+					TrackCompletionMethod (); 
+					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
 				case R.id.music_player_button_play:
@@ -783,20 +901,6 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					}
 					else
 					{
-						// ---------------------------------------------------------
-						// 01/04/2015 ECU ensure that the tracks will keep playing
-						//                and position to start of the track
-						// ---------------------------------------------------------
-						if (!PublicData.musicPlayerData.tracksPlaying)
-						{
-							PublicData.musicPlayerData.tracksPlaying = true;
-							PublicData.musicPlayerData.trackPosition = 0;
-							// -----------------------------------------------------
-							// 01/04/2015 ECU and start up the refresh handler
-							// -----------------------------------------------------
-							musicRefreshHandler.sleep (SHORT_DELAY);
-							// -----------------------------------------------------
-						}
 						// ---------------------------------------------------------
 						// 02/06/2013 ECU position the track to where I was when paused
 						// 22/05/2016 ECU changed to use new method
@@ -866,11 +970,17 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					//                it will be incremented before use
 					// 05/04/2015 ECU switch off the display of information because
 					//                the data is being updated and could cause an error
+					// 23/06/2017 ECU changed to use NO_RESULT
+					// 06/01/2018 ECU 
 					// -------------------------------------------------------------
 					displayMetadata							  = false;		
-					PublicData.musicPlayerData.trackNumber    = -1;               // used to indicate which entry is playing
-					PublicData.musicPlayerData.shuffleMode    = false;            // switch shuffle mode off
-					PublicData.mediaPlayer.stop();
+					PublicData.musicPlayerData.trackNumber    = 0;					// 06/01/2018 ECU changed from -1 to 0              
+																					// used to indicate which entry is playing
+					PublicData.musicPlayerData.shuffleMode    = false;            	// switch shuffle mode off
+					// -------------------------------------------------------------
+					// 06/01/2018 ECU now start the player
+					// -------------------------------------------------------------
+					musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_PLAY_TRACK);
 					// -------------------------------------------------------------
 					// 29/03/2015 ECU make sure that the status icons are updated
 					// -------------------------------------------------------------
@@ -894,7 +1004,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					// 29/03/2015 ECU tell the user what is happening
 					// 30/03/2015 ECU add the centre-ing flag
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak(getString(PublicData.musicPlayerData.repeatMode ? R.string.repeat_mode_on 
+					Utilities.popToastAndSpeak (getString(PublicData.musicPlayerData.repeatMode ? R.string.repeat_mode_on 
 							                                                                   : R.string.repeat_mode_off),true);
 					// -------------------------------------------------------------
 					break;
@@ -916,7 +1026,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					// 29/03/2015 ECU tell the user what is happening
 					// 30/03/2015 ECU add the centre-ing flag
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak (getString(PublicData.musicPlayerData.shuffleMode ? R.string.shuffle_mode_on 
+					Utilities.popToastAndSpeak (getString (PublicData.musicPlayerData.shuffleMode ? R.string.shuffle_mode_on 
 																								 : R.string.shuffle_mode_off),true);
 					// -------------------------------------------------------------
 					break;
@@ -928,8 +1038,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					// 01/04/2015 ECU as a test just display the list of tracks
 					// 02/04/2015 ECU change from singleChoice
 					// 08/04/2015 ECU added the search button
+					// 08/01/2018 ECU changed to use 'context'
 					// -------------------------------------------------------------
-					DialogueUtilities.listChoice (MusicPlayer.this, "Select the Required Track",
+					DialogueUtilities.listChoice (context, "Select the Required Track",
 							TrackDetails.returnStringArray (PublicData.musicPlayerData.tracks), 
 							Utilities.createAMethod(MusicPlayer.class,"SelectedTrack",0),
 							getString (R.string.select_track_titles),
@@ -944,8 +1055,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 					// 04/04/2015 ECU changed from 100 to MAX_SCALE_VOLUME
 					// 26/07/2015 ECU use the resource to set subtitle
 					// 07/05/2016 ECU change click.. to use resource
+					// 08/01/2018 ECU changed to use 'context'
 					// -------------------------------------------------------------
-					DialogueUtilities.sliderChoice (MusicPlayer.this,
+					DialogueUtilities.sliderChoice (context,
 	  												getString (R.string.select_a_volume),
 	  												getString (R.string.select_a_volume_summary),
 	  												PublicData.mediaPlayer,
@@ -959,7 +1071,52 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			}
 			// ---------------------------------------------------------------------
 		}
-	};	
+	};
+	// =============================================================================
+	public static void areYouThereRequest (String theIPAddress,int theTimeOut)
+	{
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU created to send an 'are you there' message to the
+		//                specified IP address with the specified timeout
+		// -------------------------------------------------------------------------
+		Message localMessage = PublicData.messageHandler.obtainMessage (StaticData.MESSAGE_CHECK_DEVICE, 
+									MessageHandler.ARE_YOU_THERE_MUSIC,theTimeOut,theIPAddress);
+		PublicData.messageHandler.sendMessage (localMessage);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void areYouThereResponse (boolean theResponse)
+	{
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU created to handle the response to an 'are you there'
+		//                request
+		// -------------------------------------------------------------------------
+		// 23/03/2017 ECU optionally log some data before processing
+		// -------------------------------------------------------------------------
+		logData ("areYouThereResponse : " + theResponse);
+		// -------------------------------------------------------------------------
+		if (theResponse)
+		{
+			// ---------------------------------------------------------------------
+			// 21/03/2017 ECU device still communicating so set another timeout
+			// ---------------------------------------------------------------------
+			musicRefreshHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_MONITOR,MONITOR_TIMEOUT);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 21/03/2017 ECU device has stopped communicating
+			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.lost_communication),true);
+			// ---------------------------------------------------------------------
+			// 21/03/2017 ECU cancel playing music to remote device
+			// ---------------------------------------------------------------------
+			CancelRemote (0);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 	static void buildArtistList (boolean theSortFlag)
 	{
@@ -967,57 +1124,72 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		int						artistIndex;
 		int						trackIndex;
 		// -------------------------------------------------------------------------
-		// 04/04/2015 ECU initialise the array list
+		// 14/11/2019 ECU put in a try/catch .... just in case
 		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.artists = new ArrayList<TrackArtist> ();
-		// -------------------------------------------------------------------------	
-		// 04/04/2015 ECU changed to use 'tracks'
-		// -------------------------------------------------------------------------
-		for (trackIndex = 0; trackIndex < PublicData.musicPlayerData.tracks.size(); trackIndex++)
+		try
 		{
-			// --------------------------------------------------------------------
-			// 05/04/2015 ECU get the artists name from the record
-			// --------------------------------------------------------------------
-			String artistName = PublicData.musicPlayerData.tracks.get(trackIndex).artist;
-			// --------------------------------------------------------------------
-			// 01/04/2015 ECU if a 'null' artist name is returned then just set 
-			//                UNKNOWN_ARTIST
-			// 03/05/2015 ECU changed so as not to use local string definition
-			//                of UNKNOWN
-			// 01/09/2015 ECU changed to use StaticData
-			// --------------------------------------------------------------------
-			if (artistName == null)
-				artistName = StaticData.UNKNOWN;
-			// --------------------------------------------------------------------
-			// 31/03/2015 ECU check if the artist has already been found
-			// --------------------------------------------------------------------
-			artistFound = false;
-			for (artistIndex = 0; artistIndex < PublicData.musicPlayerData.artists.size (); artistIndex++)
+			// ---------------------------------------------------------------------
+			// 04/04/2015 ECU initialise the array list
+			// ---------------------------------------------------------------------
+			PublicData.musicPlayerData.artists = new ArrayList<TrackArtist> ();
+			// ---------------------------------------------------------------------
+			// 04/04/2015 ECU changed to use 'tracks'
+			// ---------------------------------------------------------------------
+			for (trackIndex = 0; trackIndex < PublicData.musicPlayerData.tracks.size(); trackIndex++)
 			{
-				if (PublicData.musicPlayerData.artists.get (artistIndex).name.equals(artistName))
+				// -----------------------------------------------------------------
+				// 05/04/2015 ECU get the artists name from the record
+				// -----------------------------------------------------------------
+				String artistName = PublicData.musicPlayerData.tracks.get (trackIndex).artist;
+				// -----------------------------------------------------------------
+				// 01/04/2015 ECU if a 'null' artist name is returned then just set
+				//                UNKNOWN_ARTIST
+				// 03/05/2015 ECU changed so as not to use local string definition
+				//                of UNKNOWN
+				// 01/09/2015 ECU changed to use StaticData
+				// -----------------------------------------------------------------
+				if (artistName == null)
+					artistName = StaticData.UNKNOWN;
+				// -----------------------------------------------------------------
+				// 31/03/2015 ECU check if the artist has already been found
+				// -----------------------------------------------------------------
+				artistFound = false;
+				for (artistIndex = 0; artistIndex < PublicData.musicPlayerData.artists.size (); artistIndex++)
 				{
-					artistFound = true;
-					PublicData.musicPlayerData.artists.get(artistIndex).addTrack (trackIndex);
-					break;
+					if (PublicData.musicPlayerData.artists.get (artistIndex).name.equals(artistName))
+					{
+						artistFound = true;
+						PublicData.musicPlayerData.artists.get(artistIndex).addTrack (trackIndex);
+						break;
+					}
 				}
+				// -----------------------------------------------------------------
+				// 31/03/2015 ECU check if artist found - if not then create entry
+				// -----------------------------------------------------------------
+				if (!artistFound)
+				{
+					PublicData.musicPlayerData.artists.add (new TrackArtist (artistName,trackIndex));
+				}
+				// -----------------------------------------------------------------
+				// 31/03/2015 ECU add the track to the artists list
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
-			// 31/03/2015 ECU check if artist found - if not then create entry
+			// 31/03/2015 ECU check whether the list is to be sorted
 			// ---------------------------------------------------------------------
-			if (!artistFound)
-			{
-				PublicData.musicPlayerData.artists.add (new TrackArtist (artistName,trackIndex));
-			}
-			// ---------------------------------------------------------------------
-			// 31/03/2015 ECU add the track to the artists list
-			// ---------------------------------------------------------------------
+			if (theSortFlag)
+				Collections.sort(PublicData.musicPlayerData.artists);
 			// ---------------------------------------------------------------------
 		}
-		// -------------------------------------------------------------------------
-		// 31/03/2015 ECU check whether the list is to be sorted
-		// -------------------------------------------------------------------------
-		if (theSortFlag)
-			Collections.sort(PublicData.musicPlayerData.artists);
+		catch (Exception theException)
+		{
+			// ---------------------------------------------------------------------
+			// 14/11/2019 ECU log the exception for future investigation
+			// ---------------------------------------------------------------------
+			Utilities.LogToProjectFile (TAG,"buildArtistList : " + theException);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
@@ -1029,16 +1201,26 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 06/04/2015 ECU added the 'change root' option
 		// 13/04/2015 ECU changed following move of 'marquee' to storedData
 		// 05/05/2015 ECU changed to use booleanAs... method
+		// 22/03/2017 ECU add some more resources for literals
 		// -------------------------------------------------------------------------
-		theMenu.add (0,MENU_REMOTE,		0,(remoteMode ? "Turn Remote Mode Off" :  "Send Music to a Remote Device"));
-		theMenu.add (0,MENU_CHANGE_ROOT,0,"Change the root music folder");
-		theMenu.add (0,MENU_MARQUEE,	0,(getString (R.string.scrolling_track) + Utilities.booleanAsString(!PublicData.storedData.marquee)));
+		theMenu.add (0,MENU_REMOTE,		0,(remoteMode ? getString (R.string.music_remote_off) 
+				                                      : getString (R.string.music_remote_on)));
+		theMenu.add (0,MENU_CHANGE_ROOT,0, getString (R.string.music_change_root));
+		theMenu.add (0,MENU_MARQUEE,	0,(getString (R.string.scrolling_track) + Utilities.booleanAsString (!PublicData.storedData.marquee)));
 		// -------------------------------------------------------------------------
 		// 20/01/2014 ECU handle progress bar
 		// 28/03/2015 ECU remove the progress bar which now has a button
 		//            ECU take out exit as has a button
 		// 29/03/2015 ECU rebuild taken out as now a button
 		// -------------------------------------------------------------------------
+		// 23/03/2017 ECU add the 'logging' option if in debug mode
+		// -------------------------------------------------------------------------
+		if (PublicData.storedData.debugMode)
+		{
+			theMenu.add (0,MENU_LOG,0,(loggingMode ? getString (R.string.music_logging_off) 
+                    							   : getString (R.string.music_logging_on)));
+		}
+		// --------------------------------------------------------------------------
 	}
 	 // =============================================================================
 	static void buildTrackInformation (Context theContext)
@@ -1057,19 +1239,26 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		String [] localTracks
 			= utilities.BuildPlayList (theContext,PublicData.musicPlayerData.rootFolder,MUSIC_EXTENSION);
 		// -------------------------------------------------------------------------
-		// 04/04/2015 ECU now build the track details
+		// 28/10/2020 ECU check if any music files were returned
 		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.tracks = new ArrayList <TrackDetails> ();
+		if (localTracks.length > 0)
+		{
+			// ---------------------------------------------------------------------
+			// 04/04/2015 ECU now build the track details
+			// ---------------------------------------------------------------------
+			PublicData.musicPlayerData.tracks = new ArrayList <TrackDetails> ();
+			// ---------------------------------------------------------------------
+			// 04/04/2015 ECU now build the track information
+			// ---------------------------------------------------------------------
+			for (int theTrack = 0; theTrack < localTracks.length; theTrack++)
+				PublicData.musicPlayerData.tracks.add (new TrackDetails (localTracks [theTrack]));
+			// ---------------------------------------------------------------------
+			// 04/04/2015 ECU populate the details of the tracks and artists in the background
+			// ---------------------------------------------------------------------
+			populateDetails (true);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
-		// 04/04/2015 ECU now build the track information
-		// -------------------------------------------------------------------------
-		for (int theTrack = 0; theTrack < localTracks.length; theTrack++)
-			PublicData.musicPlayerData.tracks.add (new TrackDetails (localTracks [theTrack]));
-		// -------------------------------------------------------------------------
-		// 04/04/2015 ECU populate the details of the tracks and artists in the background
-		// -------------------------------------------------------------------------
-		populateDetails (true);
-		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	boolean changeIcons ()
@@ -1161,7 +1350,24 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		if (recoveryMode)
 			recoveryHandler = new RecoveryHandler ();
 		// -------------------------------------------------------------------------
-		returnedFiles = Utilities.returnSubDirectories (StaticData.ROOT_DIRECTORY,true,MUSIC_EXTENSION);
+		// 07/10/2017 ECU changed from ROOT_DIRECTORY
+		// -------------------------------------------------------------------------
+		returnedFiles = Utilities.returnSubDirectories (StaticData.MUSIC_ROOT_DIRECTORY,true,MUSIC_EXTENSION);
+		// -------------------------------------------------------------------------
+		// 13/09/2020 ECU if nothing is returned then this may be because the directories
+		//                are not 'visible', e.g. on the Amazon Fire 7, so try the main
+		//                project root storage
+		// -------------------------------------------------------------------------
+		if ((returnedFiles == null) || (returnedFiles.length == 0))
+		{
+			// ----------------------------------------------------------------------
+			// 13/09/2020 ECU now try a very basic 'direct' access
+			// 14/09/2020 ECU changed to start at the 'parent' of the project folder
+			// ----------------------------------------------------------------------
+			returnedFiles = Utilities.returnSubDirectories
+				((new File (PublicData.projectFolder)).getParent (),true,MUSIC_EXTENSION);
+			// ----------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 		DialogueUtilities.listChoice (theContext,
 									  theContext.getString (R.string.title_root_folder),
@@ -1172,57 +1378,73 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	static void closeLocalMusicPlayer ()
+	{
+		// -------------------------------------------------------------------------
+		// 11/01/2018 ECU created to close down the local music player before sending
+		//                files to a designated 'remote' music player
+		// -------------------------------------------------------------------------
+		PublicData.mediaPlayer.stop ();
+		// -------------------------------------------------------------------------
+		// 11/02/2017 ECU try and stop any displays being updated
+		// -------------------------------------------------------------------------
+		musicRefreshHandler.removeMessages (StaticData.MESSAGE_DISPLAY);
+		musicRefreshHandler.removeMessages (StaticData.MESSAGE_DISPLAY_TIMED);
+		// -------------------------------------------------------------------------
+		// 11/01/2018 ECU action a 'back key' to return to the calling activity -
+		//                in this case the GridActivity
+		// -------------------------------------------------------------------------
+		((Activity) context).onBackPressed ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static void closeMediaPlayer ()
 	{
 		// -------------------------------------------------------------------------
 		// 28/12/2016 ECU created to close down the media player, is in use
+		// 26/10/2020 ECU changed to use the new method
 		// -------------------------------------------------------------------------
-		if (PublicData.mediaPlayer != null)
-		{
-			// ---------------------------------------------------------------------
-			// 28/12/2016 ECU check if anything is being played - stop it if it is
-			// ---------------------------------------------------------------------
-			if (PublicData.mediaPlayer.isPlaying ())
-				PublicData.mediaPlayer.stop ();
-			// ---------------------------------------------------------------------
-			// 28/12/2016 ECU release any resources associated with the player
-			// ---------------------------------------------------------------------
-			PublicData.mediaPlayer.release ();
-			// ---------------------------------------------------------------------
-			// 28/12/2016 ECU indicate that the player is not on use
-			// ---------------------------------------------------------------------
-			PublicData.mediaPlayer = null;
-			// ---------------------------------------------------------------------
-		}
+		PublicData.mediaPlayer = MediaPlayerUtilities.StopAndRelease (PublicData.mediaPlayer);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@SuppressLint("HandlerLeak")
 	class DisplayHandler extends Handler
 	{
+		// -------------------------------------------------------------------------
+		// 15/01/2018 ECU changed to switch on the message type rather than using
+		//                a generalised sleep
+		// -------------------------------------------------------------------------
 		@Override
 		public void handleMessage (Message theMessage) 
 		{   
-			// ---------------------------------------------------------------------
-			if (changeIcons ())
+			switch (theMessage.what)
 			{
 				// -----------------------------------------------------------------
-				// 05/04/2015 ECU there is still activity so wait a bit then redo
-				//				  otherwise just stop
 				// -----------------------------------------------------------------
-				sleep (500);
-				// ---------------------------------------------------------------------
+				case StaticData.MESSAGE_DISPLAY:
+					// -------------------------------------------------------------
+					if (changeIcons ())
+					{
+						// ---------------------------------------------------------
+						// 05/04/2015 ECU there is still activity so wait a bit then
+						//				  redo otherwise just stop
+						// ---------------------------------------------------------
+						this.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,500);
+						// ---------------------------------------------------------
+					}
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				default:
+					break;
+				// -----------------------------------------------------------------
+				
+				// -----------------------------------------------------------------
 			}
-		}
-		/* ------------------------------------------------------------------------ */
-		public void sleep(long delayMillis)
-		{		
-			this.removeMessages(0);
 			// ---------------------------------------------------------------------
-			// 05/04/2015 ECU only carry on if the user has not stopped the player
-			// ---------------------------------------------------------------------
-			sendMessageDelayed(obtainMessage(0), delayMillis);
 		}
+		// -------------------------------------------------------------------------
 	};
 	/* ============================================================================= */
 	private static void displayAlbumArt (Context theContext,int theTrackNumber)
@@ -1241,7 +1463,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		//                track, i.e. the album folder.
 		// --------------------------------------------------------------------------
 		albumArtFile = theFile.getParent() + "/" + theContext.getString (R.string.album_art_file);
-		
+		// --------------------------------------------------------------------------
 		theFile = new File (albumArtFile);
 
 		if (theFile.exists())
@@ -1250,11 +1472,17 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// 19/01/2014 ECU the '1' refers to the 'sample size'
 			// ---------------------------------------------------------------------
 			Utilities.displayAnImage (PublicData.mpImageView,albumArtFile,1);
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
-			 PublicData.mpImageView.setImageDrawable (theContext.getResources().getDrawable(R.drawable.music));
-			 albumArtFile = null;
+			// ---------------------------------------------------------------------
+			// 14/09/2020 ECU Note - this is no album art so just display the default
+			//                       image
+			// ---------------------------------------------------------------------
+			PublicData.mpImageView.setImageDrawable (theContext.getResources().getDrawable (R.drawable.music));
+			albumArtFile = null;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------    
 		// 02/06/2013 ECU update the image in the GridActivity 
@@ -1269,12 +1497,14 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 18/01/2015 ECU added as a separate method
 		// -------------------------------------------------------------------------
 		// 20/04/2015 ECU changed to use the new method
+		// 08/01/2018 ECU changed to use 'context'
 		// -------------------------------------------------------------------------
-		tidyUp (MusicPlayer.this);
+		tidyUp (context);
 		// -------------------------------------------------------------------------
 		// 10/02/2014 ECU try and remove the album art
-		// -------------------------------------------------------------------------
-		refreshGridCell (null);
+		// 26/02/2020 ECU removed
+		//					refreshGridCell (null);
+		//                because this is now carried out in 'tidyUp'
 		// -------------------------------------------------------------------------
 		// 02/06/2013 ECU make sure the imageAdapter updates the view
 		// 10/02/2014 ECU added userView check
@@ -1292,131 +1522,100 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		finish ();
 	}
 	// =============================================================================
-	void handleRemotePlayer ()
+	public static void finishMusicPlayer ()
 	{
 		// -------------------------------------------------------------------------
-		// 02/05/2015 ECU the remote player uses a 'two file' cycle. While it is
-		//                playing the first track it will download the second track
-		//                which it will then play when the first one has finished.
+		// 03/09/2020 ECU created so that an external activity can trigger the
+		//                finishing of this activity
 		// -------------------------------------------------------------------------
-		if (remoteTrackPlayingNow == StaticData.NO_RESULT)
+		if (musicRefreshHandler != null)
 		{
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU this is the first time through so set the current
-			//                track and reset the 'next'
-			// ---------------------------------------------------------------------
-			remoteTrackPlayingNow 	= 	PublicData.musicPlayerData.trackNumber;
-			remoteTrackPlayingNext	=	StaticData.NO_RESULT;
-			// ---------------------------------------------------------------------
-		}
-		else
-		{
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU set the 'now' track to the stored 'next' providing
-			//                that there is a value stored
-			// ---------------------------------------------------------------------
-			if (remoteTrackPlayingNext != StaticData.NO_RESULT)
-				remoteTrackPlayingNow = remoteTrackPlayingNext;
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU stored the current track to be played next
-			// ---------------------------------------------------------------------
-			remoteTrackPlayingNext 	=	PublicData.musicPlayerData.trackNumber;	
-			// ---------------------------------------------------------------------
+			musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
 		}
 		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU created to hold the code that used to be in RefreshHandler
-		//                - just for clarity
+	}
+	// =============================================================================
+	int getNextTrack ()
+	{
 		// -------------------------------------------------------------------------
-		// 02/05/2015 ECU reset the waiting counter
-		//            ECU get track duration in milliseconds
+		// 04/01/2018 ECU created to get the next track number, taking into account
+		//                the repeat and shuffle modes, or if at the end then
+		//                return NOT_SET
 		// -------------------------------------------------------------------------
-		int	trackDuration = PublicData.musicPlayerData.tracks.get (remoteTrackPlayingNow).duration;
+		// 04/01/2018 ECU if in shuffle mode then doesn't matter where we are within
+		//                the list
 		// -------------------------------------------------------------------------
-		// 02/05/2015 ECU check if the duration has been set - if not then default to
-		//                5 minutes. Where there is a duration then allow twice as long 
-		//                to finish
-		// 03/05/2015 ECU (*2) seemed to long so just add in PLAY_TIMEOUT
-		// 01/09/2015 ECU changed to use StaticData
-		// -------------------------------------------------------------------------
-		if (trackDuration == StaticData.NO_RESULT)
-			trackDuration = StaticData.MILLISECONDS_PER_MINUTE * 5;
-		else
-			trackDuration = trackDuration + PLAY_TIMEOUT;
-		// -------------------------------------------------------------------------
-		// 02/05/2015 ECU now set the counter - in units of the 'sleep' period
-		// -------------------------------------------------------------------------
-		waitingCounterRemote = trackDuration / SHORT_DELAY;
-		// -------------------------------------------------------------------------
-		// 14/08/2013 ECU check if last message processed OK
-		// -------------------------------------------------------------------------
-		if (PublicData.fileTransferStatus == StaticData.SOCKET_MESSAGE_FILE_ACK)
+		if (PublicData.musicPlayerData.shuffleMode)
 		{
-			// -------------------------------------------------
-			// 03/08/2013 ECU indicate that initial actions have 
-			//                been taken
 			// ---------------------------------------------------------------------
-			remoteFirst = false;
+			// 04/01/2018 ECU in shuffle mode so use the
+			//                random number generator - remember that .nextInt (N)
+			//                creates a random integer between 0 and (N-1) inclusive
+			// 05/01/2018 ECU being a random number generator it is possible that
+			//                the same track could be selected again - this is 
+			//                particularly true if the number of tracks is small
 			// ---------------------------------------------------------------------
-			// 03/08/2013 ECU handle remotely tell it to play the
-			//                last file loaded
-			// ---------------------------------------------------------------------
-			Utilities.sendDatagramType (MusicPlayer.this,PublicData.remoteMusicPlayer,StaticData.SOCKET_MESSAGE_PLAY);
-			// ---------------------------------------------------------------------
-			// 19/08/2013 ECU now that the last file has been 
-			//                played then change to the alternative
-			//                receiving file by toggling the appropriate bit
-			// 03/09/2015 ECU change to use StaticData
-			// ---------------------------------------------------------------------
-			PublicData.socketMessageData 
-				= Utilities.bitHandler (StaticData.BIT_TOGGLE, PublicData.socketMessageData, StaticData.SOCKET_DATA_FILE);
-			// ---------------------------------------------------------------------
-			// 04/08/2013 ECU change to use a version of SendFile 
-			//                which transmits large files as chunks
-			// 04/04/2015 ECU changed to use 'tracks'
-			// ---------------------------------------------------------------------
-			remoteFileName = PublicData.musicPlayerData.tracks.get (PublicData.musicPlayerData.trackNumber).fileName;
-			// ---------------------------------------------------------------------
-			// 20/04/2015 ECU set up the album art for this track
-			// ---------------------------------------------------------------------
-			displayAlbumArt (MusicPlayer.this,PublicData.musicPlayerData.trackNumber);
-			// ---------------------------------------------------------------------
-			// 15/08/2013 ECU added the 'true' argument to select a 
-			//                method that will will try retransmission
-			//				  in the event of a failure
-			// 16/04/2015 ECU use the return from SendFile to determine whether
-			//                the operation was or was not successful
-			//            ECU change to use the common method
-			// ---------------------------------------------------------------------
-			if (SendFile (MusicPlayer.this,remoteFileName))
+			int nextTrack = StaticData.NOT_SET;				
+			
+			for (int retry = 0; retry < RANDOM_TRIES; retry++)
 			{
 				// -----------------------------------------------------------------
-				// 03/08/2013 ECU indicate that the remote player is running
+				// 05/01/2018 get the next random track number
 				// -----------------------------------------------------------------
-				PublicData.musicPlayerRemote = true;
+				nextTrack = random.nextInt (PublicData.musicPlayerData.tracks.size());
+				// -----------------------------------------------------------------
+				// 05/01/2018 ECU if the random number differs to the current track
+				//                then return it
+				// -----------------------------------------------------------------
+				if (nextTrack != PublicData.musicPlayerData.trackNumber)
+					return nextTrack;
 				// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
+			// 05/01/2018 ECU for some reason keep coming up with same track number
+			//                so just return it
+			// ---------------------------------------------------------------------
+			return nextTrack;
+			// ---------------------------------------------------------------------
+			
 		}
 		else
-		if (PublicData.fileTransferStatus == StaticData.SOCKET_MESSAGE_FILE_NAK)
 		{
 			// ---------------------------------------------------------------------
-			// 14/08/2013 ECU last file failed to be received so
-			//                want to try again
+			// 04/01/2018 ECU check if at the end of the list
 			// ---------------------------------------------------------------------
-			// 04/08/2013 ECU change to use a version of SendFile 
-			//                which transmits large files as chunks
-			// 04/04/2015 ECU changed to use 'tracks'
-			// ---------------------------------------------------------------------
-			remoteFileName 
-				= PublicData.musicPlayerData.tracks.get(PublicData.musicPlayerData.trackNumber).fileName;
-			// ---------------------------------------------------------------------
-			// 15/08/2013 ECU added the 'true' argument to select 
-			//                a method that will will try 
-			// 			      retransmission in the event of a failure
-			// 16/04/2015 ECU changed to use the common local method for sending a 
-			//                file
-			// ---------------------------------------------------------------------
-			SendFile (MusicPlayer.this,remoteFileName);
+			if (PublicData.musicPlayerData.trackNumber == (PublicData.musicPlayerData.tracks.size() - 1))
+			{
+				// -----------------------------------------------------------------
+				// 04/01/2018 ECU if at the end of the list then can only continue
+				//                if in repeat
+				// -----------------------------------------------------------------
+				if (PublicData.musicPlayerData.repeatMode)
+				{
+					// -------------------------------------------------------------
+					// 04/01/2018 ECU in repeat mode so just reset to the start of 
+					//                the list
+					// -------------------------------------------------------------
+					return 0;
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 04/01/2018 ECU indicate that cannot progress
+					// -------------------------------------------------------------
+					return StaticData.NOT_SET;
+					// -------------------------------------------------------------
+				}
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 04/01/2018 ECU can advance to the next track
+				// -----------------------------------------------------------------
+				return (PublicData.musicPlayerData.trackNumber + 1);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
@@ -1440,6 +1639,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 				= (MusicPlayerData) AsyncUtilities.readObjectFromDisk 
 						(theContext,
 						 PublicData.projectFolder + getString (R.string.music_player_data));
+			// ---------------------------------------------------------------------
 			
 		}
 		// -------------------------------------------------------------------------
@@ -1473,9 +1673,11 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		}
 		// -------------------------------------------------------------------------
 		// 21/04/2015 ECU check whether the data shows that there is music to play
+		// 19/04/2017 ECU put in check that the root folder still exists
 		// -------------------------------------------------------------------------
 		if ((PublicData.musicPlayerData.tracks != null) &&
-			(PublicData.musicPlayerData.tracks.size() > 0))
+			(PublicData.musicPlayerData.tracks.size () > 0) &&
+			(new File (PublicData.musicPlayerData.rootFolder)).exists())
 		{
 			// ---------------------------------------------------------------------
 			// 21/04/2015 ECU there seems to be music so can indicate 'success'
@@ -1491,6 +1693,23 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		}
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+	static void logData (String theData)
+	{
+		// -------------------------------------------------------------------------
+		// 23/03/2017 ECU created to optionally (dependent on 'loggingMode') log
+		//                the specified data
+		// -------------------------------------------------------------------------
+		if (loggingMode)
+		{
+			// ---------------------------------------------------------------------
+			// 23/03/2017 ECU use the general logging facility
+			// ---------------------------------------------------------------------
+			Utilities.LogToProjectFile (TAG,theData);
+			// ---------------------------------------------------------------------
+		}
+		// ------------------------------------------------------------------------
+	}
 	/* ============================================================================= */
 	@SuppressLint("HandlerLeak")
 	class MusicRefreshHandler extends Handler
@@ -1499,256 +1718,322 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 21/04/2015 ECU this handler performs the playing of tracks, both locally
 		//                and remotely. It check the state of the media player to
-		//                know ehen to move to the newxt track
+		//                know when to move to the next track
+		// 21/03/2017 ECU changed to use correct message handling previously
+		//                it wasn't checking message types and just kept looping
+		//                like an ordinary thread
 		// -------------------------------------------------------------------------
 		// -------------------------------------------------------------------------
         @Override
         public void handleMessage (Message theMessage) 
         {   
         	// ---------------------------------------------------------------------
-        	//            ECU wait until any music has finished playing 
-        	// 24/05/2013 ECU rearranged the order to give an initial delay 
-        	// 02/06/2013 ECU include the check on trackPaused
-        	// 16/06/2013 ECU include mediaPlayerPaused
-        	// 03/08/2013 ECU include musicPlayerRemote
-        	//                added remoteFirst
-        	// 18/01/2015 ECU put in the check on mediaPlayer being null
+        	// 21/03/2017 ECU switch on the message type
         	// ---------------------------------------------------------------------
-        	if (PublicData.mediaPlayer != null)
-        	{   
-        		// -----------------------------------------------------------------
-        		// -----------------------------------------------------------------
-        		// 20/04/2015 ECU the first check if to change some display information
-        		//                if :-
-        		//                	((the media player is playing) OR
-        		//                   (the user has paused the track) OR
-        		//                   (the media player has been paused by another 
-        		//                    activity) OR
-        		//                   (music is being sent to a remote device)) AND
-        		//                  (not the first operations that need to be taken
-        		//                   when music is sent to a remote device)
-        		// -----------------------------------------------------------------
-        		// -----------------------------------------------------------------
-        		if ((PublicData.mediaPlayer.isPlaying() || 
-        			 trackPaused || 
-        			 PublicData.mediaPlayerPaused || 
-        			 PublicData.musicPlayerRemote) 
-        			 	&& !remoteFirst) 													
-        		{
-        			// -------------------------------------------------------------
-        			// 02/05/2015 ECU if playing the music to a remote device then
-        			//                try and detect if the device has become unavailable
-        			// -------------------------------------------------------------
-        			if (PublicData.musicPlayerRemote)
-        			{
-        				// ---------------------------------------------------------
-        				// 02/05/2015 ECU if the counter reaches 0 then seem to have
-        				//                lost contact
-        				// ---------------------------------------------------------
-        				if (--waitingCounterRemote <= 0)
-        				{
-        					// -----------------------------------------------------
-        					// 02/05/2015 ECU contact has been lost so cancel
-        					//                remote operation
-        					// -----------------------------------------------------
-        					Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.lost_communication));
-        					// -----------------------------------------------------
-        					// 02/05/2015 ECU reset flags so that music is played
-        					//                locally
-        					// -----------------------------------------------------
-        					CancelRemote (0);
-        					// -----------------------------------------------------
-        				}
-        			}
-        			// -------------------------------------------------------------
-        			// -------------------------------------------------------------
-        			// 01/04/2015 ECU the track is just playing so update the
-        			//                artwork, if not already done, and also
-        			//                update the progress bar, if enabled
-        			// -------------------------------------------------------------
-        			// -------------------------------------------------------------
-        			// 02/06/2013 ECU check if need to refresh the album artwork
-        			// -------------------------------------------------------------
-        			if (PublicData.cellChange)
-        			{
-        				// ---------------------------------------------------------
-        				// 02/06/2013 ECU indicate that action has been taken
-        				// ---------------------------------------------------------
-        				PublicData.cellChange = false;
-        				// ---------------------------------------------------------
-        				// 02/06/2013 ECU update the displayed image with the artwork
-        				//                for the track being played, if it exists
-        				// ---------------------------------------------------------
-        				refreshGridCell (albumArtFile);
-        				// ---------------------------------------------------------
-        			}
-        			// -------------------------------------------------------------
-        			// 20/01/2014 ECU update the progress bar
-        			// -------------------------------------------------------------
-        			if (showProgressBar)
-        				progressBar.setProgress (PublicData.mediaPlayer.getCurrentPosition()/SEEKBAR_SCALE);
-        			// -------------------------------------------------------------
-        			// 03/04/2015 ECU update the seekbar progress
-        			//			  ECU put in check on metadata
-        			// -------------------------------------------------------------
-        			if (displayMetadata)
-        				progressSeekBar.setProgress (PublicData.mediaPlayer.getCurrentPosition()/SEEKBAR_SCALE);
-        			// -------------------------------------------------------------
-        			// 20/01/2014 ECU wait a bit
-        			// -------------------------------------------------------------
-        			sleep (SHORT_DELAY);
-        			// -------------------------------------------------------------
-        		}
-        		else
-        		{
-        			// -------------------------------------------------------------
-        			// -------------------------------------------------------------
-        			// 01/04/2015 ECU it appears that the current track has finished
-        			//                playing so need to move to the next one in the
-        			//                playlist
-        			// -------------------------------------------------------------
-         			// -------------------------------------------------------------
-        			// 24/05/2013 ECU check if reached the endof the play list 
-        			// 02/06/2013 ECU include the stopmpPlayer bit
-        			// 04/04/2015 ECU changed to use 'tracks'
-        			// 11/04/2015 ECU changed to check the null
-        			// -------------------------------------------------------------
-        			if ((PublicData.musicPlayerData.tracks != null) &&
-        				(PublicData.musicPlayerData.trackNumber < (PublicData.musicPlayerData.tracks.size () - 1)) &&
-        				!PublicData.stopmpPlayer)
-        			{ 
-        				// ---------------------------------------------------------
-        				// ---------------------------------------------------------
-        				// 01/04/2015 ECU there are still tracks to play so advance
-        				//                to the next track
-        				// ---------------------------------------------------------
-        				// ---------------------------------------------------------
-        				// 02/06/2013 ECU advance the track but take into account 
-        				//                shuffle mode
-        				// ---------------------------------------------------------			
-        				if (!PublicData.musicPlayerData.shuffleMode)
-        				{
-        					// -----------------------------------------------------
-        					// 02/06/2013 ECU not in shuffle mode so just step on 1
-        					// -----------------------------------------------------
-        					PublicData.musicPlayerData.trackNumber++;
-        					// -----------------------------------------------------
-        				} 
-        				else
-        				{
-        					// -----------------------------------------------------
-        					// 02/06/2013 ECU shuffle mode so randomly pick the next track
-        					// 04/04/2015 ECU changed to use 'tracks'
-        					// -----------------------------------------------------
-        					PublicData.musicPlayerData.trackNumber 
-        						= random.nextInt (PublicData.musicPlayerData.tracks.size() - 2);
-        					// -----------------------------------------------------
-        					// 02/03/2013 ECU the -2 is because if shuffle mode is 
-        					//                switched off then I do not want to go 
-        					//                beyond the array size
-        					// -----------------------------------------------------
-        				}
-        			    // ---------------------------------------------------------
-        				// 02/06/2013 ECU play the selected track
-        				// ---------------------------------------------------------
-        				if (!remoteMode)
-        				{
-         					// -----------------------------------------------------
-        					// 03/08/2013 ECU the music player is for this device
-        					// 05/04/2015 ECU changed to pass through track number
-        					//                as the argument
-        					// -----------------------------------------------------
-        					playMusicTrack (MusicPlayer.this,PublicData.musicPlayerData.trackNumber);
-        					// -----------------------------------------------------
-        				}
-        				else
-        				{
-        					// -----------------------------------------------------
-        					// 01/04/2015 ECU put the code for remote access into
-        					//                a separate method for clarity
-        					// -----------------------------------------------------
-        					handleRemotePlayer ();
-        					// -----------------------------------------------------
-        					
-        				}
-        				// ---------------------------------------------------------
-        				// 03/08/2013 ECU wait a short period of time
-        				// ---------------------------------------------------------
-        				sleep (SHORT_DELAY);
-        				// ---------------------------------------------------------
-        			}
-        			else
-        			{
-          				// ---------------------------------------------------------
-        				// ---------------------------------------------------------
-        				// 28/03/2015 ECU all of the tracks have been played so check
-        				//                if repeat mode is on
-        				// ---------------------------------------------------------
-        				// ---------------------------------------------------------
-        				if (PublicData.musicPlayerData.repeatMode)
-        				{
-        					// -----------------------------------------------------
-        					// 28/03/2015 ECU repeat mode is on so just reset the
-        					//                track to be played
-        					// 31/03/2015 ECU set to -1 instead of 0 because it is
-        					//                incremented before use
-        					// -----------------------------------------------------
-        					PublicData.musicPlayerData.trackNumber = -1;
-        					// -----------------------------------------------------
-        					// 28/03/2015 ECU and have a small delay
-        					// -----------------------------------------------------
-        					sleep (SHORT_DELAY);
-        					// -----------------------------------------------------
-        					
-        				}
-        				else
-        				{
-        					// -----------------------------------------------------
-        					// 28/03/2015 ECU repeat mode is off so just finish
-        					// -----------------------------------------------------
-        					PublicData.musicPlayerData.tracksPlaying = false;
-        					// ---------------------------------------------------------
-    						// 01/04/2015 ECU change the image to indicate that pressing
-    						//                it will start playing
-    						// ---------------------------------------------------------
-    						buttonPlay.setImageResource (R.drawable.music_play);
-    						// ---------------------------------------------------------
-        				}
-        			}
-        		}
-        	}
-        	else
+        	switch (theMessage.what)
         	{
+        		// =================================================================
+    			case StaticData.MESSAGE_DISPLAY:
+    				// -------------------------------------------------------------
+    				// 21/03/2017 ECU created to handle display aspects of playing 
+    				//                the music
+    				// -------------------------------------------------------------
+    				// 02/06/2013 ECU check if need to refresh the album artwork
+    				// -------------------------------------------------------------
+    				if (PublicData.cellChange)
+    				{
+    					// ---------------------------------------------------------
+    					// 02/06/2013 ECU indicate that action has been taken
+    					// ---------------------------------------------------------
+    					PublicData.cellChange = false;
+    					// ---------------------------------------------------------
+    					// 02/06/2013 ECU update the displayed image with the
+    					//                artwork for the track being played,
+    					//                if it exists
+    					// ---------------------------------------------------------
+    					refreshGridCell (albumArtFile);
+    					// ---------------------------------------------------------
+    				}
+    				// -------------------------------------------------------------
+    				// 09/01/2017 ECU added the 'paused' check
+    				// -------------------------------------------------------------
+    				if (!paused)
+    				{
+    					// ---------------------------------------------------------
+    					// 20/01/2014 ECU update the progress bar
+    					// 13/01/2018 ECU put in the try..catch just in case an
+    					//                'illegal state' for the media player
+    					//                occurs
+    					// ---------------------------------------------------------
+    					try
+    					{
+    						// -----------------------------------------------------
+    						if (showProgressBar)
+    							progressBar.setProgress (PublicData.mediaPlayer.getCurrentPosition()/SEEKBAR_SCALE);
+    						// -----------------------------------------------------
+    						// 03/04/2015 ECU update the seekbar progress
+    						//			  ECU put in check on metadata
+    						// -----------------------------------------------------
+    						if (displayMetadata)
+    							progressSeekBar.setProgress (PublicData.mediaPlayer.getCurrentPosition()/SEEKBAR_SCALE);
+    						// -----------------------------------------------------
+    					}
+    					catch (Exception theException)
+    					{
+    						
+    					}
+    					// ---------------------------------------------------------
+    				}
+    				// -------------------------------------------------------------
+    				break;
+    			// -----------------------------------------------------------------
+    			// -----------------------------------------------------------------
+                // 05/01/2018 ECU a 'timed display' request has been received
+                // -----------------------------------------------------------------
+                // -----------------------------------------------------------------
+    			case StaticData.MESSAGE_DISPLAY_TIMED:
+    				// -------------------------------------------------------------
+    				// 05/01/2018 ECU only request a display if the activity is in
+    				//                the foreground
+    				// -------------------------------------------------------------
+    				if (!paused)
+    					this.sendEmptyMessage (StaticData.MESSAGE_DISPLAY);
+    				// -------------------------------------------------------------
+    				// 05/01/2018 ECU put in a delayed called to repeat this display
+    				// -------------------------------------------------------------
+    				this.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY_TIMED,1000);
+    				// -------------------------------------------------------------
+    				break;
+    			// -----------------------------------------------------------------
+    			case StaticData.MESSAGE_DURATION:
+    				// -------------------------------------------------------------
+    				// 02/01/2018 ECU handle when the duration of the music player
+    				//                has been specified
+    				// -------------------------------------------------------------
+    				// 02/01/2018 ECU check if the music is playing
+    				// 12/07/2018 ECU if the music is not playing that wait a bit
+    				//                before checking again
+    				//            ECU put in the check on null
+    				// 13/07/2018 ECU put in the check on 'duration > 0'
+    				// -------------------------------------------------------------
+    				if ((PublicData.mediaPlayer != null) && (duration > 0))
+    				{
+    					if (PublicData.mediaPlayer.isPlaying())
+    					{
+    						// -----------------------------------------------------
+    						// 02/01/2018 ECU the music is playing so decrement the 
+    						//				  duration
+    						// -----------------------------------------------------
+    						duration--;
+    						// -----------------------------------------------------
+    						// 15/01/2018 ECU if scrolling text is enabled then force
+    						//                the display of the duration - the 'paused'
+    						//                is included so that it is only when the
+    						//                'GridActivity' view is on display
+    						// -----------------------------------------------------
+    						if (PublicData.storedData.marquee && paused)
+    						{
+    							refreshImageAdapter (); 
+    						} 
+    						// -----------------------------------------------------
+    						// 02/01/2018 ECU check if all done
+    						// -----------------------------------------------------
+    						if (duration == 0)
+    						{
+    							// -------------------------------------------------
+    							// 02/01/2018 ECU stop the music player
+    							// -------------------------------------------------
+    							Exit ();
+    							// -------------------------------------------------
+    						}
+    						else
+    						{
+    							// -------------------------------------------------
+    							// 02/01/2018 ECU check if it is time to start 
+    							//                decreasing the volume
+    							// -------------------------------------------------
+    							if (volumeDecreaseStart != StaticData.NOT_SET)
+    							{
+    								// ---------------------------------------------
+    								if (duration < volumeDecreaseStart)
+    								{
+    									// -----------------------------------------
+    									// 02/01/2018 ECU must decrease the volume
+    									// 07/02/2018 ECU put in the check on null
+    									// -----------------------------------------
+    									volumeCurrent -= volumeDecreaseIncrement;
+    									if (PublicData.mediaPlayer != null)
+    									{
+    										PublicData.mediaPlayer.setVolume (volumeCurrent/(float)MAX_SCALED_VOLUME,volumeCurrent/(float)MAX_SCALED_VOLUME);
+    									}
+    									// -----------------------------------------
+    								}
+    								// ---------------------------------------------
+    							}
+    							// -------------------------------------------------
+    							// 02/01/2018 ECU still some time left so send empty 
+    							//                message
+    							// -------------------------------------------------
+    							this.sendEmptyMessageDelayed(StaticData.MESSAGE_DURATION,1000);
+    							// -------------------------------------------------
+    						}
+    					}
+    					else
+    					{
+    						// -----------------------------------------------------
+    						// 12/07/2018 ECU the music is not being played so wait a
+    						//                bit before trying again
+    						// -----------------------------------------------------
+    						this.sendEmptyMessageDelayed(StaticData.MESSAGE_DURATION,1000);
+    						// -----------------------------------------------------
+    					}
+    				}
+    				// -------------------------------------------------------------
+    				break;
+    			// -----------------------------------------------------------------
+    			// -----------------------------------------------------------------
+				case StaticData.MESSAGE_FINISH:
+					// -------------------------------------------------------------
+					// 03/09/2020 ECU called if the music player is to be stopped
+					// -------------------------------------------------------------
+					Exit ();
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
         		// -----------------------------------------------------------------
-        		// 18/01/2015 ECU just stop this activity
+        		case StaticData.MESSAGE_MONITOR:
+        			// -------------------------------------------------------------
+        			// 21/03/2017 ECU created to monitor the remote music player
+        			// 25/03/2019 ECU only need to do if in remote mode
+        			// -------------------------------------------------------------
+        			if (remoteMode)
+        				areYouThereRequest (PublicData.remoteMusicPlayer,MONITOR_TIMEOUT);
+        			// -------------------------------------------------------------
+        			break;
         		// -----------------------------------------------------------------
-        		Exit ();
         		// -----------------------------------------------------------------
+        		// 09/01/2018 ECU check for other activities pausing the music
+        		// -----------------------------------------------------------------
+        		// -----------------------------------------------------------------
+        		case StaticData.MESSAGE_PAUSE_CHECK:
+        			this.sendEmptyMessageDelayed(StaticData.MESSAGE_PAUSE_CHECK, 10000);
+        			break;
+        		// -----------------------------------------------------------------
+            	// -----------------------------------------------------------------
+            	// 05/01/2018 ECU a 'play track' request has been received
+            	// -----------------------------------------------------------------
+            	// -----------------------------------------------------------------
+            	case StaticData.MESSAGE_PLAY_TRACK:
+            		// -------------------------------------------------------------
+            		// 05/01/2018 ECU play the music track that is currently being
+            		//                pointed at
+            		// 08/01/2018 ECU changed to use context
+            		// -------------------------------------------------------------
+            		playMusicTrack (context,PublicData.musicPlayerData.trackNumber);
+            		// -------------------------------------------------------------
+            		// 05/01/2018 ECU trigger the display of dynamically changing
+            		//                variables
+            		// -------------------------------------------------------------
+            		this.removeMessages (StaticData.MESSAGE_DISPLAY_TIMED);
+            		this.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY_TIMED,1000);
+            		// -------------------------------------------------------------
+            		break;
+        		// =================================================================
+        		case StaticData.MESSAGE_REMOTE_PLAYER:
+        			// -------------------------------------------------------------
+					// 01/04/2015 ECU put the code for remote access 
+					//                into a separate method for clarity
+        			// -------------------------------------------------------------
+        			// 08/01/2018 ECU process the new message
+        			// -------------------------------------------------------------
+        			remoteStatus = remotePlayerProcessor (theMessage.arg1,theMessage.arg2);
+        			// -------------------------------------------------------------
+        			// 08/01/2018 ECU check if need to process the returned state
+        			// -------------------------------------------------------------
+        			if (remoteStatus != StaticData.NOT_SET)
+        			{
+        				remotePlayerProcessorMessage (remoteStatus,theMessage.arg2);
+        			}	
+        			// -------------------------------------------------------------
+        			break;
+        		// =================================================================
+        		case StaticData.MESSAGE_REMOTE_TRACK_ENDED:
+        			// -------------------------------------------------------------
+        			// 13/01/2018 ECU called when the remote player indicates that it
+        			//                has finished playing the latest track
+        			// 15/01/2018 ECU put in the check on 'null' just in case the
+        			//                device supplying the music has been rebooted
+        			// 25/03/2019 ECU added the remote mode check to terminate the
+        			//                transmission of tracks
+					// -------------------------------------------------------------
+        			if (PublicData.remoteMusicPlayer != null && remoteMode)
+        			{
+        				// ---------------------------------------------------------
+        				remotePlayerProcessorMessage (REMOTE_STATUS_TRACK_ENDED);
+        				// ---------------------------------------------------------
+        			}
+        			// -------------------------------------------------------------
+        			break;
+        		// =================================================================
+        		case StaticData.MESSAGE_TIME_OUT:
+        			// -------------------------------------------------------------
+        			// 21/03/2017 ECU called when a time out occurs
+        			// -------------------------------------------------------------
+        			// 23/03/2017 ECU optionally log the event
+        			// -------------------------------------------------------------
+        			logData ("Time out occurred");
+        			// -------------------------------------------------------------
+        			//            ECU start up monitoring of the remote device
+        			// -------------------------------------------------------------
+        			this.sendEmptyMessage (StaticData.MESSAGE_MONITOR);
+        			// -------------------------------------------------------------
+        			break;
+        		// =================================================================
+        		case StaticData.MESSAGE_TRACK_COMPLETED:
+        			// -------------------------------------------------------------
+        			// 21/03/2017 ECU a message will be received when a track
+        			//                is finished being played
+        			// -------------------------------------------------------------
+        			int nextTrack = getNextTrack ();
+        			// -------------------------------------------------------------
+        			// 05/01/2018 ECU decide whether the next track is to be played
+        			// -------------------------------------------------------------
+        			if (nextTrack != StaticData.NOT_SET)
+        			{
+        				// ---------------------------------------------------------
+        				// 05/01/2018 ECU copy the number across
+        				// ---------------------------------------------------------
+        				PublicData.musicPlayerData.trackNumber = nextTrack;
+        				// ---------------------------------------------------------
+        				// 05/01/2018 ECU request that the track be played
+        				// ---------------------------------------------------------
+        				this.sendEmptyMessage (StaticData.MESSAGE_PLAY_TRACK);
+        				// ---------------------------------------------------------
+        			}
+        			// -------------------------------------------------------------
+        			break;
+        		// =================================================================
+        		default:
+        			break;
+        		// =================================================================      	
         	}
-        		
+        	// ---------------------------------------------------------------------
         }
-        /* ------------------------------------------------------------------------ */
-        public void sleep(long delayMillis)
-        {		
-            this.removeMessages(0);
-            
-            if (!PublicData.stopmpPlayer)
-            {
-            	// -----------------------------------------------------------------
-            	// 02/06/2013 ECU only carry on if the user has not stopped the player
-            	// -----------------------------------------------------------------
-            	sendMessageDelayed(obtainMessage(0), delayMillis);
-            }
-            else
-            {
-            	// -----------------------------------------------------------------
-            	// 02/06/2013 ECU tidy up at the end
-            	// -----------------------------------------------------------------
-            	PublicData.musicPlayerData.tracksPlaying = false;
-            	// -----------------------------------------------------------------
-            }
-        }
+        // =========================================================================
+        // =========================================================================
     };
+    // =============================================================================
+    public static void playerPaused (boolean theState)
+    {
+    	// -------------------------------------------------------------------------
+    	// 09/01/2018 ECU created to set the pause state
+    	// -------------------------------------------------------------------------
+    	if (theState)
+    		PublicData.mediaPlayer.start ();
+    	else
+    		PublicData.mediaPlayer.pause ();
+    	// -------------------------------------------------------------------------
+    }
     // =============================================================================
 	private static void playMusicTrack (Context theContext,int theTrackNumber,int thePosition)
 	{
@@ -1763,8 +2048,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		{
 			// ---------------------------------------------------------------------
 			// 03/06/2016 ECU added the false to indicate not an 'action'
+			// 21/03/2017 ECU add the method to be called when the track finishes
+			//                playing
 			// ---------------------------------------------------------------------
-			Utilities.PlayAFile (theContext,fileName,thePosition,false);
+			Utilities.PlayAFile (theContext,fileName,thePosition,false,Utilities.createAMethod (MusicPlayer.class,"TrackCompletionMethod"));
 			// ---------------------------------------------------------------------
 			// 02/06/2013 ECU check if there is any album art for this track
 			// 05/04/2015 ECU changed to pass through the track index rather than
@@ -1775,7 +2062,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			// 12/04/2015 ECU get the track information and store
 			// ---------------------------------------------------------------------
-			trackInformation = PublicData.musicPlayerData.tracks.get(PublicData.musicPlayerData.trackNumber).trackInformation();
+			trackInformation = PublicData.musicPlayerData.tracks.get (PublicData.musicPlayerData.trackNumber).trackInformation();
 			// ---------------------------------------------------------------------
 			// 02/06/2013 ECU display the meta data
 			// 01/04/2015 ECU removed the 'else' condition which just set  the 
@@ -1820,10 +2107,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 03/04/2015 ECU show the seek bar progress
 		//			  ECU add the check on metadata
 		// 06/05/2015 ECU take out the check on displayMetaData because always
-		//                want to initialse the bar just so that it is ready
+		//                want to initialise the bar just so that it is ready
 		//                for when the display is switched on
 		// ------------------------------------------------------------------------
-		progressSeekBar.setMax (PublicData.mediaPlayer.getDuration()/SEEKBAR_SCALE);
+		progressSeekBar.setMax (PublicData.mediaPlayer.getDuration() / SEEKBAR_SCALE);
 		// ------------------------------------------------------------------------
 		// 28/03/2015 ECU display the track details
 		// 31/03/2015 ECU added the '+ 1'
@@ -1831,7 +2118,8 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 05/04/2015 ECU removed from here and put into getAlbumArt
 		// ------------------------------------------------------------------------
 	}
-	/* ----------------------------------------------------------------------------- */
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
 	private static void playMusicTrack (Context theContext,int theTrackNumber)
 	{
 		// -------------------------------------------------------------------------
@@ -1839,6 +2127,21 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		//                passed through
 		// -------------------------------------------------------------------------
 		playMusicTrack (theContext,theTrackNumber,StaticData.NO_RESULT);
+		// -------------------------------------------------------------------------
+	}
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	private static void playMusicTrack (int theTrackNumber)
+	{
+		// -------------------------------------------------------------------------
+		// 09/01/2018 ECU created when just want the handler to play the track
+		// -------------------------------------------------------------------------
+		PublicData.musicPlayerData.trackNumber    = theTrackNumber;   
+		// -------------------------------------------------------------------------
+		// 09/01/2018 ECU start that track playing
+		// -------------------------------------------------------------------------
+		musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_PLAY_TRACK);
+		// -------------------------------------------------------------------------
 	}
     // =============================================================================
     public static void playOrPause (boolean theRequiredStatus)
@@ -1850,35 +2153,59 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
     	//					theRequiredStatus	=	true		play
     	//										=   false       pause
     	// 14/11/2016 ECU put in try/catch - just in case
+    	// 09/01/2018 ECU put in check on 'musicRefreshHandler'
+    	// 12/01/2018 ECU add in the check on remoteMode
+    	// 04/02/2018 ECU add check on mediaPlayer
     	// -------------------------------------------------------------------------
     	try
     	{
-    		if (theRequiredStatus)
+    		if ((PublicData.mediaPlayer != null) && (musicRefreshHandler != null) && !remoteMode)
     		{
-    			// -----------------------------------------------------------------
-    			// 22/05/2016 ECU set to play (in fact a 'resume')
-    			// -----------------------------------------------------------------
-    			PublicData.mediaPlayer.seekTo (PublicData.musicPlayerData.trackPosition);
-    			PublicData.mediaPlayer.start ();
-    			// -----------------------------------------------------------------
-    			trackPaused = false;
-    			// -----------------------------------------------------------------	
-    		}
-    		else
-    		{
-    			// -----------------------------------------------------------------
-    			// 22/05/2016 ECU pause playing the current track
-    			// -----------------------------------------------------------------
-    			PublicData.mediaPlayer.pause ();
-    			PublicData.musicPlayerData.trackPosition = PublicData.mediaPlayer.getCurrentPosition();
-    			trackPaused = true;
-    			// -----------------------------------------------------------------
+    			if (theRequiredStatus)
+    			{
+    				// -----------------------------------------------------------------
+    				// 22/05/2016 ECU set to play (in fact a 'resume')
+    				// 09/01/2018 ECU changed from
+    				// 					PublicData.mediaPlayer.seekTo (PublicData.musicPlayerData.trackPosition);
+    				// 					PublicData.mediaPlayer.start ();
+    				// -----------------------------------------------------------------
+    				playMusicTrack (context,PublicData.musicPlayerData.trackNumber,PublicData.musicPlayerData.trackPosition);
+    				// -----------------------------------------------------------------
+    				trackPaused = false;
+    				// -----------------------------------------------------------------	
+    			}
+    			else
+    			{
+    				// -----------------------------------------------------------------
+    				// 22/05/2016 ECU pause playing the current track
+    				// -----------------------------------------------------------------
+    				PublicData.mediaPlayer.pause ();
+    				PublicData.musicPlayerData.trackPosition = PublicData.mediaPlayer.getCurrentPosition ();
+    				trackPaused = true;
+    				// -----------------------------------------------------------------
+    			}
     		}
     	}
     	catch (Exception theException)
     	{
-    		
+    		// ---------------------------------------------------------------------
+    		// 31/08/2017 ECU could get a 'null' exception if ...musicPlayerData has
+    		//                not been set. This would only happen when called by
+    		//                Utilities or TextToSpeechService. Overcame this issue
+    		// 				  by initialising 'musicPayerData' to a 'new Music...'
+    		//                rather than 'null'
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
     	}
+    	// -------------------------------------------------------------------------
+    }
+    // -----------------------------------------------------------------------------
+    public static boolean playOrPause ()
+    {
+    	// -------------------------------------------------------------------------
+    	// 09/01/2018 ECU return the state of the 'track pause' variable
+    	// -------------------------------------------------------------------------
+    	return trackPaused;
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
@@ -1895,27 +2222,42 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			public void run()
 			{
 				// -----------------------------------------------------------------
-				// 04/04/2015 ECU loop for all stored tracks
+				// 14/11/2019 ECU include a try/catch .... just in caes
 				// -----------------------------------------------------------------
-				for (int theTrack = 0; theTrack < PublicData.musicPlayerData.tracks.size(); theTrack++)
+				try
 				{
-					PublicData.musicPlayerData.tracks.get(theTrack).populate ();
+					// -------------------------------------------------------------
+					// 04/04/2015 ECU loop for all stored tracks
+					// -------------------------------------------------------------
+					for (int theTrack = 0; theTrack < PublicData.musicPlayerData.tracks.size(); theTrack++)
+					{
+						PublicData.musicPlayerData.tracks.get(theTrack).populate ();
+					}
+					// -------------------------------------------------------------
+					// 05/04/2015 ECU if necessary sort the list
+					// -------------------------------------------------------------
+					if (theSortFlag)
+						Collections.sort (PublicData.musicPlayerData.tracks);
+					// -------------------------------------------------------------
+					// 05/04/2015 ECU saved this initial list as it is subject to
+					//                modification later
+					// 04/01/2018 ECU use the method for copying the tracks
+					// -------------------------------------------------------------
+					PublicData.musicPlayerData.SavedTracks ();
+					// -------------------------------------------------------------
+					// 05/04/2015 ECU have built tracks so build artist information
+					// -------------------------------------------------------------
+					buildArtistList (true);
+					// -------------------------------------------------------------
 				}
-				// -----------------------------------------------------------------
-				// 05/04/2015 ECU if necessary sort the list
-				// -----------------------------------------------------------------
-				if (theSortFlag)
-					Collections.sort (PublicData.musicPlayerData.tracks); 
-				// -----------------------------------------------------------------
-				// 05/04/2015 ECU saved this initial list as it is subject to
-				//                modification later
-				// -----------------------------------------------------------------
-				PublicData.musicPlayerData.savedTracks = PublicData.musicPlayerData.tracks;
-				// -----------------------------------------------------------------
-				// 05/04/2015 ECU have built tracks so build artist information
-				// -----------------------------------------------------------------
-				buildArtistList (true);
-				// -----------------------------------------------------------------
+				catch (Exception theException)
+				{
+					// -------------------------------------------------------------
+					// 14/11/2019 ECU log the exception for future investigation
+					// -------------------------------------------------------------
+					Utilities.LogToProjectFile (TAG,"populateDetails : " + theException);
+					// -------------------------------------------------------------
+				}
 			}
 		};
 		// -------------------------------------------------------------------------
@@ -1924,8 +2266,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		populateThread.start();  
 		// -------------------------------------------------------------------------
 		// 05/04/2015 ECU start up the display handler
+		// 15/01/2018 ECU changed to use 'delayed' method
 		// -------------------------------------------------------------------------
-		displayHandler.sleep (SHORT_DELAY);
+		displayHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_DISPLAY,500);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -1951,7 +2294,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 05/04/2015 ECU switch off the display of information because
 		//                the data is being updated and could cause an error
 		// -------------------------------------------------------------
-		displayMetadata								= false;		
+		displayMetadata							  = false;		
 		PublicData.musicPlayerData.trackNumber    = -1;               // used to indicate which entry is playing
 		PublicData.musicPlayerData.shuffleMode    = false;            // switch shuffle mode off
 		PublicData.mediaPlayer.stop();
@@ -1967,32 +2310,54 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
     {
 		// -------------------------------------------------------------------------
 		// 21/04/2015 ECU created to handle recovery issues
+		// 28/10/2020 ECU change to switch on the type of message
 		// -------------------------------------------------------------------------
         @Override
         public void handleMessage (Message theMessage) 
-        {   
-        	// ---------------------------------------------------------------------
-        	// 21/04/2015 ECU rebuild the track list now that a root has been supplied
-        	// ---------------------------------------------------------------------
-        	buildTrackInformation (MusicPlayer.context);
-        	// ---------------------------------------------------------------------
-        	// 21/04/2015 ECU reset the track number
-        	// ---------------------------------------------------------------------
-        	PublicData.musicPlayerData.trackNumber = 0;
-        	// ---------------------------------------------------------------------
-        	playMusicTrack (MusicPlayer.context,0);
-        	// ---------------------------------------------------------------------
-        	// 21/04/2015 ECU start the refresh handler to get things going
-        	// ---------------------------------------------------------------------
-        	musicRefreshHandler.sleep (SHORT_DELAY);
-        	// ---------------------------------------------------------------------
+        {
+        	switch (theMessage.what)
+			{
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_PROCESS:
+        			// -------------------------------------------------------------
+        			// 21/04/2015 ECU rebuild the track list now that a root has been supplied
+        			// -------------------------------------------------------------
+        			buildTrackInformation (MusicPlayer.context);
+        			// -------------------------------------------------------------
+        			// 28/10/2020 ECU check if there is any track information
+        			// -------------------------------------------------------------
+        			if (PublicData.musicPlayerData.AnyTracks ())
+					{
+        				// ---------------------------------------------------------
+        				// 21/04/2015 ECU reset the track number
+        				// ---------------------------------------------------------
+        				PublicData.musicPlayerData.trackNumber = 0;
+        				// ---------------------------------------------------------
+        				playMusicTrack (MusicPlayer.context,0);
+        				// ---------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 28/10/2020 ECU even after recovery there are no tracks to play
+						// ---------------------------------------------------------
+						Utilities.popToastAndSpeak (getString (R.string.no_music_to_play),true);
+						changeRootFolderForMusic (context,true);
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				default :
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
         }
-        /* ------------------------------------------------------------------------- */
-        public void sleep(long delayMillis)
-        {		
-            this.removeMessages (0);
-            sendMessageDelayed(obtainMessage (0), delayMillis);
-        }
+       	// -------------------------------------------------------------------------
     };
 	// =============================================================================
 	public static void refreshGridCell (String theFileName)
@@ -2038,6 +2403,356 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
     	// -------------------------------------------------------------------------
     }
     // =============================================================================
+    int remotePlayerProcessor (int theCurrentStatus,int theAssociatedData)
+    {
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU this method is created to be a 'state processor' when
+    	//                handling a 'remote music player' - will return with the
+    	//                modified state
+    	// -------------------------------------------------------------------------
+    	
+    	// -------------------------------------------------------------------------
+    	// 13/01/2018 ECU declare any local variables
+    	// -------------------------------------------------------------------------
+    	int nextRemoteTrack;
+    	// -------------------------------------------------------------------------
+    	
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU created to be the state processor when a remote music player
+    	//                is being, or trying to be, used
+    	// -------------------------------------------------------------------------
+    	switch (theCurrentStatus)
+    	{
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_CANCEL:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU handles all aspects of the cancellation
+    			// -----------------------------------------------------------------
+    			CancelRemote (0);
+    			// -----------------------------------------------------------------
+    			// 14/01/2018 ECU Note - indicate that everything has been done
+    			// -----------------------------------------------------------------
+    			return StaticData.NOT_SET;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_DEVICE_CAN_PLAY:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU the device has indicated that it is capable of
+    			//                playing music
+    			// -----------------------------------------------------------------
+    			MessageHandler.popToastAndSpeak (MusicPlayer.context.getString (R.string.remote_device_can_play_music));
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU indicate the first time that a file will be sent
+    			// -----------------------------------------------------------------
+    			remoteFirst = true;
+    			// -----------------------------------------------------------------
+    			// 14/01/2018 ECU preset the header information
+    			// -----------------------------------------------------------------
+    			PublicData.socketMessageData 
+    				= Utilities.bitHandler (StaticData.BIT_UNSET,PublicData.socketMessageData, StaticData.SOCKET_DATA_FILE);
+    			// -----------------------------------------------------------------
+    			// 09/01/2018 ECU indicate that a music file is to be send to the
+    			//                remote player
+    			// -----------------------------------------------------------------
+    			return REMOTE_STATUS_SEND_FILE;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_DEVICE_CANNOT_PLAY:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU the remote device has indicated that it cannot
+    			//                play music
+    			// -----------------------------------------------------------------
+    			MessageHandler.popToastAndSpeak (MusicPlayer.context.getString (R.string.remote_device_cannot_play_music));
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU just cancel anything that is outstanding
+    			// -----------------------------------------------------------------
+    			return REMOTE_STATUS_CANCEL;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_DEVICE_NONE:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU it has not been possible to communicate with the
+    			//                specified remote device so just cancel this
+    			//                request
+    			// -----------------------------------------------------------------
+    			return REMOTE_STATUS_CANCEL;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_FILE_ACK:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU the remote player has ACKnowledged receipt of the
+    			//                the last transmitted file
+    			// -----------------------------------------------------------------
+    			// 13/01/2018 ECU decide whether the track can be started on the
+    			//                remote player or if it needs to wait until the
+    			//                remote player has finished playing the track
+    			// -----------------------------------------------------------------
+    			if (!remoteTrackPlaying)
+    			{
+    				// -------------------------------------------------------------
+    				// 13/01/2018 ECU the remote player isn't playing a track so can
+    				//                tell it to start
+    				// -------------------------------------------------------------
+    				playAfterTrackEnds = false;
+    				return REMOTE_STATUS_PLAY;
+    				// -------------------------------------------------------------
+    			}
+    			else
+    			{
+    				// -------------------------------------------------------------
+    				// 13/01/2018 ECU have to wait till the remote player has finished
+    				// -------------------------------------------------------------
+    				return REMOTE_STATUS_PLAY_AT_TRACK_END;
+    				// -------------------------------------------------------------
+    			}
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_FILE_NAK:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU the remote player has NAK'ed the last transmitted
+    			//                file
+    			// -----------------------------------------------------------------
+    			break;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_PLAY:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU want to tell the remote player to start playing
+    			//                the most recent file that it received
+    			// -----------------------------------------------------------------
+    			PublicData.musicPlayerRemote = true;
+    			if (remoteFirst)
+    			{
+    				// -------------------------------------------------------------
+        			// 12/01/2018 ECU get the remote player to start playing
+        			// -------------------------------------------------------------
+        			tellRemotePlayerToPlay ();	
+        			// -------------------------------------------------------------
+    				remoteFirst = false;
+    				// -------------------------------------------------------------
+    			}
+    			else
+    			{
+    				// -------------------------------------------------------------
+    				// 13/01/2018 ECU check if the remote track is still playing
+    				// -------------------------------------------------------------
+    				if (!remoteTrackPlaying)
+    				{
+    					// ---------------------------------------------------------
+    					// 13/01/2018 ECU it is not playing so can tell the remote
+    					//                player to start
+    					// ---------------------------------------------------------
+    					tellRemotePlayerToPlay ();
+    					// ---------------------------------------------------------
+    				}
+    				else
+    				{
+    					// ---------------------------------------------------------
+    					// 13/01/2018 ECU the remote player is playing so queue till
+    					//                it has finished
+    					// ---------------------------------------------------------
+    					return REMOTE_STATUS_SEND_FILE;
+    					// ---------------------------------------------------------
+    				}
+    			}
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU at this point should be able to trigger the next
+    			//                transfer
+    			// -----------------------------------------------------------------
+    			return REMOTE_STATUS_SEND_NEXT_FILE;
+    			// -----------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_PLAY_AT_TRACK_END:
+    			// -----------------------------------------------------------------
+    			// 13/01/2018 ECU indicate that when the remote player has finished
+    			//                playing the last track then it should be told to
+    			//                play the next one (this will have been previously
+    			//                sent) and is the one that this ACK relates to
+    			// -----------------------------------------------------------------
+    			playAfterTrackEnds = true;
+    			// -----------------------------------------------------------------
+    			break;
+    		//  --------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_SEND:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU send a message to the remote device to see if it
+    			//                is capable of being a 'remote music player'
+    			// -----------------------------------------------------------------
+    			DeviceStatusHandler deviceStatusHandler = new DeviceStatusHandler 
+    														(DialogueUtilitiesNonStatic.context,
+    																Utilities.createAMethod (MusicPlayer.class,"StatusSuccessMethod"),
+    																Utilities.createAMethod (MusicPlayer.class,"StatusFailureMethod"));
+    			deviceStatusHandler.initiate (Devices.returnIPAddress (devices [theAssociatedData]));
+    			// -----------------------------------------------------------------
+    			// 10/02/2014 ECU try and remove the album art
+    			// -----------------------------------------------------------------
+    			refreshGridCell (null);
+    			// -----------------------------------------------------------------
+    			break;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    	   	case REMOTE_STATUS_SEND_FILE:
+    	   		// -----------------------------------------------------------------
+    	   		// 08/01/2018 ECU want to send the 'current track' to the remote
+    	   		//                player
+    	   		// -----------------------------------------------------------------
+    	   		// 13/01/2018 ECU remember the number of this track
+    	   		// -----------------------------------------------------------------
+    	   		remoteTrackPlayingNow = PublicData.musicPlayerData.trackNumber;
+    			// -----------------------------------------------------------------
+    			// 15/08/2013 ECU added the 'true' argument to select a method that will will try retransmission
+    			//				  in the event of a failure
+    			// 16/04/2015 ECU use the return from SendFile to determine whether
+    			//                the operation was or was not successful
+    			// -----------------------------------------------------------------
+    	   		SendFileThread (context,PublicData.musicPlayerData.tracks.get (PublicData.musicPlayerData.trackNumber).fileName);
+    			// -----------------------------------------------------------------
+    	   		// 12/01/2018 ECU at some stage the file will be ACKed (or NAKed)
+    	   		//                this is the point when the remote player will be
+    	   		//                told to start playing the received file
+    	   		// -----------------------------------------------------------------
+    	   		break;
+    	   	// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_SEND_NEXT_FILE:
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU want to transmit the 'next track' to the remote
+    			//                player
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU get the next track to be transmitted
+    			// -----------------------------------------------------------------
+    			nextRemoteTrack = getNextTrack ();
+    			// -----------------------------------------------------------------
+    			// 08/01/2018 ECU decide whether the next track is to be played.
+    			//                if NOT_SET returned then there are no more tracks
+    			//                to be played.
+    			// -----------------------------------------------------------------
+    			if (nextRemoteTrack != StaticData.NOT_SET)
+    			{
+    				// -------------------------------------------------------------
+    				// 08/01/2018 ECU copy the number across
+    				// -------------------------------------------------------------
+    				PublicData.musicPlayerData.trackNumber = nextRemoteTrack;
+    				// -------------------------------------------------------------
+    				// 08/01/2018 ECU request that the track be transmitted to the
+    				//                remote player
+    				// -------------------------------------------------------------
+    				remotePlayerProcessorMessage (REMOTE_STATUS_SEND_FILE);
+    				// -------------------------------------------------------------
+    			}
+    			// -----------------------------------------------------------------
+    			break;
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		case REMOTE_STATUS_TRACK_ENDED:
+    			// -------------------------------------------------------------
+    			// 09/01/2018 ECU the 'remote player' has indicated that it has 
+    			//                finished playing the 'last track'
+    			// -------------------------------------------------------------
+    			remoteTrackPlaying = false;
+    			// -----------------------------------------------------------------
+    			// 13/01/2018 ECU check if there is a stored track ready to be played
+    			// -----------------------------------------------------------------
+    			if (!playAfterTrackEnds)
+    			{
+    				// --------------------------------------------------------------
+    				// 14/01/2018 ECU there is no queued 'play request' so just
+    				//                transmit the next file
+    				// --------------------------------------------------------------
+    				return REMOTE_STATUS_SEND_NEXT_FILE;
+    				// --------------------------------------------------------------
+    			}
+    			else
+    			{
+    				// -------------------------------------------------------------
+    				// 13/01/2018 ECU want to play the track that has been stored
+    				// -------------------------------------------------------------
+    				return REMOTE_STATUS_PLAY;	
+    				// -------------------------------------------------------------
+    			}
+    			// -----------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    		// ---------------------------------------------------------------------
+    	}
+    	// -------------------------------------------------------------------------
+    	return StaticData.NOT_SET;
+    }
+    // =============================================================================
+    static void remotePlayerProcessorMessage (int theState,int theAssociatedData)
+    {
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU created to package the message that will go to the remote
+    	//                music player
+    	// 06/09/2020 ECU put in the 'null' check - just in case
+    	// -------------------------------------------------------------------------
+    	if (musicRefreshHandler != null)
+		{
+    		Message localMessage = musicRefreshHandler.obtainMessage (StaticData.MESSAGE_REMOTE_PLAYER);
+    		localMessage.arg1 = theState;
+    		localMessage.arg2 = theAssociatedData;
+    		musicRefreshHandler.sendMessage (localMessage);
+		}
+    	// -------------------------------------------------------------------------
+    }
+    // -----------------------------------------------------------------------------
+    static void remotePlayerProcessorMessage (int theState)
+    {
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU called when there is no associated data
+    	// -------------------------------------------------------------------------
+    	remotePlayerProcessorMessage (theState,StaticData.NOT_SET);
+    	// -------------------------------------------------------------------------
+    }  
+    // =============================================================================
+    static void remotePlayerProcessorMessageDelayed (int theState,int theAssociatedData,long theDelay)
+    {
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU created to package the message that will go to the remote
+    	//                music player
+    	// -------------------------------------------------------------------------
+    	Message localMessage = musicRefreshHandler.obtainMessage (StaticData.MESSAGE_REMOTE_PLAYER);
+    	localMessage.arg1 = theState;
+    	localMessage.arg2 = theAssociatedData;
+    	musicRefreshHandler.sendMessageDelayed (localMessage,theDelay);
+    	// -------------------------------------------------------------------------
+    }
+    // -----------------------------------------------------------------------------
+    static void remotePlayerProcessorMessageDelayed (int theState,long theDelay)
+    {
+    	// -------------------------------------------------------------------------
+    	// 08/01/2018 ECU called when there is no associated data
+    	// -------------------------------------------------------------------------
+    	remotePlayerProcessorMessageDelayed (theState,StaticData.NOT_SET,theDelay);
+    	// -------------------------------------------------------------------------
+    }
+    // =============================================================================
+    public static void remotePlayerTrackEndReset (boolean theCloseMediaFlag)
+    {
+    	// -------------------------------------------------------------------------
+    	// 25/03/2019 ECU reset parameters at the end of a track
+    	// -------------------------------------------------------------------------
+    	if (theCloseMediaFlag)
+    		MusicPlayer.closeMediaPlayer ();
+    	// -------------------------------------------------------------------------
+    	// 25/03/2019 ECU reset everything to do with remote player
+    	// -------------------------------------------------------------------------
+    	PublicData.trackBeingPlayed = false;
+    	// -------------------------------------------------------------------------
+    	// 13/04/2015 ECU at this point if there is track information
+    	//                being displayed then clear it
+    	// -------------------------------------------------------------------------
+    	MusicPlayer.setMarqueeText (null);
+    	// -------------------------------------------------------------------------
+    	// 02/05/2015 ECU indicate that the music player is now available
+    	//            ECU change to use method
+    	// -------------------------------------------------------------------------
+    	MusicPlayer.setStatus (false);
+    	// -------------------------------------------------------------------------
+    }
+    // =============================================================================
     public static void SearchTracks (int theFolderIndex)
     {
 		 // ------------------------------------------------------------------------
@@ -2045,11 +2760,11 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		 // 10/04/2015 ECU changed to use new dialogue which contains options
 		 //                as well as the search string
 		 // ------------------------------------------------------------------------
-		 DialogueUtilities.searchChoice (DialogueUtilities.context,
-				 	DialogueUtilities.context.getString (R.string.title_search_string),
-				 	DialogueUtilities.context.getString (R.string.confirm),
+		 DialogueUtilities.searchChoice (DialogueUtilitiesNonStatic.context,
+				 	DialogueUtilitiesNonStatic.context.getString (R.string.title_search_string),
+				 	DialogueUtilitiesNonStatic.context.getString (R.string.confirm),
 					Utilities.createAMethod (MusicPlayer.class,"ConfirmSearch",(Object)(new SearchParameters())),
-					DialogueUtilities.context.getString (R.string.cancel),
+					DialogueUtilitiesNonStatic.context.getString (R.string.cancel),
 					Utilities.createAMethod (MusicPlayer.class,"CancelSearch",(Object)(new SearchParameters())));	
 		 // ------------------------------------------------------------------------
 	}
@@ -2109,7 +2824,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 				// -----------------------------------------------------------------
 				// 08/04/2015 ECU add the track into results list
 				// -----------------------------------------------------------------
-				localTracks.add(theTracks.get(theTrack));
+				localTracks.add (theTracks.get(theTrack));
 				// -----------------------------------------------------------------
 			}
 		}
@@ -2136,7 +2851,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// 16/04/2015 ECU sendFile was successful
 			// ---------------------------------------------------------------------
 			// 13/04/2015 ECU indicate where the music is being sent
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			String deviceName = Utilities.GetDeviceName (PublicData.remoteMusicPlayer);
 			// ---------------------------------------------------------
 			// 16/04/2015 ECU provide information about music that has been
@@ -2145,7 +2860,11 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			setMarqueeText ("Last Track sent to " + 
 					((deviceName == null) ? PublicData.remoteMusicPlayer : deviceName) + " was " +
 					TrackDetails.trackInformation (theFileName));
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 23/03/2017 ECU log some useful data
+			// ---------------------------------------------------------------------
+			logData ("Sent : " + TrackDetails.trackInformation (theFileName));
+			// ---------------------------------------------------------------------
 			return true;
 			// ---------------------------------------------------------------------
 		}
@@ -2161,6 +2880,40 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			return false;
 			// ---------------------------------------------------------------------
 		}
+	}
+	// =============================================================================
+	void SendFileThread (final Context theContext,final String theFileName)
+	{
+		Thread sendThread = new Thread()
+		{
+			@Override
+			public void run()
+			{
+				// -----------------------------------------------------------------
+				if (SendFile (theContext,theFileName))
+				{
+					// -------------------------------------------------------------
+					// 10/01/2018 ECU the send was successful
+					// -------------------------------------------------------------
+					remotePlayerProcessorMessage (REMOTE_STATUS_FILE_ACK);
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 10/01/2018 ECU the send was unsuccessful
+					// -------------------------------------------------------------
+					remotePlayerProcessorMessage (REMOTE_STATUS_FILE_NAK);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+			}
+		};
+		// -------------------------------------------------------------------------
+		// 05.04/2015 ECU start up the thread
+		// -------------------------------------------------------------------------
+		sendThread.start();  
+		// -----------------------------
 	}
 	// =============================================================================
 	private static void setImageViewSize (ImageView theImageView,int theSize)
@@ -2234,7 +2987,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		if (theMediaPlayer != null)
 		{
 			float adjustedVolume = (float) theVolume / (float) theScaleFactor;
-			PublicData.mediaPlayer.setVolume(adjustedVolume, adjustedVolume);
+			PublicData.mediaPlayer.setVolume (adjustedVolume,adjustedVolume);
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -2268,17 +3021,18 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
  	   			// -----------------------------------------------------------------
  	   			// 30/03/2015 ECU table is not on display so use toast with centre-ing
  	   			// -----------------------------------------------------------------
- 	   			Utilities.popToast (MainActivity.activity.getString (R.string.album_name_textview)  	+ " : " + trackDetails.album + "\n" +
- 	   								MainActivity.activity.getString (R.string.track_name_textview)	 	+ " : " + trackDetails.title + "\n" +
- 	   								MainActivity.activity.getString (R.string.artist_textview) 			+ " : " + trackDetails.artist + "\n" +
+ 	   			Utilities.popToast (MainActivity.activity.getString (R.string.album_name_textview)  	+ " : " + trackDetails.album + StaticData.NEWLINE +
+ 	   								MainActivity.activity.getString (R.string.track_name_textview)	 	+ " : " + trackDetails.title + StaticData.NEWLINE +
+ 	   								MainActivity.activity.getString (R.string.artist_textview) 			+ " : " + trackDetails.artist + StaticData.NEWLINE +
  	   								MainActivity.activity.getString (R.string.track_composer_textview)	+ " : " + trackDetails.composer,true);
  	   			// -----------------------------------------------------------------
  	   		}
  	   		// ---------------------------------------------------------------------
  	   		// 05/04/2015 ECU update the number of tracks at the same time
  	   		// ---------------------------------------------------------------------
- 	   		musicTrackTextView.setText("Playing track " + (theTrackNumber + 1) +
- 	   									" of " + PublicData.musicPlayerData.tracks.size());
+ 	   		musicTrackTextView.setText (String.format (MainActivity.activity.getString
+ 	   			(R.string.music_player_playing_track),(theTrackNumber + 1),PublicData.musicPlayerData.tracks.size()));
+ 	   		// ---------------------------------------------------------------------
 		}
  		// -------------------------------------------------------------------------
 	}
@@ -2303,62 +3057,57 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// ------------------------------------------------------------------------
 		
 	}
-	// ============================================================================
-	static void startRemoteMusicPlayer (String theIPAddress)
+	// =============================================================================
+	void tellRemotePlayerToPlay ()
 	{
-		// ------------------------------------------------------------------------
-		// 15/03/2015 ECU created to hold the code, previously against item selection,
-		//                that starts up the music player on the specified device
-		// 16/03/2015 ECU took out the check on 'remoteMode' which is done elsewhere
 		// -------------------------------------------------------------------------
-		// 15/03/2015 ECU copy address the IP address
+		// 12/01/2018 ECU create to send the datagram to get the remote player to
+		//                start playing and then toggle the status bit
 		// -------------------------------------------------------------------------
-		PublicData.remoteMusicPlayer = theIPAddress;
+		Utilities.sendDatagramType (context,PublicData.remoteMusicPlayer,StaticData.SOCKET_MESSAGE_PLAY);
 		// -------------------------------------------------------------------------
-		// 15/03/2015 ECU want to put this device into remote mode with music
-		//                being played on the specified device
+		// 13/01/2018 ECU start up the timers associated with this track
 		// -------------------------------------------------------------------------
-		// 03/08/2013 ECU send the file currently being played
-		// 04/08/2013 ECU change to use a version of SendFile which transmits large files as chunks
-		//            ECU remember the file name being sent
+		trackTimeOuts (remoteTrackPlayingNow);
 		// -------------------------------------------------------------------------
-		remoteFileName = PublicData.musicPlayerData.tracks.get (PublicData.musicPlayerData.trackNumber).fileName;
+		// 12/01/2018 ECU toggle the receiving file
 		// -------------------------------------------------------------------------
-		// 15/08/2013 ECU added the 'true' argument to select a method that will will try retransmission
-		//				  in the event of a failure
-		// 16/04/2015 ECU use the return from SendFile to determine whether
-		//                the operation was or was not successful
+		PublicData.socketMessageData 
+			= Utilities.bitHandler (StaticData.BIT_TOGGLE,PublicData.socketMessageData, StaticData.SOCKET_DATA_FILE);
 		// -------------------------------------------------------------------------
-		if (SendFile (MusicPlayer.context,remoteFileName))
-		{
-			// ---------------------------------------------------------------------
-			// 17/04/2015 ECU now that there is a good connection to the remote device
-			//                then stop the music playing on this device
-			// ---------------------------------------------------------------------
-			PublicData.mediaPlayer.stop (); 
-			// ---------------------------------------------------------------------
-			// 03/08/2013 ECU indicate that some initial actions are required
-			// ---------------------------------------------------------------------
-			remoteFirst = true;
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU preset some variables
-			// ---------------------------------------------------------------------
-			remoteTrackPlayingNow	=	StaticData.NO_RESULT;	
-			remoteTrackPlayingNext	= 	StaticData.NO_RESULT;	
-			//----------------------------------------------------------------------
-		}
-		else
-		{
-			// ---------------------------------------------------------------------
-			// 17/04/2015 ECU unable to connect to remote device
-			// ---------------------------------------------------------------------
-			Utilities.popToast (DialogueUtilities.context.getString (R.string.unable_to_connect));
-			// ---------------------------------------------------------------------
-		}
+		// 09/01/2018 ECU indicate that the track is playing
+		// -------------------------------------------------------------------------
+		remoteTrackPlaying = true;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static void tidyUp (Context theContext)
 	{
+		// -------------------------------------------------------------------------
+		// 04/06/2013 ECU stop the media player 
+		// 18/01/2015 ECU put in the check on null
+		// 03/01/2018 ECU changed the order in which the handler is stopped so that
+		//                it is not still running when the data is written to disk
+		// 26/10/2020 ECU changed to use the new method
+		// -------------------------------------------------------------------------
+		PublicData.mediaPlayer = MediaPlayerUtilities.StopAndRelease(PublicData.mediaPlayer);
+		// -------------------------------------------------------------------------			
+		// 02/06/2013 ECU indicate that the player has been stopped
+		// -------------------------------------------------------------------------
+		PublicData.stopmpPlayer = true;
+		// -------------------------------------------------------------------------
+		// 03/01/2018 ECU clear any stored messages
+		// 05/01/2018 ECU put in the check on null
+		// -------------------------------------------------------------------------
+		if (musicRefreshHandler != null)
+		{
+			musicRefreshHandler.removeMessages (StaticData.MESSAGE_DURATION);
+			// ---------------------------------------------------------------------
+			// 03/09/2020 ECU reset the handler
+			// ---------------------------------------------------------------------
+			musicRefreshHandler = null;
+			// ---------------------------------------------------------------------
+		}
 		//  ------------------------------------------------------------------------
 		// 20/04/2015 ECU created to tidy up when exiting the activity or when
 		//                called by MainActivity when it is destroyed
@@ -2367,22 +3116,18 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 21/04/2015 ECU put in the check on null
 		// -------------------------------------------------------------------------
 		if (PublicData.musicPlayerData != null)
+		{
 			WriteToDisk (PublicData.projectFolder + theContext.getString (R.string.music_player_data));
-		// -------------------------------------------------------------------------
-		// 04/06/2013 ECU stop the media player 
-		// 18/01/2015 ECU put in the check on null
-		// -------------------------------------------------------------------------
-		if (PublicData.mediaPlayer != null)
-			PublicData.mediaPlayer.stop();
-		// -------------------------------------------------------------------------			
-		// 02/06/2013 ECU indicate that the player has been stopped
-		// -------------------------------------------------------------------------
-		PublicData.stopmpPlayer = true;
+		}
 		// -------------------------------------------------------------------------
 		// 13/04/2015 ECU delete the track information. Setting to 'null' will cause
 		//                the adapter to set the TextView to 'GONE'
 		// -------------------------------------------------------------------------
 		trackInformation = null; 
+		// -------------------------------------------------------------------------
+		// 26/10/2020 ECU remove any album art
+		// -------------------------------------------------------------------------
+		refreshGridCell (null);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2399,6 +3144,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		if (PublicData.musicPlayerData.shuffleMode && PublicData.musicPlayerData.tracks.size() < SHUFFLE_LIMIT)
 		{
 			// ---------------------------------------------------------------------
+			// 06/01/2018 ECU tell user why shuffle mode is not being switched on
+			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (String.format (context.getString (R.string.shuffle_mode_too_few_format),SHUFFLE_LIMIT),true);
+			// ---------------------------------------------------------------------
 			// 01/04/2015 ECU force shuffle mode to be off
 			// ---------------------------------------------------------------------
 			PublicData.musicPlayerData.shuffleMode = false;
@@ -2408,6 +3157,48 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 01/04/2015 ECU update the display status icons
 		// -------------------------------------------------------------------------
 		updateStatusIcons ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void trackTimeOuts (int theTrackNumber)
+	{
+		// -------------------------------------------------------------------------
+		// 13/01/2018 ECU created to handle the timeouts associated with playing a
+		//                remote track
+		// -------------------------------------------------------------------------
+		int	trackDuration = PublicData.musicPlayerData.tracks.get (theTrackNumber).duration;
+		// -------------------------------------------------------------------------
+		// 02/05/2015 ECU check if the duration has been set - if not then default to
+		//                5 minutes. Where there is a duration then allow twice as long 
+		//                to finish
+		// 03/05/2015 ECU (*2) seemed too long so just add in PLAY_TIMEOUT
+		// 01/09/2015 ECU changed to use StaticData
+		// 21/03/2017 ECU changed from '* 5 to' '* 10'
+		//            ECU added the check on 'remoteFirst' because cannot know
+		//                the first track to be played
+		// -------------------------------------------------------------------------
+		if (trackDuration == StaticData.NO_RESULT)
+		{
+			trackDuration = StaticData.MILLISECONDS_PER_MINUTE * 10;
+		}
+		else
+		{
+			trackDuration = trackDuration + PLAY_TIMEOUT;
+		}
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU set up the time out message
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU delete any outstanding time out message before sending a
+		//                new one
+		// -------------------------------------------------------------------------
+		musicRefreshHandler.removeMessages (StaticData.MESSAGE_TIME_OUT);
+		musicRefreshHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_TIME_OUT,trackDuration);
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU make sure there is no monitoring running 
+		// 13/01/2018 ECU Note - this monitor will only start should the track
+		//                       timeout occur
+		// -------------------------------------------------------------------------
+		musicRefreshHandler.removeMessages (StaticData.MESSAGE_MONITOR);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2467,8 +3258,33 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 						theSubTitleTextView.setVisibility (View.VISIBLE);
 					// -------------------------------------------------------------
 					// 12/04/2015 ECU display the track information
+					// 15/01/2018 ECU if the duration is running then display it
 					// -------------------------------------------------------------
-					theSubTitleTextView.setText (trackInformation);
+					if (duration == StaticData.NOT_SET)
+					{
+						// ---------------------------------------------------------
+						// 15/01/2018 ECU Note - just display information about the
+						//                       track being played
+						// ---------------------------------------------------------
+						theSubTitleTextView.setText (trackInformation);
+						// ---------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 15/01/2018 ECU indicate how much longer the music will be
+						//                played
+						// 03/02/2018 ECU added the display of volume and use a format
+						// 12/07/2018 ECU if music has been stopped because of some
+						//                text being spoken then display this
+						//                fact
+						// ---------------------------------------------------------
+						if (PublicData.mediaPlayer.isPlaying())
+							theSubTitleTextView.setText (String.format (context.getString (R.string.music_player_time_remaining),Utilities.printTime (duration),volumeCurrent));
+						else
+							theSubTitleTextView.setText (context.getString (R.string.music_player_waiting_to_restart));
+						// ---------------------------------------------------------
+					}
 					// -------------------------------------------------------------
 					// 12/04/2015 ECU make sure the text view is selected
 					// -------------------------------------------------------------
@@ -2560,7 +3376,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 	/* ============================================================================= */
 	private static void WriteToDisk (String theFileName)
 	{
-		// -------------------------------------------------------------------------
+		// ---------------------------------------------------------
+		// 04/01/2018 ECU trying to find a problem so just log that
+		//                arrived here
+		// ---------------------------------------------------------
 		// 04/06/2013 ECU check if already written to disk
 		// 19/06/2013 ECU use MainActivity.musicDataWritten instead of a local boolean
 		// 19/01/2014 ECU change to use the Write method in Utilities
@@ -2581,7 +3400,15 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		//if (savedTracks != null)
 		//		PublicData.musicPlayerData.tracks = savedTracks;
 		// -------------------------------------------------------------------------
-		AsyncUtilities.writeObjectToDisk (theFileName, PublicData.musicPlayerData);
+		if (writeToDisk)
+		{
+			AsyncUtilities.writeObjectToDisk (theFileName, PublicData.musicPlayerData);
+			// ---------------------------------------------------------------------
+			// 03/01/2018 ECU indicate that no need for any more writes to disk
+			// ---------------------------------------------------------------------
+			writeToDisk = false;
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------	
 	}
 	// =============================================================================
@@ -2615,8 +3442,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			recoveryMode = false;
 			// ---------------------------------------------------------------------
 			// 21/04/2015 ECU tell the handler to do its work
+			// 28/10/2020 ECU changed from a 'sleep' to a '...Delayed'
 			// ---------------------------------------------------------------------
-			MusicPlayer.recoveryHandler.sleep (SHORT_DELAY);
+			MusicPlayer.recoveryHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_PROCESS,SHORT_DELAY);
 			// ---------------------------------------------------------------------
 		}
 	}
@@ -2634,7 +3462,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 09/08/2016 ECU ensure that the selected file is a directory
 		// -------------------------------------------------------------------------
-		if (returnedFileAsFile.isDirectory())
+		if (returnedFileAsFile.isDirectory ())
 		{
 			// ---------------------------------------------------------------------
 			// 09/08/2016 ECU Note - check if there is only a single file returned
@@ -2696,7 +3524,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			// 10/08/2016 ECU there are more subfolders so carry on
 			// ---------------------------------------------------------------------
-			DialogueUtilities.listChoice (DialogueUtilities.context,
+			DialogueUtilities.listChoice (DialogueUtilitiesNonStatic.context,
 										  "Parent Directory is " + returnedFile,
 										  returnedFiles,
 										  Utilities.createAMethod (MusicPlayer.class,"BrowseForRootFolder",0),
@@ -2718,21 +3546,17 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// 31/03/2015 ECU restore the saved playlist
 		// 04/04/2015 ECU changed to use 'tracks'
 		// 05/04/2015 ECU changed to use variable in 'musicPlayerData'
+		// 04/01/2018 ECU changed to use the new method
 		// --------------------------------------------------------------------------
-		PublicData.musicPlayerData.tracks = PublicData.musicPlayerData.savedTracks;
+		PublicData.musicPlayerData.Tracks ();
 		// -------------------------------------------------------------------------
-		// 31/03/2015 ECU now send the music to the remote device
+		// 09/01/2018 ECU play the first track
 		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.trackNumber    = -1;      
-		PublicData.mediaPlayer.stop();
-		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU make sure the refresh handler is running
-		// -------------------------------------------------------------------------
-		musicRefreshHandler.sleep (SHORT_DELAY);
+		playMusicTrack (0);
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-	public static void CancelRemote (int theIndex)
+	public static void CancelRemote (int theDummyIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 13/04/2015 ECU created to clear flags associated with remote music playing
@@ -2754,6 +3578,19 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 06/04/2015 ECU created as cancel in the dialogue
 		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU if in 'recover mode' then cannot start up the music player
+		// -------------------------------------------------------------------------
+		if (recoveryMode)
+		{
+			// ---------------------------------------------------------------------
+			// 28/10/2020 ECU just want to end this activity
+			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.music_cannot_continue));
+			// ---------------------------------------------------------------------
+			finishMusicPlayer ();
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static void CancelSearch (String theSearchString)
@@ -2772,18 +3609,13 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 16/03/2015 ECU now send the music to the remote device
 		// 02/05/2015 ECU want to check if the device is present and in the correct mode
+		// 08/01/2017 ECU changed to use MessageHandler
 		// -------------------------------------------------------------------------
-		Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.trying_to_communicate),true,Toast.LENGTH_SHORT);
+		MessageHandler.popToastAndSpeak (MusicPlayer.context.getString (R.string.trying_to_communicate));
 		// -------------------------------------------------------------------------
-		DeviceStatusHandler deviceStatusHandler = new DeviceStatusHandler 
-				(DialogueUtilities.context,
-				 Utilities.createAMethod (MusicPlayer.class,"StatusSuccessMethod"),
-				 Utilities.createAMethod (MusicPlayer.class,"StatusFailureMethod"));
-		deviceStatusHandler.initiate (Devices.returnIPAddress (devices [theIndex]));
+		// 08/01/2018 ECU initiate the state handler
 		// -------------------------------------------------------------------------
-		// 10/02/2014 ECU try and remove the album art
-		// -------------------------------------------------------------------------
-		refreshGridCell (null);
+		remotePlayerProcessorMessage (REMOTE_STATUS_SEND,theIndex);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2803,20 +3635,21 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 			// ---------------------------------------------------------------------
 			// 08/04/2015 ECU nothing matched the search so reset the tracks and inform
 			//                the user
+			// 04/01/2018 ECU changed to use the method
 			// ----------------------------------------------------------------------
-			PublicData.musicPlayerData.tracks = PublicData.musicPlayerData.savedTracks;
+			PublicData.musicPlayerData.Tracks ();
 			// ----------------------------------------------------------------------
 			Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.sorry_no_tracks));
 		}
 		// --------------------------------------------------------------------------
-		DialogueUtilities.listChoice (DialogueUtilities.context,
-									  DialogueUtilities.context.getString(R.string.select_track),
+		DialogueUtilities.listChoice (DialogueUtilitiesNonStatic.context,
+									  DialogueUtilitiesNonStatic.context.getString (R.string.select_track),
 						              TrackDetails.returnStringArray (PublicData.musicPlayerData.tracks), 
-						              Utilities.createAMethod(MusicPlayer.class,"SelectedTrack",0),
-						              DialogueUtilities.context.getString (R.string.select_track_titles),
-									  Utilities.createAMethod(MusicPlayer.class,"SearchTracks",0),
-						              DialogueUtilities.context.getString(R.string.cancel_and_reset),
-						              Utilities.createAMethod(MusicPlayer.class,"CancelSearch",0));
+						              Utilities.createAMethod (MusicPlayer.class,"SelectedTrack",0),
+						              DialogueUtilitiesNonStatic.context.getString (R.string.select_track_titles),
+									  Utilities.createAMethod (MusicPlayer.class,"SearchTracks",0),
+						              DialogueUtilitiesNonStatic.context.getString (R.string.cancel_and_reset),
+						              Utilities.createAMethod (MusicPlayer.class,"CancelSearch",0));
 		// -------------------------------------------------------------------------
 		
 	}
@@ -2843,7 +3676,7 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
  				// ---------------------------------------------------------------------
  				returnedFiles = Utilities.returnSubDirectories (returnedFile,true,MUSIC_EXTENSION);
  				// ---------------------------------------------------------------------
- 				DialogueUtilities.listChoice (DialogueUtilities.context,
+ 				DialogueUtilities.listChoice (DialogueUtilitiesNonStatic.context,
  											  "Parent Directory is " + returnedFile,
  											  returnedFiles,
  											  Utilities.createAMethod (MusicPlayer.class,"BrowseForRootFolder",0),
@@ -2862,28 +3695,47 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
  				// -----------------------------------------------------------------
 				// 06/04/2015 ECU change the root folder for the music
 				// 07/04/2015 ECU changed to use listChoice
+ 				// 07/10/2017 ECU changed from ROOT_DIRECTORY
 				// -----------------------------------------------------------------
-				returnedFiles = Utilities.returnSubDirectories (StaticData.ROOT_DIRECTORY,true,MUSIC_EXTENSION);
+				returnedFiles = Utilities.returnSubDirectories (StaticData.MUSIC_ROOT_DIRECTORY,true,MUSIC_EXTENSION);
 				// -----------------------------------------------------------------
-				DialogueUtilities.listChoice (DialogueUtilities.context,
-											  DialogueUtilities.context.getString (R.string.title_root_folder),
+				DialogueUtilities.listChoice (DialogueUtilitiesNonStatic.context,
+											  DialogueUtilitiesNonStatic.context.getString (R.string.title_root_folder),
 											  returnedFiles,
 											  Utilities.createAMethod (MusicPlayer.class,"BrowseForRootFolder",0),
-											  DialogueUtilities.context.getString (R.string.cancel_this_operation),
+											  DialogueUtilitiesNonStatic.context.getString (R.string.cancel_this_operation),
 											  Utilities.createAMethod (MusicPlayer.class,"CancelRootFolder",0));
 				// -----------------------------------------------------------------
  			}
  		}
  	}
 	// =============================================================================
+	public static void RemoteCompletionMethod ()
+	{
+		// -------------------------------------------------------------------------
+		// 22/03/2017 ECU created to be called when the track from the server
+		//                has finished playing
+		// -------------------------------------------------------------------------
+		// 22/03/2017 ECU send the message to the general handler because there are 
+		//                some timing aspects
+		// -------------------------------------------------------------------------
+		PublicData.messageHandler.sendEmptyMessage (StaticData.MESSAGE_TRACK_COMPLETED);
+		// -------------------------------------------------------------------------
+	}	
+	// =============================================================================
 	public static void SelectedArtist (int theArtist)
 	{
 		// -------------------------------------------------------------------------
 		// 31/03/2015 ECU save the existing tracks but only once
 		// 04/04/2015 ECU changed to use 'tracks'
+		// 04/01/2018 ECU changed to use method for saving the tracks
 		// -------------------------------------------------------------------------
 		if (PublicData.musicPlayerData.savedTracks == null)
-			PublicData.musicPlayerData.savedTracks = PublicData.musicPlayerData.tracks;
+			PublicData.musicPlayerData.SavedTracks ();
+		// -------------------------------------------------------------------------
+		// 09/01/2018 ECU stop the current track form playing
+		// -------------------------------------------------------------------------
+		PublicData.mediaPlayer.stop (); 
 		// -------------------------------------------------------------------------
 		// 31/03/2015 ECU now build the tracks for this artists
 		// 04/04/2015 ECU changed to use 'tracks'
@@ -2901,19 +3753,14 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		Collections.sort (PublicData.musicPlayerData.tracks);
 		// -------------------------------------------------------------------------
-		// 16/03/2015 ECU now send the music to the remote device
-		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.trackNumber    = -1;               // used to indicate which entry is playing
-		PublicData.mediaPlayer.stop (); 
-		// -------------------------------------------------------------------------
 		// 01/04/2015 ECU just check if there are enough tracks to make
 		//                shuffle mode sensible - if set
 		// -------------------------------------------------------------------------
 		toggleShuffleMode (false);
 		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU make sure the refresh handler is running
+		// 09/01/2018 ECU play the first track
 		// -------------------------------------------------------------------------
-		musicRefreshHandler.sleep (SHORT_DELAY);
+		playMusicTrack (0);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2922,26 +3769,9 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 01/04/2015 ECU a track has been selected
 		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU the following doesn't work if in shuffle mode so switch
-		//                it off until have a solution
+		// 09/01/2018 ECU play the first track
 		// -------------------------------------------------------------------------
-		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU set the required track - the '-1' is because the number 
-		//                will be incremented before use
-		// 04/04/2015 ECU changed from
-		//					PublicData.musicPlayerData.tracks.get(theTrackIndex).trackNumber
-		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.trackNumber    = theTrackIndex - 1; 
-		PublicData.mediaPlayer.stop (); 
-		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU force shuffle mode off
-		// -------------------------------------------------------------------------
-		PublicData.musicPlayerData.shuffleMode = false;
-		updateStatusIcons ();
-		// -------------------------------------------------------------------------
-		// 01/04/2015 ECU make sure the refresh handler is running
-		// -------------------------------------------------------------------------
-		musicRefreshHandler.sleep (SHORT_DELAY);
+		playMusicTrack (theTrackIndex);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2950,12 +3780,10 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 02/05/2015 ECU unable to communicate with the remote device tell the user
 		//                and then ignore the request
+		// 08/01/2018 ECU changed to use MessageHandler
 		// -------------------------------------------------------------------------
-		Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.unable_to_communicate));
-		// -------------------------------------------------------------------------
-		// 02/05/2015 ECU cancel the request
-		// -------------------------------------------------------------------------
-		CancelRemote (0);
+		MessageHandler.popToastAndSpeak (MusicPlayer.context.getString (R.string.unable_to_communicate));
+		remotePlayerProcessorMessage (REMOTE_STATUS_DEVICE_NONE);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2969,32 +3797,48 @@ public class MusicPlayer extends DibosonActivity implements OnGestureListener
 		if (!PublicData.receivedStatus.remoteMusicMode)
 		{
 			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU the remote device is capable of playing music
+			// 08/01/2018 ECU remember the address of the remote device
 			// ---------------------------------------------------------------------
-			Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.remote_device_can_play_music),true,Toast.LENGTH_SHORT);
+			PublicData.remoteMusicPlayer = PublicData.receivedStatus.IPAddress;
 			// ---------------------------------------------------------------------
-			// 07/05/2016 ECU indicate that remote mode is valid
+			// 09/01/2018 ECU initialise some variables
+			// ---------------------------------------------------------------------
+			remoteTrackPlaying = false;
+			// ---------------------------------------------------------------------
+			// 12/01/2018 ECU indicate remote mode in use
 			// ---------------------------------------------------------------------
 			remoteMode = true;
 			// ---------------------------------------------------------------------
 			// 02/05/2015 ECU start up the remote music for the specified player
 			// ---------------------------------------------------------------------
-			startRemoteMusicPlayer (PublicData.receivedStatus.IPAddress);
+			//startRemoteMusicPlayer (PublicData.receivedStatus.IPAddress);
+			// ---------------------------------------------------------------------
+			// 11/01/2018 ECU in a position to start sending files to the selected
+			//                remote device so stop the local music player
+			// ---------------------------------------------------------------------
+			closeLocalMusicPlayer ();
+			// ---------------------------------------------------------------------
+			remotePlayerProcessorMessage (REMOTE_STATUS_DEVICE_CAN_PLAY);
 			// ---------------------------------------------------------------------
 		}
 		else
 		{
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU the remote device is not capable of playing music
-			// ---------------------------------------------------------------------
-			Utilities.popToastAndSpeak (MusicPlayer.context.getString (R.string.remote_device_cannot_play_music),true,Toast.LENGTH_SHORT);
-			// ---------------------------------------------------------------------
-			// 02/05/2015 ECU reset the mode
-			// ---------------------------------------------------------------------
-			CancelRemote (0);
-			// ---------------------------------------------------------------------
+			remotePlayerProcessorMessage (REMOTE_STATUS_DEVICE_CANNOT_PLAY);
 		}
 	}
+	// =============================================================================
+	public static void TrackCompletionMethod ()
+	{
+		// -------------------------------------------------------------------------
+		// 21/03/2017 ECU created to be called when a track finishes being played
+		// 08/01/2018 ECU only do if not in remote mode - this seems to be necessary 
+		//                because when setting remote mode then the mediaPlayer.stop
+		//                seems to generate am 'onTrackCompletion' event
+		// ------------------------------------------------------------------------
+		if (!remoteMode)
+			musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_TRACK_COMPLETED);
+		// -------------------------------------------------------------------------
+	}	
 	// =============================================================================
 	public static void VolumeChange (int theSliderValue)
 	{

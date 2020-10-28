@@ -80,7 +80,7 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	@SuppressLint("InflateParams") 
+	@SuppressLint ("InflateParams") 
 	protected View onCreateDialogView () 
 	{
 		LayoutInflater layoutInflater = LayoutInflater.from (getContext());
@@ -311,7 +311,8 @@ public class SeekBarPreference extends DialogPreference implements SeekBar.OnSee
 			// 31/03/2016 ECU use the method to decide on the trailing 's'
 			// ---------------------------------------------------------------------
 			valueTextView.setText (String.valueOf (value + minimumValue) + 
-									(units == null ? "" : (" " + units + Utilities.AddAnS (value + minimumValue))));
+									(units == null ? StaticData.BLANK_STRING 
+											       : (" " + units + Utilities.AddAnS (value + minimumValue))));
 			// ---------------------------------------------------------------------
 		}
 	}

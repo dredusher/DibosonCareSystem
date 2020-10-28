@@ -2,6 +2,7 @@ package com.usher.diboson;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class NamedAction implements Serializable
 {
@@ -113,6 +114,10 @@ public class NamedAction implements Serializable
 			{
 				localNames [index] = PublicData.namedActions.get(index).name;
 			}
+			// ---------------------------------------------------------------------
+			// 13/04/2020 ECU more usable to 'sort' the list of names
+			// ---------------------------------------------------------------------
+			Arrays.sort (localNames,String.CASE_INSENSITIVE_ORDER);
 			// ---------------------------------------------------------------------
 			// 04/08/2016 ECU return the list of names
 			// ---------------------------------------------------------------------

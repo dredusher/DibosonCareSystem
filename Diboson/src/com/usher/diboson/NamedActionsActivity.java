@@ -1,9 +1,8 @@
 package com.usher.diboson;
 
 import java.util.ArrayList;
-
 import android.app.Activity;
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
@@ -16,14 +15,20 @@ public class NamedActionsActivity extends DibosonActivity
 	//                a very simple form of nesting and to shorten the data that
 	//                may need to be stored on items like an NFC tag
 	// 12/09/2016 ECU added the data changed bit to reduce the writes to disk
-	//            ECU changd to use hash code instead of data changed
+	//            ECU changed to use hash code instead of data changed
+	// 20/04/2018 ECU changed to use ListViewSelector and reduce the use of 'statics'
+	// 12/04/2019 ECU changed the actioning of the 'named action' from a long press
+	//                to pressing the 'process' button
 	// =============================================================================
 	
 	// =============================================================================
-	static EditText	actionsEditText;
-	static Activity	activity;
-	static int		initialHashCode;						// 12/09/2016 ECU added
-	static EditText	nameEditText;
+	Activity		 activity;
+	Context			 context;
+	int				 initialHashCode;						// 12/09/2016 ECU added
+	ListViewSelector listViewSelector;
+	EditText		 nameEditText;
+	// -----------------------------------------------------------------------------
+	EditText		 actionsEditText;
 	// =============================================================================
 	
 	// =============================================================================
@@ -46,6 +51,7 @@ public class NamedActionsActivity extends DibosonActivity
 			// 03/08/2016 ECU remember the context
 			// ---------------------------------------------------------------------
 			activity = this;
+			context  = this;
 			// ---------------------------------------------------------------------
 			// 22/10/2016 ECU use the method rather than '== 0' check
 			// ---------------------------------------------------------------------
@@ -60,33 +66,9 @@ public class NamedActionsActivity extends DibosonActivity
 			else
 			{
 				// -----------------------------------------------------------------
-				// 03/08/2016 ECU there are already a number of named actions
+				// 20/04/2018 ECU initialise the display of named actions
 				// -----------------------------------------------------------------
-				// 05/08/2016 ECU initialise the selector data
-				// -----------------------------------------------------------------
-				SelectorUtilities.Initialise();
-				// -----------------------------------------------------------------
-				// 04/08/2016 ECU added the 'back' method
-				// 05/08/2016 ECU added the 'long select' method
-				// -----------------------------------------------------------------
-				BuildTheNamedActionsList ();
-				SelectorUtilities.selectorParameter.rowLayout 					= R.layout.named_actions_row;
-				SelectorUtilities.selectorParameter.classToRun 					= NamedActionsActivity.class;
-				SelectorUtilities.selectorParameter.type 						= StaticData.OBJECT_NAMED_ACTIONS;
-				SelectorUtilities.selectorParameter.sort						= false;
-				SelectorUtilities.selectorParameter.backMethodDefinition 		= new MethodDefinition<NamedActionsActivity> (NamedActionsActivity.class,"BackKeyAction");
-				SelectorUtilities.selectorParameter.customMethodDefinition 		= new MethodDefinition<NamedActionsActivity> (NamedActionsActivity.class,"AddAction");
-				SelectorUtilities.selectorParameter.customLegend 				= getString (R.string.add);
-				SelectorUtilities.selectorParameter.longSelectMethodDefinition 	= new MethodDefinition<NamedActionsActivity> (NamedActionsActivity.class,"TestAction");
-				SelectorUtilities.selectorParameter.selectMethodDefinition 		= new MethodDefinition<NamedActionsActivity> (NamedActionsActivity.class,"SelectAction");
-				SelectorUtilities.selectorParameter.swipeMethodDefinition 		= new MethodDefinition<NamedActionsActivity> (NamedActionsActivity.class,"SwipeAction");
-				// -----------------------------------------------------------------
-				// 05/08/2016 ECU specify the drawable that will give additional help
-				//                to the user
-				// -----------------------------------------------------------------
-				SelectorUtilities.selectorParameter.drawableInitial = R.drawable.long_press;
-				// -----------------------------------------------------------------
-				SelectorUtilities.StartSelector (this,StaticData.OBJECT_NAMED_ACTIONS);
+				initialiseDisplay (activity);
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
@@ -138,14 +120,10 @@ public class NamedActionsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
     }
 	// =============================================================================
-	public static void AddAction (int theIndex)
+	public void AddAction (int theIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 03/08/2016 ECU add a new named action
-		// -------------------------------------------------------------------------
-		// 03/08/2016 ECU terminate the selector activity
-		// -------------------------------------------------------------------------
-		Selector.Finish ();
 		// -------------------------------------------------------------------------
 		// 03/08/2016 ECU display the layout for the input data
 		// -------------------------------------------------------------------------
@@ -153,40 +131,7 @@ public class NamedActionsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void BackKeyAction (int theIndex)
-	{
-		// -------------------------------------------------------------------------
-		// 04/08/2016 ECU created to be called when the back key pressed
-		//            ECU just 'finish' this activity
-		// -------------------------------------------------------------------------
-		activity.finish ();
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static ArrayList<ListItem> BuildTheNamedActionsList ()
-	{
-		// -------------------------------------------------------------------------
-		// 03/08/2016 ECU build up the list of named actions
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem>();
-		// -------------------------------------------------------------------------
-		for (int theIndex = 0; theIndex < PublicData.namedActions.size(); theIndex++)
-		{
-			// ---------------------------------------------------------------------
-			// 03/08/2016 ECU populate the list that will be displayed
-			// ---------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-									"",
-									PublicData.namedActions.get(theIndex).name,
-									PublicData.namedActions.get(theIndex).actions,
-									"",
-									theIndex));
-			// ---------------------------------------------------------------------
-		}
-		return SelectorUtilities.selectorParameter.listItems;
-	}
-	// =============================================================================
-	private static View.OnClickListener buttonListener = new View.OnClickListener() 
+	private View.OnClickListener buttonListener = new View.OnClickListener() 
 	{
 		// -------------------------------------------------------------------------
 		@Override
@@ -209,7 +154,7 @@ public class NamedActionsActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 03/08/2016 ECU check if the data has been input
 					// -------------------------------------------------------------
-					if (inputActions.equalsIgnoreCase (""))
+					if (inputActions.equalsIgnoreCase (StaticData.BLANK_STRING))
 					{
 						// ---------------------------------------------------------
 						// 03/08/2016 ECU no name has been entered
@@ -219,7 +164,7 @@ public class NamedActionsActivity extends DibosonActivity
 						// ---------------------------------------------------------
 						break;
 					}
-					if (inputName.equalsIgnoreCase(""))
+					if (inputName.equalsIgnoreCase (StaticData.BLANK_STRING))
 					{
 						// ---------------------------------------------------------
 						// 03/08/2016 ECU no name has been entered
@@ -239,15 +184,9 @@ public class NamedActionsActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					updateTheDisk (true);
 					// -------------------------------------------------------------
-					// 03/08/2016 ECU exit this activity
+					// 20/04/2018 ECU refresh the display
 					// -------------------------------------------------------------
-					activity.finish ();
-					// -------------------------------------------------------------
-					// 20/09/2016 ECU restart this activity
-					// -------------------------------------------------------------
-					Intent localIntent = activity.getIntent ();
-					localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
-					activity.startActivity (localIntent);
+					initialiseDisplay (activity);
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -255,9 +194,13 @@ public class NamedActionsActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 03/08/2016 ECU start up the wizard to try and help define
 					//                the actions string
+					// 21/04/2018 ECU pass through the activity because the return
+					//                method is non-static
 					// -------------------------------------------------------------
-					ActionCommandUtilities.SelectCommand (activity,
-							Utilities.createAMethod (NamedActionsActivity.class,"SetActionsMethod",""));
+					ActionCommandUtilities.SelectCommand (context,
+														  activity,
+														  Utilities.createAMethod 
+														  	(NamedActionsActivity.class,"SetActionsMethod",StaticData.BLANK_STRING));
 					// -------------------------------------------------------------
 					break;
 					// -------------------------------------------------------------
@@ -266,12 +209,12 @@ public class NamedActionsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	};
 	// =============================================================================
-	public static void displayLayout ()
+	public void displayLayout ()
 	{
 		// -------------------------------------------------------------------------
 		// 22/10/2016 ECU Note - display the format to create a new entry
 		// -------------------------------------------------------------------------
-		activity.setContentView (R.layout.activity_named_actions);
+		setContentView (R.layout.activity_named_actions);
 		// -------------------------------------------------------------------------
 					actionsEditText	= (EditText) activity.findViewById (R.id.named_actions_actions);
 		Button		defineButton    = (Button)   activity.findViewById (R.id.named_actions_define_button);
@@ -285,25 +228,40 @@ public class NamedActionsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-   	public static void NoMethod (Object theSelection)
+   	public void NoMethod (Object theSelection)
    	{
    	}
    	// =============================================================================
- 	public static void SelectAction (int theIndex)
+ 	public void ProcessAction (int theIndex)
  	{
  		// -------------------------------------------------------------------------
- 		// 03/08/2016 ECU process the swipe action
+ 		// 05/08/2016 ECU process the 'long select' action
+ 		// 04/05/2017 ECU just confirm that the action is being processed
  		// -------------------------------------------------------------------------
- 		displayLayout ();
+ 		Utilities.popToast (String.format (getString (R.string.named_action_beging_processed_format),
+ 											PublicData.namedActions.get (theIndex).name),true);
  		// -------------------------------------------------------------------------
- 		// 03/08/2016 ECU prefill the fields
+ 		// 08/08/2016 ECU add the final 'true' to flush any actions that may be queued
  		// -------------------------------------------------------------------------
- 		actionsEditText.setText (PublicData.namedActions.get (theIndex).actions);
- 		nameEditText.setText (PublicData.namedActions.get (theIndex).name);
+ 		Utilities.actionHandler (context,PublicData.namedActions.get (theIndex).actions,true);
  		// -------------------------------------------------------------------------
  	}
+ 	// =============================================================================
+  	public void SelectAction (int theIndex)
+  	{
+  		// -------------------------------------------------------------------------
+  		// 03/08/2016 ECU process the swipe action
+  		// -------------------------------------------------------------------------
+  		displayLayout ();
+  		// -------------------------------------------------------------------------
+  		// 03/08/2016 ECU prefill the fields
+  		// -------------------------------------------------------------------------
+  		actionsEditText.setText (PublicData.namedActions.get (theIndex).actions);
+  		nameEditText.setText (PublicData.namedActions.get (theIndex).name);
+  		// -------------------------------------------------------------------------
+  	}
 	// =============================================================================
-	public static void SetActionsMethod (String theActionCommands)
+	public void SetActionsMethod (String theActionCommands)
 	{
 		// -------------------------------------------------------------------------
 		// 24/01/2016 ECU created to take the action commands and store away
@@ -313,39 +271,32 @@ public class NamedActionsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		String currentEntry = actionsEditText.getText().toString().trim();
 		
-		if (!currentEntry.equalsIgnoreCase (""))
+		if (!currentEntry.equalsIgnoreCase (StaticData.BLANK_STRING))
 			actionsEditText.append (StaticData.ACTION_SEPARATOR);
 		
 		actionsEditText.append (theActionCommands);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void SwipeAction (int theIndex)
+	public void SwipeAction (int theIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 03/08/2016 ECU process the swipe action
 		// 20/09/2016 ECU changed to use the format resource
+		// 07/06/2019 ECU changed from 'named_action_delete_format'
 		// -------------------------------------------------------------------------
-		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-				   				 String.format (Selector.context.getString (R.string.named_action_delete_format), 
-						   				PublicData.namedActions.get (theIndex).name),
-						   		 (Object) theIndex,
-						   		 Utilities.createAMethod (NamedActionsActivity.class,"YesMethod",(Object) null),
-						   		 Utilities.createAMethod (NamedActionsActivity.class,"NoMethod",(Object) null)); 
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
-	public static void TestAction (int theIndex)
-	{
-		// -------------------------------------------------------------------------
-		// 05/08/2016 ECU process the 'long select' action
-		// 08/08/2016 ECU add the final 'true' to flush any actions that may be queued
-		// -------------------------------------------------------------------------
-		Utilities.actionHandler (activity,PublicData.namedActions.get (theIndex).actions,true);
+		DialogueUtilitiesNonStatic.yesNo (context,
+										  activity,
+										  "Item Deletion",
+										  String.format (getString (R.string.delete_confirmation_format), 
+												  PublicData.namedActions.get (theIndex).name),
+										  (Object) theIndex,
+										  Utilities.createAMethod (NamedActionsActivity.class,"YesMethod",(Object) null),
+										  Utilities.createAMethod (NamedActionsActivity.class,"NoMethod",(Object) null)); 
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void updateTheDisk (boolean theAlwaysFlag)
+	void updateTheDisk (boolean theAlwaysFlag)
 	{
 		// -------------------------------------------------------------------------
 		// 22/10/2016 ECU update the disk if data has changed
@@ -355,11 +306,11 @@ public class NamedActionsActivity extends DibosonActivity
 		if ((initialHashCode != PublicData.namedActions.hashCode()) || theAlwaysFlag)
 		{
 			AsyncUtilities.writeObjectToDisk (PublicData.projectFolder + 
-					MainActivity.activity.getString (R.string.named_actions_file),PublicData.namedActions);
+					getString (R.string.named_actions_file),PublicData.namedActions);
 		}
 	}
    	// =============================================================================
-   	public static void YesMethod (Object theSelection)
+   	public void YesMethod (Object theSelection)
    	{
    		// -------------------------------------------------------------------------
    		// 03/08/2016 ECU the selected item can be deleted
@@ -374,7 +325,7 @@ public class NamedActionsActivity extends DibosonActivity
    			// ---------------------------------------------------------------------
    			// 03/08/2016 ECU rebuild and then display the updated list view
    			// ---------------------------------------------------------------------
-   			Selector.Rebuild();
+   			refreshDisplay ();
    			// ----------------------------------------------------------------------
    		}
    		else
@@ -383,18 +334,99 @@ public class NamedActionsActivity extends DibosonActivity
    			// 03/08/2016 ECU everything has been deleted
    			// 20/09/2016 ECU changed to use resource
    			// ---------------------------------------------------------------------
-   			Utilities.popToastAndSpeak (activity.getString (R.string.named_actions_all_deleted));
-   			// ---------------------------------------------------------------------
-   			// 03/08/2016 ECU finish the selector activity
-   			// ---------------------------------------------------------------------
-   			Selector.Finish();
+   			Utilities.popToastAndSpeak (getString (R.string.named_actions_all_deleted));
    			// ---------------------------------------------------------------------
    			// 03/08/2016 ECU terminate this activity
    			// ---------------------------------------------------------------------
-   			activity.finish ();
+   			finish ();
    			// ---------------------------------------------------------------------
    		}
    		// -------------------------------------------------------------------------
    	}
    	// =============================================================================
+   	
+  	// =============================================================================
+  	// =============================================================================
+  	// ListViewSelector
+  	// ================
+  	//
+  	//		Declare methods associated with the use of ListViewSelector
+  	//
+  	// ============================================================================
+  	// ============================================================================
+  	
+	// =============================================================================
+	void initialiseDisplay (Activity theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU created to generate the display of stored documents
+		// -------------------------------------------------------------------------
+		listViewSelector = new ListViewSelector (theActivity,
+												 R.layout.named_actions_row,
+				   								 "PopulateTheList",
+				   								 true,
+				   								"SelectAction",
+				   								 null,
+				   								 "ProcessAction",
+				   								 getString (R.string.add),
+				   								 "AddAction",
+				   								 null,
+				   								 "SwipeAction");
+		// -------------------------------------------------------------------------
+		// 20/04/2018 ECU display an initial information message about long press
+		// 12/04/2019 ECU changed the name to 'press_process'
+		// -------------------------------------------------------------------------
+		Utilities.DisplayADrawable (context,R.drawable.press_process);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public ArrayList<ListItem> PopulateTheList ()
+	{
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU created to build a list of the currently named actions
+		// -------------------------------------------------------------------------
+		ArrayList<ListItem> listItems = new ArrayList<ListItem>();
+		// -------------------------------------------------------------------------
+		for (int theIndex = 0; theIndex < PublicData.namedActions.size(); theIndex++)
+		{
+			// ---------------------------------------------------------------------
+			// 03/08/2016 ECU populate the list that will be displayed
+			// ---------------------------------------------------------------------
+			listItems.add (new ListItem (StaticData.BLANK_STRING,
+										 PublicData.namedActions.get(theIndex).name,
+										 PublicData.namedActions.get(theIndex).actions,
+										 StaticData.BLANK_STRING,
+										 theIndex));
+			// ---------------------------------------------------------------------
+		}
+		return listItems;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void refreshDisplay ()
+	{
+		// -------------------------------------------------------------------------
+		// 13/04/2018 ECU created to refresh the display if it exists or create the
+		//                display if not
+		// -------------------------------------------------------------------------
+		if (listViewSelector == null)
+		{
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU need to build the display
+			// ---------------------------------------------------------------------
+			initialiseDisplay (this);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 13/04/2018 ECU display already initialised so just refresh it
+			// ---------------------------------------------------------------------
+			listViewSelector.refresh ();
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+   	
 }

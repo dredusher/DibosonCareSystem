@@ -1,23 +1,24 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemLongClickListener;
-import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ImageButton;
+import android.widget.ListView;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 
-public class Selector extends Activity 
+public class Selector extends DibosonActivity
 {
 	/* ============================================================================= */
-	// 23/03/2014 ECU created
+	// 23/03/2014 ECU created 
 	//            ECU provide a generic selector of an object
 	// 09/06/2015 ECU put in some swipe handling
 	// 11/10/2015 ECU put in the check as to whether the activity has been created
@@ -28,7 +29,7 @@ public class Selector extends Activity
 	//                in MethodDefinition which means that () means no arguments
 	//                whereas it used to mean an integer argument
 	//            ECU added OBJECT_APPOINTMENTS
-	// 07/03/2016 ECU added OBJECT_MEDICATION_TIMERactivity is created
+	// 07/03/2016 ECU added OBJECT_MEDICATION_TIMER activity is created
 	// 05/08/2016 ECU added 'drawableInitial' which is the resource ID of a drawable
 	//                that is to be displayed when the 
 	// 15/08/2016 ECU changed the handling of the 'back key' - used to process
@@ -43,6 +44,25 @@ public class Selector extends Activity
 	// 24/09/2016 ECU added OBJECT_LIQUIDS
 	// 18/10/2016 ECU added OBJECT_DOCUMENTS
 	// 02/03/2017 ECU added OBJECT_DAILY_SUMMARIES
+	// 06/05/2017 ECU added OBJECT_UPNP
+	// 20/12/2017 ECU added OBJECT_CONTACTS
+	// 23/03/2017 ECU invoke methods using Utilities.invokeMethod which (if
+	//                StaticData.INVOKE_STATIC is false) will accommodate calls to
+	//                static and non-static methods. if INVOKE_STATIC is true then
+	//                call methods MUST be static.
+	// 09/04/2018 ECU removed OBJECT_BARCODES
+	// 13/04/2018 ECU removed OBJECT_DOCUMENTS
+	// 17/04/2018 ECU removed OBJECT_UPNP
+	// 20/04/2018 ECU removed OBJECT_DAILY_SUMMARIES
+	//			  ECU removed OBJECT_NAMED_ACTIONS
+	// 28/04/2018 ECU removed OBJECT_CHANNELS
+	//			  ECU removed OBJECT_SELECTED_CHANNELS
+	// 23/07/2019 ECU HandleHelp .... take out the checking of 'sortList' - see the
+	//                                comment in the method
+	// 24/01/2020 ECU HandleHelp .... take out it's use as a default method for the
+	//                                help button
+	// 21/05/2020 ECU IMPORTANT ..... changed from 'extends Activity' to 'extands
+	//                =========       DibosonActivity'
 	// ----------------------------------------------------------------------------- 
 	// -----------------------------------------------------------------------------
 	// I M P O R T A N T   read this to understand how the class works
@@ -72,29 +92,29 @@ public class Selector extends Activity
 	// When the activity is started there are a number of parameters which can be
 	// supplied in extras. These are as follows :-
 	//
-	// MainActivity.PARAMETER_OBJECT_TYPE  		'int' 
+	// StaticData.PARAMETER_OBJECT_TYPE  		'int' 
 	//			defines the type of object being handled
 	//			Possible values are :-
-	//					MainActivity.OBJECT_DAYS
-	//					MainActivity.OBJECT_DOSES
-	//					MainActivity.OBJECT_MEDICATION
-	//					MainActivity.OBJECT_SELECTOR
-	//					MainActivity.OBJECT_TIMER
-	//					MainActivity.OBJECT_WEMO_TIMER
-	//					MainActivity.OBJECT_WEMO_TIMERS
-	// MainActivity.PARAMETER_BACK_KEY			'boolean'
+	//					StaticData.OBJECT_DAYS
+	//					StaticData.OBJECT_DOSES
+	//					StaticData.OBJECT_MEDICATION
+	//					StaticData.OBJECT_SELECTOR
+	//					StaticData.OBJECT_TIMER
+	//					StaticData.OBJECT_WEMO_TIMER
+	//					StaticData.OBJECT_WEMO_TIMERS
+	// StaticData.PARAMETER_BACK_KEY			'boolean'
 	//          specifies whether the 'back' key causes the activity to 'finish'
-	// MainActivity.PARAMETER_MEDICATION		'int'
+	// StaticData.PARAMETER_MEDICATION			'int'
 	//			specifies the index of a medication being processed
-	// MainActivity.PARAMETER_DOSE				'int'
+	// StaticData.PARAMETER_DOSE				'int'
 	//			specifies the index of a medication dose being handled
-	// MainActivity.PARAMETER_INITIAL_POSITION	'int'
+	// StaticData.PARAMETER_INITIAL_POSITION	'int'
 	//			specifies the initial starting position within the supplied list
-	// MainActivity.PARAMETER_SORT				'boolean'
+	// StaticData.PARAMETER_SORT				'boolean'
 	//			specifies whether the supplied list is to be sorted or not
-	// MainActivity.PARAMETER_METHOD			'(MethodDefinition<?>)'
+	// StaticData.PARAMETER_METHOD				'(MethodDefinition<?>)'
 	//			defines the method to be actioned when an item is selected
-	// MainActivity.PARAMETER_BACK_METHOD		'(MethodDefinition<?>)'
+	// StaticData.PARAMETER_BACK_METHOD			'(MethodDefinition<?>)'
 	//          defines the method to be actioned when the BACK key is pressed
 	//
 	// Note :- apart from PARAMETER_OBJECT_TYPE the other arguments are optional.
@@ -161,10 +181,11 @@ public class Selector extends Activity
 			static 	Method				swipeMethod		= null;			// 09/06/2015 ECU added
 			static 	int					type			= StaticData.NO_RESULT;
 																		// 29/03/2014 ECU added
-	/* ============================================================================= */
+	// ============================================================================= 
 	@Override
 	protected void onCreate (Bundle savedInstanceState) 
-	{	
+	{
+		// -------------------------------------------------------------------------
 		super.onCreate(savedInstanceState);	
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null)
@@ -199,8 +220,12 @@ public class Selector extends Activity
 			//                selected. Do it this way rather than trying to send an
 			//                object which would require setting up a Parcelable
 			// ---------------------------------------------------------------------	
-			Bundle extras = getIntent().getExtras();
-	    
+			Bundle extras = getIntent ().getExtras ();
+			// ---------------------------------------------------------------------
+			// 06/06/2019 ECU Note - parameters have been supplied so extract them
+			//                       from the bundle so that the appropriate actions can
+			//                       be taken
+			// ---------------------------------------------------------------------
 			if (extras != null)
 			{
  	   			// -----------------------------------------------------------------
@@ -210,7 +235,7 @@ public class Selector extends Activity
  	   			// -----------------------------------------------------------------  
  	   			// 24/03/2014 ECU indicate whether the 'back key' is allowed
  	   			// -----------------------------------------------------------------
- 	   			backKeyAllowed = extras.getBoolean(StaticData.PARAMETER_BACK_KEY, false);
+ 	   			backKeyAllowed = extras.getBoolean (StaticData.PARAMETER_BACK_KEY, false);
  	   			// -----------------------------------------------------------------
  	   			medicationIndex = extras.getInt (StaticData.PARAMETER_MEDICATION, StaticData.NO_RESULT);
  	   			doseIndex 		= extras.getInt (StaticData.PARAMETER_DOSE, StaticData.NO_RESULT);
@@ -260,10 +285,17 @@ public class Selector extends Activity
  	   			// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 06/06/2019 ECU Note - now handle the rest of the 'onCreate' code
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 23/03/2014 ECU remember the context
 			// ---------------------------------------------------------------------
 			context = this;
-			// ---------------------------------------------------------------------		 
+			// ---------------------------------------------------------------------
+			// 28/01/2020 ECU Note - get the 'item' view that will contain the
+			//						 data associated with the specified 'object'
+			// ---------------------------------------------------------------------
 			listView = (ListView) findViewById (R.id.grid_list_view);	
 			// ---------------------------------------------------------------------
 			// 09/06/2015 ECU use the side swipe action to cause a deletion
@@ -287,11 +319,22 @@ public class Selector extends Activity
 							//                return the index held within the record
 							// -----------------------------------------------------
 							// 10/06/2015 ECU store the legend in the selector object
+							// 06/06/2019 ECU Note - worried about the use of ShoppingActivity 
+							//                ====   - needs investigating. I believe that this
+							//                       is purely 'historical' as the ShoppingActivity
+							//                       was the first to use this swipe method in
+							//                       order to delete a specified item.
+							// 07/06/2019 ECU Did some investigations took place but with
+							//                    no real luck so leave as is.
+							//            ECU added 'ShoppingInputActivity.getLegend' so no
+							//                need to set it here
 							// -----------------------------------------------------
-							ShoppingActivity.selectorParameter.name = listItems.get (reverseSortedPositions [0]).legend;
+							//ShoppingActivity.selectorParameter.name = listItems.get (reverseSortedPositions [0]).legend;
 							// -----------------------------------------------------
-							swipeMethod.invoke (null, new Object [] {sortList ? listItems.get (reverseSortedPositions [0]).index 
-																			  : reverseSortedPositions [0]});
+							// 23/03/2018 ECU changed to use the new method
+							// -----------------------------------------------------
+							Utilities.invokeMethod (swipeMethod, new Object [] {sortList ? listItems.get (reverseSortedPositions [0]).index 
+																			             : reverseSortedPositions [0]});
 							// -----------------------------------------------------
 						}
 						catch (Exception theException) 
@@ -301,8 +344,10 @@ public class Selector extends Activity
 					}
 				});
 				// -----------------------------------------------------------------
-				listView.setOnTouchListener (touchListener);
-				listView.setOnScrollListener (touchListener.makeScrollListener());
+				// 28/01/2020 ECU Note - add basic listeners for 'swiping'
+				// -----------------------------------------------------------------
+				listView.setOnTouchListener  (touchListener);
+				listView.setOnScrollListener (touchListener.makeScrollListener ());
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
@@ -317,6 +362,11 @@ public class Selector extends Activity
 			// 26/01/2014 ECU play around with a custom grid
 			// 23/03/2014 ECU add the photo into the displayed list
 			// 24/03/2014 ECU build up parameters dependent of the type of object
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 28/01/2020 ECU Note - now do the processing associated with each
+			//                       type of object
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			switch (objectType)
 			{
@@ -334,6 +384,10 @@ public class Selector extends Activity
 					// 24/03/2014 ECU set up the class to run when item selected
 					// -------------------------------------------------------------
 					classToRun = MedicationInput.class;
+					// -------------------------------------------------------------
+					// 30/01/2020 ECU indicate that no custome button is needed
+					// -------------------------------------------------------------
+					customLegend = null;
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -353,6 +407,7 @@ public class Selector extends Activity
 					classToRun = MedicationInput.class;
 					// -------------------------------------------------------------
 					rowLayoutID = R.layout.dose_time_row;
+					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
 				// -----------------------------------------------------------------
@@ -363,7 +418,7 @@ public class Selector extends Activity
 					// 30/03/2014 ECU added the index as an argument
 					// 01/04/2014 ECU added the call to BuildList
 					// -------------------------------------------------------------
-					listItems = MedicationDetails.BuildList();			
+					listItems = MedicationDetails.BuildList ();			
 					// -------------------------------------------------------------
 					// 24/03/2014 ECU set up the class to run when item selected
 					// -------------------------------------------------------------
@@ -379,17 +434,11 @@ public class Selector extends Activity
 				// -----------------------------------------------------------------
 				case    StaticData.OBJECT_AGENCIES:
 				case    StaticData.OBJECT_APPOINTMENTS:
-				case	StaticData.OBJECT_BARCODES:
 				case	StaticData.OBJECT_CARE_PLANS:
 				case	StaticData.OBJECT_CARE_VISITS:
+				case 	StaticData.OBJECT_CARER_VISITS:
 				case    StaticData.OBJECT_CARERS:
-				case    StaticData.OBJECT_CHANNELS:
-				case    StaticData.OBJECT_DAILY_SUMMARIES:
-				case    StaticData.OBJECT_DOCUMENTS:
-				case    StaticData.OBJECT_LIQUIDS:
-				case    StaticData.OBJECT_NAMED_ACTIONS:
-				case    StaticData.OBJECT_NOTIFICATIONS:
-				case    StaticData.OBJECT_SELECTED_CHANNELS:
+				case    StaticData.OBJECT_CONTACTS:
 				case	StaticData.OBJECT_SELECTOR:
 				case    StaticData.OBJECT_SHOPPING:
 					// -------------------------------------------------------------
@@ -406,18 +455,22 @@ public class Selector extends Activity
 					// 24/09/2016 ECU added ....LIQUIDS
 					// 18/10/2016 ECU added ....DOCUMENTS
 					// 02/03/2017 ECU added ....DAILY_SUMMARIES
+					// 06/05/2017 ECU added ....UPNP
+					// 20/12/2017 ECU added ....CONTACTS
+					// --/04/2018 ECU removed . see notes at top of the method
+					// 25/01/2020 ECU added ....CARER_VISITS
 					// -------------------------------------------------------------
 					// 01/09/2015 ECU change the default image when not replaced
 					// -------------------------------------------------------------
 					imageDefault 	= R.drawable.no_photo;
 					// -------------------------------------------------------------
 					// 25/09/2016 ECU put in any local tailoring
+					// 10/04/2018 ECU used to have a check for 'liquids'
 					// -------------------------------------------------------------
 					switch (objectType)
 					{
 						// ---------------------------------------------------------
-						case StaticData.OBJECT_LIQUIDS:
-								imageDefault = R.drawable.liquid;
+						default:
 								break;
 						// ---------------------------------------------------------
 					}
@@ -475,6 +528,10 @@ public class Selector extends Activity
 					customMethod = Utilities.createAMethod (WeMoTimerActivity.class,"AddATimer",0);
 					customLegend = getString (R.string.add);
 					// -------------------------------------------------------------
+					// 24/01/2020 ECU add the help handler
+					// -------------------------------------------------------------
+					helpMethod 		= Utilities.createAMethod (WeMoTimerActivity.class,"HelpTimerHandler",0);
+					// -------------------------------------------------------------
 					// 27/02/2015 ECU by setting the editMethod to null tells the adapter
 					//                not to show the button
 					// -------------------------------------------------------------
@@ -502,10 +559,20 @@ public class Selector extends Activity
 					// -------------------------------------------------------------
 					customMethod 	= Utilities.createAMethod (WeMoTimerActivity.class,"DeleteTimer",0);
 					editMethod  	= Utilities.createAMethod (WeMoTimerActivity.class,"EditTimer",0);
+					// -------------------------------------------------------------
+					// 24/01/2020 ECU add the help handler
+					// -------------------------------------------------------------
+					helpMethod 		= Utilities.createAMethod (WeMoTimerActivity.class,"HelpTimersHandler",0);
+					// -------------------------------------------------------------
 					customLegend 	= getString (R.string.delete);
 					// -------------------------------------------------------------
 					break;
 			}
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 22/01/2020 ECU Note- having performed the 'object' specific tasks now
+			//                      handle the 'common' processing
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			// 30/03/2014 ECU try and sort the displayed entries - if requested
 			// ---------------------------------------------------------------------
@@ -514,11 +581,7 @@ public class Selector extends Activity
 			// ---------------------------------------------------------------------
 			// 25/03/2014 ECU default to use 'rowLayoutID'
 			// ---------------------------------------------------------------------
-			customListViewAdapter = new CustomListViewAdapter (this,rowLayoutID,listItems); 
-			// ---------------------------------------------------------------------
-			// 07/02/2014 ECU change any defaults
-			// ---------------------------------------------------------------------
-			Method helpMethod = Utilities.createAMethod (Selector.class,"HandleHelp",0);
+			customListViewAdapter = new CustomListViewAdapter (this,rowLayoutID,listItems);
 			// ---------------------------------------------------------------------
 			// 31/03/2014 ECU added temporarily to define image method
 			// 13/06/2015 ECU added the check on null
@@ -580,9 +643,10 @@ public class Selector extends Activity
 							//                actual position pressed. If sorted then
 							//                return the index held within the record
 							// 10/06/2015 ECU changed to use SelectedItem object
+							// 23/03/2018 ECU changed to use the new method
 							// -----------------------------------------------------
-							selectMethod.invoke (null, new Object [] {sortList ? listItems.get(position).index 
-								                                               : position});
+							Utilities.invokeMethod (selectMethod, new Object [] {sortList ? listItems.get(position).index 
+								                                                          : position});
 							// -----------------------------------------------------
 						}
 						catch (Exception theException) 
@@ -628,9 +692,10 @@ public class Selector extends Activity
 							//                actual position pressed. If sorted then
 							//                return the index held within the record
 							// 10/06/2015 ECU changed to use SelectedItem object
+							// 23/03/2018 ECU changed to use new method
 							// -----------------------------------------------------
-							longSelectMethod.invoke (null, new Object [] {sortList ? listItems.get(position).index 
-								                                           		   : position});
+							Utilities.invokeMethod (longSelectMethod,new Object [] {sortList ? listItems.get(position).index 
+								                                           		             : position});
 							// -----------------------------------------------------
 							// 21/11/2015 ECU and just finish the activity
 							//            ECU at the moment this is only used by the
@@ -644,17 +709,22 @@ public class Selector extends Activity
 							// 21/11/2015 ECU finish ();
 							// -----------------------------------------------------
 							return true;
+							// -----------------------------------------------------
 						}
 						catch (Exception theException) 
 						{
+							// -----------------------------------------------------
 							return false;
+							// -----------------------------------------------------
 						}
 						// ---------------------------------------------------------
 					}
 					else
 						return false;
+					// -------------------------------------------------------------
 				}			
 			});
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -708,8 +778,9 @@ public class Selector extends Activity
 	    		{
 	    			// -------------------------------------------------------------
 	    			// 28/02/2015 ECU action the defined method
+	    			// 23/03/2018 ECU changed to use new method
 	    			// -------------------------------------------------------------
-					backMethod.invoke (null, new Object [] {0});
+	    			Utilities.invokeMethod (backMethod, new Object [] {0});
 					// -------------------------------------------------------------
 					finish ();
 					// -------------------------------------------------------------
@@ -725,7 +796,7 @@ public class Selector extends Activity
 	        // ---------------------------------------------------------------------
 	    }
 	}
-	/* ============================================================================= */
+	// =============================================================================
 	@Override 
 	protected void onPause() 
 	{
@@ -735,33 +806,43 @@ public class Selector extends Activity
 		// -------------------------------------------------------------------------
 		paused = true;
 		// -------------------------------------------------------------------------
-	   	super.onPause(); 
+	   	super.onPause();
+	   	// -------------------------------------------------------------------------
 	} 
 	/* ============================================================================= */
 	@Override 
 	protected void onResume() 
-	{ 	
+	{
 		// ------------------------------------------------------------------------
 		// 01/04/2014 ECU use the 'paused' flag because initially get an 'onResume'
 		//                which I do not want to process
 		// ------------------------------------------------------------------------
 		if (paused)
 		{
+			// --------------------------------------------------------------------
 			paused = false;
-
 			// ---------------------------------------------------------------------
 			// 01/04/2014 ECU rebuild the displayed list for the SELECTOR object
 			//                only
 			// 27/02/2015 ECU changed to use the method rather than having code
 			//                in-line
 			// ---------------------------------------------------------------------
-			Rebuild ();	
+			Rebuild ();
+			// ---------------------------------------------------------------------
+			// 06/10/2020 ECU check if there is still data to be displayed - if not
+			//                then just finish this app
+			// ---------------------------------------------------------------------
+			if (listItems.size() == 0)
+			{
+				finish ();
+			}
 			// ---------------------------------------------------------------------
 		}
-
-	   	super.onResume(); 
+		// -------------------------------------------------------------------------
+	   	super.onResume();
+	   	// -------------------------------------------------------------------------
 	} 
-	/* ============================================================================ */
+	/* ============================================================================= */
 	public static void CustomMethod (int thePosition)
 	{
 		// -------------------------------------------------------------------------
@@ -804,37 +885,6 @@ public class Selector extends Activity
 		}
 	}
 	/* ============================================================================= */
-	public static void HandleHelp (int thePosition)
-	{
-		// -------------------------------------------------------------------------
-		// 08/04/2014 ECU use resource
-		// -------------------------------------------------------------------------
-		if (helpMethod == null)
-		{
-			Utilities.popToast (context.getString (R.string.handle_help));
-		}
-		else
-		{
-			try 
-			{
-				// ---------------------------------------------------------
-				// 15/06/2015 ECU the position that is returned depends on
-				//                whether the list has been sorted
-				//                if the list has not been sorted then return
-				//                actual position pressed. If sorted then
-				//                return the index held within the record
-				// ---------------------------------------------------------
-				helpMethod.invoke (null, new Object [] {sortList ? listItems.get(thePosition).index 
-						                                         : thePosition});
-				// ---------------------------------------------------------
-			}
-			catch (Exception theException) 
-			{
-			}
-		}
-		// -------------------------------------------------------------------------
-	}
-	/* ============================================================================= */
 	public static void Rebuild ()
 	{
 		switch (objectType)
@@ -855,31 +905,31 @@ public class Selector extends Activity
 				listItems = AppointmentsActivity.BuildTheAppointmentsList();
 				break;
 			// =====================================================================
-			case StaticData.OBJECT_BARCODES:
-				listItems = BarCodeActivity.BuildTheBarCodeList();
-				break;
-			// =====================================================================
 			case StaticData.OBJECT_CARE_PLANS:
 				listItems = CarePlanActivity.BuildTheDailyCarePlanList();
 				break;
 			// =====================================================================
 			case StaticData.OBJECT_CARE_VISITS:
-				listItems = CarePlanActivity.BuildTheDailyCarePlanVisitsList();
+				listItems = CarePlanActivity.BuildTheDailyCarePlanVisitsList ();
 				break;
 			// =====================================================================
 			case StaticData.OBJECT_CARERS:
-				listItems = CarerActivity.BuildTheCarersList ();
+			case StaticData.OBJECT_CARER_VISITS:
+				// -----------------------------------------------------------------
+				// 25/01/2020 ECU the only difference between the two objects is
+				//                the control of the buttons that allow the use
+				//                of the phone/text message. To distinguish this the
+				//                object type is passed through to the Build.. method
+				// -----------------------------------------------------------------
+				listItems = CarerActivity.BuildTheCarersList (objectType);
+				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
-			case StaticData.OBJECT_CHANNELS:
-				listItems = TVChannelsActivity.BuildTheChannelsList ();
-				break;
-			// =====================================================================
-			case StaticData.OBJECT_DAILY_SUMMARIES:
+			case StaticData.OBJECT_CONTACTS:
 				// -----------------------------------------------------------------
-				// 02/03/2017 ECU added to rebuild the daily summaries information
+				// 20/12/2017 ECU added to handle the display of contacts
 				// -----------------------------------------------------------------
-				listItems = DailySummaryActivity.BuildTheDaysList ();
+				listItems = DatabaseUtilities.BuildTheContactsList();
 				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
@@ -887,40 +937,12 @@ public class Selector extends Activity
 				listItems = DoseDaily.BuildList(medicationIndex);
 				break;
 			// =====================================================================
-			case StaticData.OBJECT_DOCUMENTS:
-				listItems = DocumentsActivity.BuildTheDocumentsList ();
-				break;
-			// =====================================================================
 			case StaticData.OBJECT_DOSES:
-				listItems = DoseTime.BuildList(medicationIndex, doseIndex);
-				break;
-			// =====================================================================
-			case StaticData.OBJECT_LIQUIDS:
-				// -----------------------------------------------------------------
-				// 24/09/2016 ECU added to rebuild the liquid information
-				// -----------------------------------------------------------------
-				listItems = LiquidActivity.BuildList ();
-				// -----------------------------------------------------------------
+				listItems = DoseTime.BuildList (medicationIndex, doseIndex);
 				break;
 			// =====================================================================	
 			case StaticData.OBJECT_MEDICATION:
-				listItems = MedicationDetails.BuildList();
-				break;
-			// =====================================================================
-			case StaticData.OBJECT_NAMED_ACTIONS:
-				listItems = NamedActionsActivity.BuildTheNamedActionsList();
-				break;
-			// =====================================================================
-			case StaticData.OBJECT_NOTIFICATIONS:
-				// -----------------------------------------------------------------
-				// 13/07/2016 ECU added
-				// -----------------------------------------------------------------
-				listItems = NotificationsActivity.BuildTheNotificationsList ();
-				// -----------------------------------------------------------------
-				break;
-			// =====================================================================
-			case StaticData.OBJECT_SELECTED_CHANNELS:
-				listItems = TVChannelsActivity.BuildTheSelectedChannelsList ();
+				listItems = MedicationDetails.BuildList ();
 				break;
 			// =====================================================================
 			case StaticData.OBJECT_SELECTOR:
@@ -975,6 +997,15 @@ public class Selector extends Activity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public static int ReturnObjectType ()
+	{
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU created to return the currently selected 'object type'
+		// -------------------------------------------------------------------------
+		return objectType;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static void SetFromSelectorParameter (SelectorParameter theSelectorParameter)
 	{
 		// -------------------------------------------------------------------------
@@ -1009,9 +1040,12 @@ public class Selector extends Activity
 	   	}
 	   	// -------------------------------------------------------------------------
 	   	// 21/11/2015 ECU set up the help method if defined
+	   	// 24/01/2020 ECU set the method to null if no method defined
 	   	// -------------------------------------------------------------------------
 		if (selectorParameter.helpMethodDefinition != null)
 	   		helpMethod 	= selectorParameter.helpMethodDefinition.ReturnMethod(0);
+		else
+			helpMethod  = null;
 		// -------------------------------------------------------------------------
 	   	// 21/11/2015 ECU set up the select method if defined
 	   	// -------------------------------------------------------------------------
@@ -1059,6 +1093,59 @@ public class Selector extends Activity
 	   	// 08/03/2016 ECU set the finish on select flag
 	   	// -------------------------------------------------------------------------
 	    finishOnSelect = selectorParameter.finishOnSelect;
+	    // -------------------------------------------------------------------------
+	    // 18/01/2020 ECU handle the issues associated with the 'button'
+	    // -------------------------------------------------------------------------
+		if (selectorParameter.buttonMethodDefinition != null)
+		{
+			final Method buttonMethod 	= selectorParameter.buttonMethodDefinition.ReturnMethod (0);
+			// ---------------------------------------------------------------------
+			ImageButton notificationButton = (ImageButton) ((Activity)context).findViewById (R.id.notificationButton);
+			if (notificationButton != null)
+			{
+				// -----------------------------------------------------------------
+				// 18/01/2020 ECU make the button visible
+				// -----------------------------------------------------------------
+				notificationButton.setVisibility (View.VISIBLE);
+				// -----------------------------------------------------------------
+				// 18/01/2020 ECU check if the displayed image is to be changed
+				// -----------------------------------------------------------------
+				if (selectorParameter.buttonResourceId != StaticData.NOT_SET)
+				{
+					// -------------------------------------------------------------
+					// 18/01/2020 ECU change the displayed image
+					// -------------------------------------------------------------
+					notificationButton.setImageResource (selectorParameter.buttonResourceId);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+				// 18/01/2020 ECU now set up a listener for a click on this button
+				// -----------------------------------------------------------------
+				notificationButton.setOnClickListener (new View.OnClickListener()
+				{
+					@Override
+					public void onClick (View view)
+					{
+						// -------------------------------------------------------------
+						// 18/01/2020 ECU invoke the associated method
+						// -------------------------------------------------------------
+						try
+						{
+							// -----------------------------------------------------
+							// 18/01/2020
+							// -----------------------------------------------------
+							Utilities.invokeMethod (buttonMethod,new Object [] {0});
+							// -----------------------------------------------------
+						}
+						catch (Exception theException)
+						{
+						}
+						// ---------------------------------------------------------
+					}
+				});
+			}
+			// ---------------------------------------------------------------------
+		}
 	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================

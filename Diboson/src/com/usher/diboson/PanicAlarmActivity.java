@@ -1,20 +1,16 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.Calendar;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlarmManager;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.TimePickerDialog;
 import android.app.admin.DevicePolicyManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
 import android.content.DialogInterface.OnDismissListener;
+import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.hardware.SensorEvent;
 import android.hardware.SensorManager;
@@ -22,7 +18,6 @@ import android.location.Location;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.support.v4.app.NotificationCompat;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -31,6 +26,9 @@ import android.widget.RelativeLayout;
 import android.widget.TableRow;
 import android.widget.TextView;
 import android.widget.TimePicker;
+
+import java.lang.reflect.Method;
+import java.util.Calendar;
 
 public class PanicAlarmActivity extends DibosonActivity 
 {
@@ -50,12 +48,20 @@ public class PanicAlarmActivity extends DibosonActivity
 	// 26/12/2015 ECU handle PARAMETER_PANIC_INITIALISE to be called by MainActivity
 	//                to re-instate the state of the panic alarm when the app was
 	//                stopped
+	// 24/12/2017 ECU when the Samsung was updated to Nougat (API 25) then there was
+	//                an issue with the 'device administrator' failing to activate
+	//                - turned out not to be a problem just needed the app to be
+	//                re-installed. See 'raw/documentation_notes' because it also
+	//                looks that on the Samsung the app needs to be loaded to 'internal
+	//                memory' rather then the SD card
+	// 26/03/2020 ECU just tidied up the 'initialise' so that 'finish' is always
+	//                called whether the alarm is enabled or not.
 	// =============================================================================
 	//private final static String TAG = "PanicAlarmActivity";
 	// =============================================================================
 	
 	// =============================================================================
-	// 21/02/2016 ECU declare the number of lines for use into the action commands
+	// 21/02/2016 ECU declare the number of lines for use in the action commands
 	//                field
 	// 11/03/2016 ECU changed from '3'
 	// -----------------------------------------------------------------------------
@@ -246,6 +252,9 @@ public class PanicAlarmActivity extends DibosonActivity
 					//                alarm is defined so no checking needed here
 					// -------------------------------------------------------------
 					// 14/03/2016 ECU check the status of the alarm
+					// 26/03/2020 ECU rearrange the calling of 'finish' so that it
+					//                always called whether 'Check....' returns
+					//                true or false
 					// -------------------------------------------------------------
 					if (!CheckAlarmState (this))
 					{
@@ -257,14 +266,11 @@ public class PanicAlarmActivity extends DibosonActivity
 						EnablePanicAlarm (this);
 						// ---------------------------------------------------------
 					}
-					else
-					{
-						// ---------------------------------------------------------
-						// 14/03/2016 ECU now finish this activity
-						// ---------------------------------------------------------
-						finish ();
-						// ---------------------------------------------------------
-					}
+					// -------------------------------------------------------------
+					// 14/03/2016 ECU now finish this activity
+					// 26/03/2020 ECU always 'finish' this activity on initialise
+					// -------------------------------------------------------------
+					finish ();
 					// -------------------------------------------------------------
 				}
 			}
@@ -314,7 +320,7 @@ public class PanicAlarmActivity extends DibosonActivity
     				// -------------------------------------------------------------
     				// 03/12/2015 ECU and clear the incoming string
     				// -------------------------------------------------------------
-    				securityInput = "";
+    				securityInput = StaticData.BLANK_STRING;
     				// -------------------------------------------------------------
     				securityTries = StaticData.PANIC_ALARM_MAX_TRIES;
     				// -------------------------------------------------------------
@@ -392,6 +398,7 @@ public class PanicAlarmActivity extends DibosonActivity
 		 			// 26/03/2016 ECU changed to use the resource
 			 		// -------------------------------------------------------------
 			 		Utilities.popToast (getString (R.string.admin_permission_failed));
+			 		// -------------------------------------------------------------
 		 		}  
 		 		// -----------------------------------------------------------------
 		 		// 26/12/2015 ECU decide if the activity is to be terminated
@@ -448,7 +455,7 @@ public class PanicAlarmActivity extends DibosonActivity
 														  context.getString (R.string.action_command_summary),
 														  ACTION_PROMPT_LINES,
 														  PublicData.storedData.panicAlarm.alarmCommands,
-														  Utilities.createAMethod (PanicAlarmActivity.class,"AlarmCommands",""),
+														  Utilities.createAMethod (PanicAlarmActivity.class,"AlarmCommands",StaticData.BLANK_STRING),
 														  null,
 														  StaticData.NO_RESULT,
 														  context.getString (R.string.press_to_define_command));
@@ -546,6 +553,7 @@ public class PanicAlarmActivity extends DibosonActivity
 					// 06/03/2016 add the '1' to be the minimum value
 					// 10/03/2016 ECU changed from '60 * 10'
 					// 26/03/2016 ECU changed to use resources
+					// 23/03/2017 ECU changed the prompt period from 5 to 2
 					// -------------------------------------------------------------
 					DialogueUtilities.sliderChoice (context,
         											getString (R.string.select_the_prompt_interval),
@@ -554,7 +562,7 @@ public class PanicAlarmActivity extends DibosonActivity
         											null,
         											PublicData.storedData.panicAlarm.intervalTime,
         											1,
-        											60 * 5,
+        											60 * 2,
         											getString (R.string.click_to_set_prompt_interval),
         											Utilities.createAMethod (PanicAlarmActivity.class,"IntervalTime",0),
         											getString (R.string.cancel_operation));
@@ -630,7 +638,7 @@ public class PanicAlarmActivity extends DibosonActivity
 													      context.getString (R.string.action_command_summary),
 													      ACTION_PROMPT_LINES,
 													      PublicData.storedData.panicAlarm.promptCommands,
-													      Utilities.createAMethod (PanicAlarmActivity.class,"PromptCommands",""),
+													      Utilities.createAMethod (PanicAlarmActivity.class,"PromptCommands",StaticData.BLANK_STRING),
 													      null,
 													      StaticData.NO_RESULT,
 													      context.getString (R.string.press_to_define_command));
@@ -670,7 +678,7 @@ public class PanicAlarmActivity extends DibosonActivity
 														  context.getString (R.string.action_command_summary),
 														  ACTION_PROMPT_LINES,
 														  PublicData.storedData.panicAlarm.responseCommands,
-														  Utilities.createAMethod (PanicAlarmActivity.class,"ResponseCommands",""),
+														  Utilities.createAMethod (PanicAlarmActivity.class,"ResponseCommands",StaticData.BLANK_STRING),
 														  null,
 														  StaticData.NO_RESULT,
 														  context.getString (R.string.press_to_define_command));
@@ -686,9 +694,9 @@ public class PanicAlarmActivity extends DibosonActivity
 													 context.getString (R.string.panic_alarm_security_title),
 													 PublicData.storedData.panicAlarm.security,
 													 context.getString (R.string.set_security_code),
-													 Utilities.createAMethod (PanicAlarmActivity.class,"ConfirmSecurityString",""),
+													 Utilities.createAMethod (PanicAlarmActivity.class,"ConfirmSecurityString",StaticData.BLANK_STRING),
 													 context.getString (R.string.switch_off_security),
-													 Utilities.createAMethod (PanicAlarmActivity.class,"CancelSecurityString",""));
+													 Utilities.createAMethod (PanicAlarmActivity.class,"CancelSecurityString",StaticData.BLANK_STRING));
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -834,7 +842,7 @@ public class PanicAlarmActivity extends DibosonActivity
 						// ---------------------------------------------------------
 						// 03/12/2015 ECU can still retry so reset the parameters
 						// ---------------------------------------------------------
-						securityInput = "";
+						securityInput = StaticData.BLANK_STRING;
 						// ---------------------------------------------------------
 					}
 					// -------------------------------------------------------------
@@ -1323,14 +1331,14 @@ public class PanicAlarmActivity extends DibosonActivity
 		//               minutes into real milliseconds
 		// -------------------------------------------------------------------------
 		Calendar calendar = Calendar.getInstance ();
-		
+		// -------------------------------------------------------------------------
 		long currentTime = calendar.getTimeInMillis();
-		
+		// -------------------------------------------------------------------------
 		calendar.set (Calendar.HOUR_OF_DAY,theTime.hour);
 		calendar.set (Calendar.MINUTE, theTime.minute);
 		calendar.set (Calendar.SECOND, 0);
 		calendar.set (Calendar.MILLISECOND, 0);
-			
+		// -------------------------------------------------------------------------
 		long localTime = calendar.getTimeInMillis();
 		// -------------------------------------------------------------------------
 		// 01/12/2015 ECU determine if the alarm is for today or tomorrow
@@ -1451,7 +1459,7 @@ public class PanicAlarmActivity extends DibosonActivity
 		// 26/03/2016 ECU changed to use resource
 		// -------------------------------------------------------------------------
 		updateStatusMessage (theContext.getString (R.string.panic_alarm_reactivated) + 
-								PublicData.storedData.panicAlarm.startTime.Print());
+								PublicData.storedData.panicAlarm.startTime.Print ());
 		// -------------------------------------------------------------------------
 		// 04/12/2015 ECU if 'shake' mode is required then unregister the accelerometer
 		//                listener
@@ -1490,7 +1498,7 @@ public class PanicAlarmActivity extends DibosonActivity
 			// 26/11/2015 ECU start up activity to get user response
 			// ---------------------------------------------------------------------
 			Intent localIntent = new Intent (theContext,PanicAlarmActivity.class);
-			localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
 			// ---------------------------------------------------------------------
 			// 26/11/2015 ECU indicate that want to put the activity into prompt mode
 			// ---------------------------------------------------------------------
@@ -1560,7 +1568,7 @@ public class PanicAlarmActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				Intent localIntent = new Intent (theContext,PanicAlarmActivity.class);
 				localIntent.putExtra (StaticData.PARAMETER_PANIC_INITIALISE, true);
-				localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
 				theContext.startActivity (localIntent);
 				// -----------------------------------------------------------------
 			}
@@ -1569,13 +1577,14 @@ public class PanicAlarmActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void locationUpdate (Location theNewLocation)
+	public static void locationUpdate (Context theContext,Location theNewLocation)
 	{
 		// -------------------------------------------------------------------------
 		// 28/11/2015 ECU created to be called when the tracking software detects
 		//                a location change
+		// 05/02/2018 ECU added the context as an argument
 		// -------------------------------------------------------------------------
-		Utilities.SendEmailMessage (context,
+		Utilities.SendEmailMessage (theContext,
 						  			PublicData.storedData.panicAlarm.trackingEmail,
 						  			"PANIC ALARM - Tracking Information", 
 						  			"Current position is \n\n" + 
@@ -1627,7 +1636,10 @@ public class PanicAlarmActivity extends DibosonActivity
 	                	//                value
 	                	// ---------------------------------------------------------
 	                	panicAlarmCounter--;
-	                	panicAlarmTimer.setText ("" + panicAlarmCounter );
+	                	// ---------------------------------------------------------
+	                	// 26/03/2020 ECU tidy up the display of the timer
+	                	// ---------------------------------------------------------
+	                	panicAlarmTimer.setText (StaticData.BLANK_STRING + panicAlarmCounter);
 	                	// ---------------------------------------------------------
 	                	// 26/11/2015 ECU check if it is time to action any alarms
 	                	// ---------------------------------------------------------
@@ -1661,6 +1673,7 @@ public class PanicAlarmActivity extends DibosonActivity
         	// ---------------------------------------------------------------------
             this.removeMessages (StaticData.MESSAGE_SLEEP);
             sendMessageDelayed (obtainMessage (StaticData.MESSAGE_SLEEP), delayMillis);
+            //----------------------------------------------------------------------
         }
     };
 	// =============================================================================
@@ -1680,7 +1693,7 @@ public class PanicAlarmActivity extends DibosonActivity
     			// -----------------------------------------------------------------
     			// 28/11/2015 ECU lock the screen
     			// -----------------------------------------------------------------
-    			((DevicePolicyManager)context.getSystemService(Context.DEVICE_POLICY_SERVICE)).lockNow(); 
+    			((DevicePolicyManager)context.getSystemService(Context.DEVICE_POLICY_SERVICE)).lockNow ();
     			// -----------------------------------------------------------------
     		}
     		else
@@ -1710,9 +1723,14 @@ public class PanicAlarmActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_TYPE,theAlarmType);
 		// -------------------------------------------------------------------------
+		// 15/03/2019 ECU added PendingIntent.FLAG_UPDATE_CURRENT
+		// 09/05/2020 ECU changed to use 'ALARM...FLAGS'
+		// -------------------------------------------------------------------------
 		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_ID,StaticData.ALARM_ID_PANIC_ALARM);
 		alarmPendingIntent = PendingIntent.getBroadcast (theContext,
-				StaticData.ALARM_ID_PANIC_ALARM,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK);  
+														 StaticData.ALARM_ID_PANIC_ALARM,
+														 alarmIntent,
+														 StaticData.ALARM_PENDING_INTENT_FLAGS);
 		// -------------------------------------------------------------------------
 		// 24/12/2015 ECU changed to use the new method
 		// 03/11/2016 ECU changed to use the global alarm manager
@@ -1721,49 +1739,10 @@ public class PanicAlarmActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
     }
 	// =============================================================================
-	static void SetNotification (Context theContext,String theNotificationMessage)
-	{
-		// -------------------------------------------------------------------------
-		// 12/03/2016 ECU created in case a notification is needed in the future
-		// -------------------------------------------------------------------------
-		NotificationManager notificationManager 
-				= (NotificationManager) theContext.getSystemService (NOTIFICATION_SERVICE);
-		// -------------------------------------------------------------------------
-		// 12/03/2016 ECU there is a manager so set up the required data
-		// -------------------------------------------------------------------------
-		if (notificationManager != null)
-		{
-			// ---------------------------------------------------------------------
-			// 12/03/2016 ECU set the components of the notification
-			// 16/03/2016 ECU chenged to use the 'big text style'
-			// ---------------------------------------------------------------------
-			NotificationCompat.Builder notificationBuilder =
-				    new NotificationCompat.Builder (theContext)
-				    						.setSmallIcon (R.drawable.timer_icon_on)
-				    						.setContentTitle ("Panic Alarm")
-				    						.setStyle(new NotificationCompat.BigTextStyle().bigText(theNotificationMessage));
-	        // -------------------------------------------------------------------------
-	        // 26/06/2013 ECU specify the activity to be started if the user selects it
-	        //                from the list of notifications
-	        // -------------------------------------------------------------------------
-			PendingIntent resultPendingIntent =
-								PendingIntent.getActivity (theContext,
-														   0,
-														   new Intent (theContext,PanicAlarmActivity.class),
-														   PendingIntent.FLAG_UPDATE_CURRENT);
-			notificationBuilder.setContentIntent(resultPendingIntent);
-			// ---------------------------------------------------------------------
-			// 12/03/2016 ECU now get the manager to action
-			// ---------------------------------------------------------------------
-			notificationManager.notify (StaticData.NOTIFICATION_PANIC_ALARM,notificationBuilder.build());
-			// ---------------------------------------------------------------------
-		}
-	}
-	// =============================================================================
 	static void setWallPaper (boolean theState)
 	{
 		// -------------------------------------------------------------------------
-		// 25/03/2016 ECU created to set or reset the wallpaper depeneding on the
+		// 25/03/2016 ECU created to set or reset the wallpaper depending on the
 		//                supplied state
 		//				    theState = true   set the wallpaper to the panic alarm
 		//                                    version after saving the current one
@@ -1776,7 +1755,17 @@ public class PanicAlarmActivity extends DibosonActivity
 			// 25/03/2015 ECU set the panic alarm wallpaper
 			// ---------------------------------------------------------------------
 			if (existingWallPaper == null)
+			{
 				existingWallPaper = Utilities.setWallPaper (context,R.drawable.panic_alarm);
+				// -----------------------------------------------------------------
+				// 26/03/2020 ECU store in the 'lock file'
+				// 09/05/2020 ECU changed to use the new method because it was
+				//                possible to get to this point before the
+				//                'lockFileData' is initialsed thus giving a NPE
+				// -----------------------------------------------------------------
+				LockFileData.SetWallPaper (existingWallPaper);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -1786,7 +1775,7 @@ public class PanicAlarmActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			if (existingWallPaper != null)
 			{
-				Utilities.setWallPaper(context,existingWallPaper);
+				Utilities.setWallPaper (context,existingWallPaper);
 				// -----------------------------------------------------------------
 				// 25/03/2016 ECU clear the wallpaper drawable to indicate 'done'
 				// -----------------------------------------------------------------
@@ -1841,7 +1830,7 @@ public class PanicAlarmActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 28/11/2015 ECU the panic alarm is enabled
 				// -----------------------------------------------------------------
-				// 28/11/2015/2015 ECU and change the subtitle field, if required
+				// 28/11/2015 ECU and change the subtitle field, if required
 				// -----------------------------------------------------------------
 				if (theSubTitleTextView != null)
 				{
@@ -1881,6 +1870,12 @@ public class PanicAlarmActivity extends DibosonActivity
 			// 28/11/2015 ECU request the refresh
 			// ---------------------------------------------------------------------
 			MusicPlayer.refreshImageAdapter ();
+			// ---------------------------------------------------------------------
+			// 01/06/2017 ECU update the notification
+			// 11/11/2017 ECU changed to use the new method
+			// ---------------------------------------------------------------------
+			Utilities.notification (context,R.drawable.panic_icon, null,theMessage,null,false,StaticData.NOTIFICATION_PANIC_ALARM);
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -1911,7 +1906,7 @@ public class PanicAlarmActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     	// 03/12/2015 ECU called to set up the security string
     	// -------------------------------------------------------------------------
-    	PublicData.storedData.panicAlarm.security = ((theSecurityString.equalsIgnoreCase ("")) ? null 
+    	PublicData.storedData.panicAlarm.security = ((theSecurityString.equalsIgnoreCase (StaticData.BLANK_STRING)) ? null 
     																		    			   : theSecurityString);
     	// -------------------------------------------------------------------------
     }
@@ -1941,7 +1936,7 @@ public class PanicAlarmActivity extends DibosonActivity
     	// 11/12/2015 ECU created to store commands that are required for the panic
     	//                alarm when a response is received from the user
     	// -------------------------------------------------------------------------
-    	PublicData.storedData.panicAlarm.responseCommands = ((theCommands.equalsIgnoreCase ("")) ? null 
+    	PublicData.storedData.panicAlarm.responseCommands = ((theCommands.equalsIgnoreCase (StaticData.BLANK_STRING)) ? null 
  			    																				 : theCommands);
     	// -------------------------------------------------------------------------
     }

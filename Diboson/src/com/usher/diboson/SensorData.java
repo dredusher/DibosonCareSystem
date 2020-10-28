@@ -27,16 +27,29 @@ public class SensorData implements Serializable
 		upperTriggerActions		= 	null;
 		// -------------------------------------------------------------------------
 	}
+	// -----------------------------------------------------------------------------
+	public SensorData (int theLowerTrigger,int theUpperTrigger)
+	{
+		// -------------------------------------------------------------------------
+		// 23/06/2017 ECU created when want to set initial triggers are to be set
+		// -------------------------------------------------------------------------
+		lowerTrigger			=	theLowerTrigger;
+		lowerTriggerActions		= 	null;
+		triggered				= 	false;
+		upperTrigger			=	theUpperTrigger;
+		upperTriggerActions		= 	null;
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 	public String Print ()
 	{
 		// -------------------------------------------------------------------------
 		// 14/03/2015 ECU return a summary of the sensor data
 		// --------------------------------------------------------------------------
-		return "Lower Trigger = " + lowerTrigger + "\n" +
-				"Upper Trigger = " + upperTrigger + "\n" +
-				"Lower Trigger Actions = " + lowerTriggerActions + "\n" +
-				"Upper Trigger Actions = " + upperTriggerActions + "\n" +
+		return "Lower Trigger = " + lowerTrigger + StaticData.NEWLINE +
+				"Upper Trigger = " + upperTrigger + StaticData.NEWLINE +
+				"Lower Trigger Actions = " + lowerTriggerActions + StaticData.NEWLINE +
+				"Upper Trigger Actions = " + upperTriggerActions + StaticData.NEWLINE +
 				"Trigger State = " + triggered;	
 	}
 	// =============================================================================

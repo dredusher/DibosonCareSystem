@@ -153,11 +153,14 @@ public class SntpClient
         long milliseconds = time - seconds * 1000L;
         seconds += OFFSET_1900_TO_1970;
 
+        // ---------------------------------------------------------------------
         // write seconds in big endian format
-        buffer[offset++] = (byte)(seconds >> 24);
-        buffer[offset++] = (byte)(seconds >> 16);
-        buffer[offset++] = (byte)(seconds >> 8);
-        buffer[offset++] = (byte)(seconds >> 0);
+        // ---------------------------------------------------------------------
+        buffer [offset++] = (byte)(seconds >> 24);
+        buffer [offset++] = (byte)(seconds >> 16);
+        buffer [offset++] = (byte)(seconds >> 8);
+        buffer [offset++] = (byte)(seconds >> 0);           // 03/07/2020 ECU just 'seconds' but
+                                                            //                leave for clarity
 
         long fraction = milliseconds * 0x100000000L / 1000L;
         // write fraction in big endian format

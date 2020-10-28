@@ -363,8 +363,8 @@ public class NFC_Activity extends DibosonActivity
 														  context.getString (R.string.nfc_actions_title),
 														  context.getString (R.string.action_command_summary),
 														  3,
-														  "",
-														  Utilities.createAMethod (NFC_Activity.class,"ActionsMethod",""),
+														  StaticData.BLANK_STRING,
+														  Utilities.createAMethod (NFC_Activity.class,"ActionsMethod",StaticData.BLANK_STRING),
 														  null,
 														  StaticData.NO_RESULT,
 														  context.getString (R.string.press_to_define_command));
@@ -712,7 +712,7 @@ public class NFC_Activity extends DibosonActivity
 	        	    	 // 12/06/2016 ECU add final true to interrupt existing
 	        	    	 //                actions
 	        	    	 // --------------------------------------------------------
-	        	    	 text = text.replace(getPackageName() + StaticData.ACTION_DELIMITER + StaticData.ACTION_INTRODUCER + "=","");
+	        	    	 text = text.replace(getPackageName() + StaticData.ACTION_DELIMITER + StaticData.ACTION_INTRODUCER + "=",StaticData.BLANK_STRING);
 	        	    	 // --------------------------------------------------------
 	        	    	 // 15/06/2016 ECU decide whether to process locally or not
 	        	    	 // --------------------------------------------------------
@@ -818,6 +818,11 @@ public class NFC_Activity extends DibosonActivity
 				 									  new MethodDefinition<NFC_Activity> (NFC_Activity.class,"checkDeviceResponse"),
 				 									  StaticData.NFC_TIMEOUT);
 		 Message localMessage = PublicData.messageHandler.obtainMessage (StaticData.MESSAGE_CHECK_DEVICE,localNFCMessage);
+		 // ------------------------------------------------------------------------
+		 // 21/03/2017 ECU indicate why the device is being checked
+		 // ------------------------------------------------------------------------
+		 localMessage.arg1 = MessageHandler.ARE_YOU_THERE_NFC;
+		 // ------------------------------------------------------------------------
 		 PublicData.messageHandler.sendMessage (localMessage);
 		 // ------------------------------------------------------------------------
 	 }

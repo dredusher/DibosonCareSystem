@@ -19,8 +19,11 @@ public class SelectorParameter implements Serializable
 	//            ECU added 'finishOnSelect'
 	// 05/08/2016 ECU added 'drawableInitial'
 	// 18/10/2016 ECU added 'editMethodDefinition'
+	// 18/01/2020 ECU added 'button....'
 	// =============================================================================
 	public MethodDefinition<?> backMethodDefinition 	= null;
+	public int				   buttonResourceId			= StaticData.NOT_SET;
+	public MethodDefinition<?> buttonMethodDefinition	= null;
 	public Class <?> 		   classToRun;
 	public String			   customLegend 			= null;
 	public MethodDefinition<?> customMethodDefinition 	= null;
@@ -33,7 +36,12 @@ public class SelectorParameter implements Serializable
 	public ArrayList<ListItem> listItems				= new ArrayList<ListItem>();  
 	public MethodDefinition<?> longSelectMethodDefinition
 														= null;
-	public String			   name  					= null;
+	// -----------------------------------------------------------------------------
+	// 07/06/2019 ECU 'name' was included to sort out some issues in ShoppingInputActivity
+	//                - this is no longer needed
+	// -----------------------------------------------------------------------------
+	//public String			   name  					= null;
+	// -----------------------------------------------------------------------------
 	public boolean			   newTask					= false;
 	public int				   rowLayout 				= 0;
 	public MethodDefinition<?> selectMethodDefinition	= null;

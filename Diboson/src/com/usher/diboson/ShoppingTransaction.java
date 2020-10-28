@@ -3,7 +3,6 @@ package com.usher.diboson;
 import java.io.Serializable;
 import java.util.Arrays;
 
-
 public class ShoppingTransaction implements Serializable
 {
 	/* ============================================================================= */
@@ -15,6 +14,8 @@ public class ShoppingTransaction implements Serializable
 	//                          introduce the 'deleted' variable which will indicate
 	//                          that the brand has been deleted but its object will
 	//                          remain with this variable set to true.
+	// 08/09/2017 ECU override the hashCode method to handle the deleted flag which
+	//                the root method was not doing
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -174,6 +175,17 @@ public class ShoppingTransaction implements Serializable
 		// -------------------------------------------------------------------------
 		return StaticData.NO_RESULT;
 	}
+	// =============================================================================
+	@Override
+	public int hashCode ()
+	{
+		// -------------------------------------------------------------------------
+		// 08/09/2017 ECU override the default method so that the hashcode can
+		//                accommodate the 'delete' flag
+		// -------------------------------------------------------------------------
+		return super.hashCode () + (deleted ? 1 : 0);
+		// -------------------------------------------------------------------------
+	}
 	/* ============================================================================= */
 	public String Print ()
 	{
@@ -181,20 +193,28 @@ public class ShoppingTransaction implements Serializable
 				PublicData.shoppingData.shops.get(shopIndex).name;
 	}
 	// =============================================================================
-	String PrintRecord ()
+	String PrintRecord (int theIndex)
 	{
-		return "Item Index : " + itemIndex + " Shop Index : " + shopIndex + "  Deleted : " + deleted;
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
+		return String.format("Index : %3d  Item Index : %3d  Shop Index : %3d  Deleted : %b",
+									theIndex,itemIndex,shopIndex,deleted);
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String PrintAll ()
 	{
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
 		String printString = "Transaction\n============\n";
 		for (int theIndex=0; theIndex < PublicData.shoppingData.transactions.size(); theIndex++)
 		{
-			printString += "Index : " + theIndex + "\n";
-			printString += PublicData.shoppingData.transactions.get(theIndex).PrintRecord () + "\n";
+			printString += PublicData.shoppingData.transactions.get(theIndex).PrintRecord (theIndex) + StaticData.NEWLINE;
 		}
 		return printString;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String [] ReturnNames ()

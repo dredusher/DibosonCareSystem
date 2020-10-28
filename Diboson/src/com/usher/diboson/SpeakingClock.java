@@ -6,6 +6,9 @@ public class SpeakingClock implements Serializable
 {
 	/* ============================================================================= */
 	// 09/01/2014 ECU created to contain details for the speaking clock
+	// 25/07/2017 ECU added westminsterChimeEnd
+	//						   true ....... the chiming ends at the specified time
+	//						   false ...... the chiming starts at the specified time
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -21,27 +24,31 @@ public class SpeakingClock implements Serializable
 	public int		stopMinute			 	= 0;
 	public int      stopTime			 	= 0;
 	public boolean  westminsterChime	 	= false;	// 10/03/2017 ECU added
+	public boolean  westminsterChimeEnd		= true;		// 25/07/2017 ECU added
 	/* ============================================================================= */
 	public SpeakingClock (boolean theEnableFlag,
 				          int theStartHour,int theStartMinute,
-				          int theStopHour,int theStopMinute,int theGap,
+				          int theStopHour,int theStopMinute,
+				          int theGap,
 				          boolean theShowTextFlag,
-				          boolean theWestminsterChime)
+				          boolean theWestminsterChime,
+				          boolean theWestminsterChimeEnd)
 	{
 		// -------------------------------------------------------------------------
 		// 09/02/2014 ECU copy across the variables
 		// 01/02/2017 ECU added the show text flag
 		// 10/03/2017 ECU added the Westminster chime
 		// -------------------------------------------------------------------------
-		enabled			= theEnableFlag;
-		gap				= theGap;
-		nextAlarmTime	= 0;						// 23/02/2014 ECU added
-		showText		= theShowTextFlag;			// 01/02/2017 ECU added	
-		startHour		= theStartHour;
-		startMinute		= theStartMinute;
-		stopHour		= theStopHour;
-		stopMinute		= theStopMinute;
-		westminsterChime= theWestminsterChime;		// 10/03/2017 ECU added
+		enabled				= theEnableFlag;
+		gap					= theGap;
+		nextAlarmTime		= 0;						// 23/02/2014 ECU added
+		showText			= theShowTextFlag;			// 01/02/2017 ECU added	
+		startHour			= theStartHour;
+		startMinute			= theStartMinute;
+		stopHour			= theStopHour;
+		stopMinute			= theStopMinute;
+		westminsterChime	= theWestminsterChime;		// 10/03/2017 ECU added
+		westminsterChimeEnd	= theWestminsterChimeEnd;	// 25/07/2017 ECU added
 		// -------------------------------------------------------------------------
 		// 09/02/2014 ECU work out the minutes which will be used for testing
 		// -------------------------------------------------------------------------
@@ -136,11 +143,12 @@ public class SpeakingClock implements Serializable
 		// 13/03/2014 ECU added print of 'spansMidnight'
 		// -------------------------------------------------------------------------
 		if (enabled)
-			return "Enable State : " + enabled + "\n" +
+			return "Enable State : " + enabled + StaticData.NEWLINE +
 					"Active from  " + Utilities.AdjustedNumber(startHour) + ":" + Utilities.AdjustedNumber(startMinute) +
 					" until " + Utilities.AdjustedNumber(stopHour) + ":" + Utilities.AdjustedNumber(stopMinute) + " \n" +
 					"Interval : " + gap + " minutes" +
-					(spansMidnight ? "\nPeriod Spans Midnight" : "");
+					(spansMidnight ? "\nPeriod Spans Midnight" : StaticData.BLANK_STRING +
+					(westminsterChime ? "\n\nChimes at " + (westminsterChimeEnd ? "End" : "Start") : StaticData.BLANK_STRING));
 		else
 			return "The speaking clock is disabled";
 	}

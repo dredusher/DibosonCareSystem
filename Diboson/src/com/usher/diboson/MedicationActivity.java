@@ -8,15 +8,13 @@ import android.os.Bundle;
 import android.os.Message;
 import android.content.Context;
 import android.content.Intent;
-import android.view.GestureDetector;
 import android.view.View;
-import android.view.GestureDetector.OnGestureListener;
-import android.view.MotionEvent;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
-public class MedicationActivity extends DibosonActivity implements OnGestureListener 
+public class MedicationActivity extends DibosonActivity
 {
 	// ===============================================================================
 	// 23/06/2013 ECU created
@@ -27,13 +25,16 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 	// 24/10/2015 ECU put in the check as to whether the activity has been created
 	//                anew or is being recreated after having been destroyed by
 	//                the Android OS
+	// 26/03/2017 ECU was set up as onGestureListener - this was historical so took
+	//                it out
+	//            ECU put in validation when called up because the supplied indices
+	//                may refer to something which has been deleted
+	// 02/04/2017 ECU removed the GestureScanner
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
 	//================================================================================
 	private static final String TAG	=	"MedicationActivity";
-	/* ====================================================================== */
-	private GestureDetector gestureScanner;
 	/* ====================================================================== */
 	static Context		context;					// 20/12/2015 ECU added
 		   int 			theHour;
@@ -102,91 +103,134 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
  	   				theMedication		 	= getIntent().getIntExtra (StaticData.PARAMETER_MEDICATION,0); 
  	   				theDailyDose 			= getIntent().getIntExtra (StaticData.PARAMETER_DOSE_TIME,0);
  	   				theDose 				= getIntent().getIntExtra (StaticData.PARAMETER_DOSE,0);
- 	   				// -------------------------------------------------------------
- 	   				// 09/03/206 ECU try and get dose time
- 	   				// -------------------------------------------------------------
+ 	   				// ---------------------------------------------------------
+ 	   				// 09/03/2016 ECU try and get dose time
+ 	   				// 25/11/2017 ECU moved here from within the 'if'
+ 	   				// ---------------------------------------------------------
  	   				doseTime 				= (DoseTime) medicationExtras.getSerializable (StaticData.PARAMETER_OBJECT);
- 	   				// -------------------------------------------------------------	
- 	   				// 24/06/2013 ECU added
- 	   				// -------------------------------------------------------------	
- 	   				setTitle (String.format ("Medication to be taken at %02d:%02d",theHour,theMinute));
  	   				// -------------------------------------------------------------
- 	   				// 23/06/2013 ECU make major changes
- 	   				// 10/12/2013 ECU change because want to use the full path
- 	   				// 17/01/2014 ECU added the amount in the display
- 	   				//			  ECU change the call to displayAnImage so that a default
- 	   				//				  'drawable' image can be displayed if the requested 
- 	   				//				   image cannot be found
- 	   				// 24/03/2014 ECU display the description
- 	   				//            ECU change to used AbsolutePath
- 	   				// 01/09/2015 ECU changed to use StaticData
+ 	   				// 26/03/2017 ECU just check that the indices passed through are valid
+ 	   				// 25/11/2017 ECU added the check on 'doseTime' because if set
+ 	   				//                then do not want to validate the indices
  	   				// -------------------------------------------------------------
- 	   				Utilities.displayAnImage(medicationImageView,Utilities.AbsoluteFileName(PublicData.medicationDetails.get(theMedication).photo),StaticData.IMAGE_SAMPLE_SIZE,R.drawable.medication);
+ 	   			    if ((doseTime != null) || MedicationDetails.validateIndices (theMedication,theDailyDose,theDose))
+ 	   			    {
+ 	   			    	// ---------------------------------------------------------	
+ 	   			    	// 24/06/2013 ECU added
+ 	   			    	// ---------------------------------------------------------	
+ 	   			    	setTitle (String.format ("Medication to be taken at %02d:%02d",theHour,theMinute));
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 23/06/2013 ECU make major changes
+ 	   			    	// 10/12/2013 ECU change because want to use the full path
+ 	   			    	// 17/01/2014 ECU added the amount in the display
+ 	   			    	//			  ECU change the call to displayAnImage so that 
+ 	   			    	//				  a default 'drawable' image can be displayed 
+ 	   			    	// 				  if the requested image cannot be found
+ 	   			    	// 24/03/2014 ECU display the description
+ 	   			    	//            ECU change to used AbsolutePath
+ 	   			    	// 01/09/2015 ECU changed to use StaticData
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	Utilities.displayAnImage (medicationImageView,Utilities.AbsoluteFileName (PublicData.medicationDetails.get(theMedication).photo),StaticData.IMAGE_SAMPLE_SIZE,R.drawable.medication);
 		
- 	   				medicationName.setText	("Medication : " 	+ PublicData.medicationDetails.get(theMedication).name);
- 	   				// -------------------------------------------------------------
- 	   				// 28/11/2014 ECU check if the required data exists
- 	   				// 09/03/2016 ECU check for the 'object' option
- 	   				// -------------------------------------------------------------
- 	   				if (doseTime == null)
- 	   				{
- 	   					if (PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose] != null &&
- 	   							PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.size() > theDose)
- 	   					{
- 	   						medicationAmount.setText("Amount : " 		+ PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.amount +
+ 	   			    	medicationName.setText	("Medication : " 	+ PublicData.medicationDetails.get (theMedication).name);
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 28/11/2014 ECU check if the required data exists
+ 	   			    	// 09/03/2016 ECU check for the 'object' option
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	if (doseTime == null)
+ 	   			    	{
+ 	   			    		if (PublicData.medicationDetails.get (theMedication).dailyDoseTimes[theDailyDose] != null &&
+ 	   			    			PublicData.medicationDetails.get (theMedication).dailyDoseTimes[theDailyDose].doseTimes.size() > theDose)
+ 	   			    		{
+ 	   			    			medicationAmount.setText("Amount : " 		+ PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.amount +
  	   								" " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.units);
- 	   						medicationNotes.setText	("Notes : " 		+ PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).notes);
- 	   					}
- 	   					else
- 	   					{
- 	   						// -----------------------------------------------------
- 	   						// 28/11/2014 ECU preset some fields
- 	   						// -----------------------------------------------------
- 	   						medicationAmount.setText ("No Amount Specified");
- 	   						medicationNotes.setText ("No Notes Specified");
- 	   						// -----------------------------------------------------
- 	   					}
- 	   				}
- 	   				else
- 	   				{
- 	   					// ---------------------------------------------------------
- 	   					// 09/03/2016 ECU display the information from dose time
- 	   					// ---------------------------------------------------------
- 	   					medicationAmount.setText("Amount : " 		+ doseTime.dose.amount + " " + doseTime.dose.units);
-						medicationNotes.setText	("Notes : " 		+ doseTime.notes);
-						// ---------------------------------------------------------
- 	   				}
- 	   				// -------------------------------------------------------------
- 	   				medicationDescription.setText	("Description : " 		+ PublicData.medicationDetails.get(theMedication).description);
- 	   				// -------------------------------------------------------------
- 	   				// 19/03/2014 ECU display details of the date and time
- 	   				// 10/11/2014 ECU changed to use Locale.getDefault instead of Locale.UK
- 	   				// 27/10/2016 ECU changed to use dateSimpleFormat
- 	   				// -------------------------------------------------------------
- 	   				medicationDate.setText (Utilities.getAdjustedTime (PublicData.dateSimpleFormat));
- 	   				medicationDay.setText (Utilities.getAdjustedTime(new SimpleDateFormat ("EEEE",Locale.getDefault())));	
- 	   				medicationTime.setText (Utilities.getAdjustedTime(new SimpleDateFormat ("HH:mm:ss",Locale.getDefault())));
- 	   				// -------------------------------------------------------------	   
- 	   				// 15/01/2014 ECU re-arranged the code
- 	   				// -------------------------------------------------------------
- 	   				gestureScanner = new GestureDetector(this,this);
- 	   				// -------------------------------------------------------------
- 	   				// 23/06/2013 ECU add button handling here
- 	   				// -------------------------------------------------------------
- 	   				((Button)findViewById(R.id.dose_confirm)).setOnClickListener(confirmDose);
- 	   				((Button)findViewById(R.id.dose_reject)).setOnClickListener(rejectDose);
- 	   				// -------------------------------------------------------------
- 	   				// 21/12/2015 ECU start up the prompt mechanism
- 	   				// -------------------------------------------------------------
- 	   				PromptForUserResponse (true);     
- 	   				// -------------------------------------------------------------
+ 	   			    			medicationNotes.setText	("Notes : " 		+ PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).notes);
+ 	   			    		}
+ 	   			    		else
+ 	   			    		{
+ 	   			    			// -------------------------------------------------
+ 	   			    			// 28/11/2014 ECU preset some fields
+ 	   			    			// -------------------------------------------------
+ 	   			    			medicationAmount.setText ("No Amount Specified");
+ 	   			    			medicationNotes.setText  ("No Notes Specified");
+ 	   			    			// -------------------------------------------------
+ 	   			    		}
+ 	   			    	}
+ 	   			    	else
+ 	   			    	{
+ 	   			    		// -----------------------------------------------------
+ 	   			    		// 09/03/2016 ECU display the information from dose time
+ 	   			    		// -----------------------------------------------------
+ 	   			    		medicationAmount.setText ("Amount : " 		+ doseTime.dose.amount + " " + doseTime.dose.units);
+ 	   			    		medicationNotes.setText	 ("Notes : " 		+ doseTime.notes);
+ 	   			    		// -----------------------------------------------------
+ 	   			    	}
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	medicationDescription.setText	("Description : " 		+ PublicData.medicationDetails.get(theMedication).description);
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 19/03/2014 ECU display details of the date and time
+ 	   			    	// 10/11/2014 ECU changed to use Locale.getDefault instead 
+ 	   			    	//                of Locale.UK
+ 	   			    	// 27/10/2016 ECU changed to use dateSimpleFormat
+ 	   			    	// 24/07/2017 ECU changed to use ALARM...
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	medicationDate.setText (Utilities.getAdjustedTime (PublicData.dateSimpleFormat));
+ 	   			    	medicationDay.setText  (Utilities.getAdjustedTime(new SimpleDateFormat ("EEEE",Locale.getDefault())));	
+ 	   			    	medicationTime.setText (Utilities.getAdjustedTime(new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT,Locale.getDefault())));
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 11/11/2017 ECU set up a notification
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	Utilities.notification (this,R.drawable.medication,
+ 	   			    								getString (R.string.medication_reminder), 
+ 	   			    								getString (R.string.medication_reminder), 
+ 	   			    								(String) medicationName.getText () 			+ StaticData.NEWLINE + 
+ 	   			    									(String) medicationAmount.getText () 	+ StaticData.NEWLINE +
+ 	   			    									(String) medicationNotes.getText () 	+ StaticData.NEWLINE +
+ 	   			    									(String) medicationDescription.getText (),
+ 	   			    								true,StaticData.NOTIFICATION_MEDICATION);
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 26/03/2017 ECU now make the layout visible
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	((LinearLayout) findViewById (R.id.medication_linear_layout)).setVisibility (View.VISIBLE);
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 23/06/2013 ECU add button handling here
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	((Button)findViewById(R.id.dose_confirm)).setOnClickListener(confirmDose);
+ 	   			    	((Button)findViewById(R.id.dose_reject)).setOnClickListener(rejectDose);
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 21/12/2015 ECU start up the prompt mechanism
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	PromptForUserResponse (true);     
+ 	   			    	// ---------------------------------------------------------
+ 	   			    }
+ 	   			    else
+ 	   			    {
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	// 26/03/2017 ECU the supplied indices seem to point to a 
+ 	   			    	//                medication or dose which does not exist so  
+ 	   			    	//                log the fact and exit
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	Utilities.LogToProjectFile (TAG,"Medication or dose deleted");
+ 	   			    	// ---------------------------------------------------------
+ 	   			    	finish ();
+ 	   			    	// ---------------------------------------------------------
+ 	   			    }
 				}
 				catch (Exception theException)
 				{
 					// -------------------------------------------------------------
 					// 13/12/2015 ECU log the exception
+					// 26/03/2017 ECU an exception could occur if one of the indices
+					//                is invalid following the deletion of a medication
+					//                or dose. Found it difficult to delete any associated
+					//                alarms which are generated by the DailyScheduler.
+					//                This is there a lazy way of doing the 'validation'
 					// -------------------------------------------------------------
-					Utilities.LogToProjectFile(TAG,"Exception " + theException);
+					Utilities.LogToProjectFile (TAG,"Exception " + theException);
+					// -------------------------------------------------------------
+					// 26/03/2017 ECU finish with this activity
+					// -------------------------------------------------------------
+					finish ();
 					// -------------------------------------------------------------
 				}
 			}
@@ -208,12 +252,6 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 			// ---------------------------------------------------------------------
 		}
 	}
-	/* ============================================================================= */
-    @Override
-    public boolean onTouchEvent(MotionEvent me) 
-	 {
-	        return gestureScanner.onTouchEvent(me);
-	 }
     // =============================================================================
  	@Override
  	public void onBackPressed () 
@@ -235,48 +273,11 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 		super.onDestroy();
 		// -------------------------------------------------------------------------
     }
-	/* ============================================================================= */
-	@Override
-	public boolean onDown(MotionEvent arg0) 
-	{
-		return false;
-	}
-	/* ============================================================================= */
-	@Override
-	public boolean onFling(MotionEvent arg0, MotionEvent arg1, float arg2,
-			float arg3) 
-	{
-		return false;
-	}
-	/* ====================================================================== */
-	@Override
-	public void onLongPress(MotionEvent arg0) 
-	{
-		finish ();
-	}
-	/* ====================================================================== */
-	@Override
-	public boolean onScroll(MotionEvent arg0, MotionEvent arg1, float arg2,
-			float arg3) 
-	{
-		return false;
-	}
-	/* ====================================================================== */
-	@Override
-	public void onShowPress(MotionEvent arg0) 
-	{
-	}
-	/* ====================================================================== */
-	@Override
-	public boolean onSingleTapUp(MotionEvent arg0) 
-	{
-		return false;
-	}
 	/* ====================================================================== */
 	private View.OnClickListener confirmDose = new View.OnClickListener() 
 	{
 		@Override
-		public void onClick(View v) 
+		public void onClick(View view) 
 		{
 			// ---------------------------------------------------------------------
 			// 29/05/2013 ECU terminate this activity
@@ -288,20 +289,32 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 			// ---------------------------------------------------------------------
 			PromptForUserResponse (false);
 			// ---------------------------------------------------------------------
+			// 02/08/2019 ECU check if any 'confirm actions' are to be taken
+			// ---------------------------------------------------------------------
+			if (PublicData.medicationDetails.get(theMedication).actionsConfirmed != null)
+			{
+				// -----------------------------------------------------------------
+				// 02/08/2019 ECU process the defined actions
+				// -----------------------------------------------------------------
+				Utilities.actionHandler (context,PublicData.medicationDetails.get (theMedication).actionsConfirmed);
+				// -----------------------------------------------------------------
+			}	
+			// ---------------------------------------------------------------------
 			finish ();
+			// ---------------------------------------------------------------------
 		}
 	};
 	/* ========================================================================== */
 	private View.OnClickListener rejectDose = new View.OnClickListener() 
 	{
 		@Override
-		public void onClick(View view) 
+		public void onClick (View view) 
 		{
 			// ---------------------------------------------------------------------
 			// 29/05/2013 ECU terminate this activity
 			// 08/11/2013 ECU use the custom toast
 			// ---------------------------------------------------------------------
-			Utilities.popToast(getString(R.string.dose_not_given));
+			Utilities.popToast (getString(R.string.dose_not_given));
 			// ---------------------------------------------------------------------
 			// 05/01/2014 ECU request a reason from the user and then process
 			// ---------------------------------------------------------------------
@@ -314,7 +327,7 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 			// ---------------------------------------------------------------------
 		}
 	};
-	/* ========================================================================== */
+	/* ============================================================================= */
 	@Override
 	public void onActivityResult (int theRequestCode, int theResultCode, Intent theIntent) 
 	{
@@ -339,19 +352,31 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 	    		//                with network on UI thread
 				// -----------------------------------------------------------------
 				PublicData.emailDetails.TimedEmail(getBaseContext(), "Medication Not Taken",
-							"Time         : " + theHour + ":" + theMinute + "\n" + 
-	 	   					"Medication   : " + PublicData.medicationDetails.get(theMedication).name +"\n" +
-	 	   					"Description  : " + PublicData.medicationDetails.get(theMedication).description + "\n" +
-	 	   					"Form         : " + PublicData.medicationDetails.get(theMedication).form + "\n" +
-	 	   					"Photo        : " + PublicData.medicationDetails.get(theMedication).photo + "\n" +
+							"Time         : " + theHour + ":" + theMinute + StaticData.NEWLINE + 
+	 	   					"Medication   : " + PublicData.medicationDetails.get(theMedication).name +StaticData.NEWLINE +
+	 	   					"Description  : " + PublicData.medicationDetails.get(theMedication).description + StaticData.NEWLINE +
+	 	   					"Form         : " + PublicData.medicationDetails.get(theMedication).form + StaticData.NEWLINE +
+	 	   					"Photo        : " + PublicData.medicationDetails.get(theMedication).photo + StaticData.NEWLINE +
 	 	   					((PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose] != null &&
 	 	   						PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.size() > theDose)
-	 	   					 ? ("Amount       : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.amount + "\n" +
-	 	   							 "Units        : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.units + "\n" +
-	 	   							 "Notes        : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).notes) : ""),
+	 	   					 ? ("Amount       : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.amount + StaticData.NEWLINE +
+	 	   							 "Units        : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).dose.units + StaticData.NEWLINE +
+	 	   							 "Notes        : " + PublicData.medicationDetails.get(theMedication).dailyDoseTimes[theDailyDose].doseTimes.get(theDose).notes) : StaticData.BLANK_STRING),
 	 	   					"Reason Given for the Dose not being given is\n" + message);
 				// -----------------------------------------------------------------
+				// 02/08/2019 ECU check if any 'confirm actions' are to be taken
+				// -----------------------------------------------------------------
+				if (PublicData.medicationDetails.get (theMedication).actionsRejected != null)
+				{
+					// -------------------------------------------------------------
+					// 02/08/2019 ECU process the defined actions
+					// -------------------------------------------------------------
+					Utilities.actionHandler (context,PublicData.medicationDetails.get (theMedication).actionsRejected);
+					// -------------------------------------------------------------
+				}	
+				// -----------------------------------------------------------------
 				finish ();
+				// -----------------------------------------------------------------
 	    	}
 	    	else 
 	 	    if (theResultCode == RESULT_CANCELED) 
@@ -375,9 +400,9 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 		List <MedicationDetails> medicationDetails =  medicationByDay (theDayOfWeek);
 		// -------------------------------------------------------------------------
 		DoseDaily 			localDoseDaily;
-		String				localDoseSummary = "";
+		String				localDoseSummary = StaticData.BLANK_STRING;
 		MedicationDetails 	localMedicationDetails;
-		String				localSeparator = "";
+		String				localSeparator = StaticData.BLANK_STRING;
 		// -------------------------------------------------------------------------
 		// 11/12/2016 ECU declare the summary string and initialise to the day being
 		//                processed
@@ -435,8 +460,9 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 						{
 							// -----------------------------------------------------
 							// 11/12/2016 ECU this is a dose that is of interest
+							// 29/11/2017 ECU added Inset
 							// -----------------------------------------------------
-							localDoseSummary += "Dose Time    : " + localDoseDaily.doseTimes.get(dose).Print() + StaticData.NEWLINE;
+							localDoseSummary += "Dose Time    : " + localDoseDaily.doseTimes.get(dose).Print(StaticData.INSET) + StaticData.NEWLINE;
 							// -----------------------------------------------------
 						}
 						// ---------------------------------------------------------
@@ -566,7 +592,7 @@ public class MedicationActivity extends DibosonActivity implements OnGestureList
 			// --------------------------------------------------------------------
 			// 21/12/2015 ECU stop the mechanism
 			// --------------------------------------------------------------------
-			PublicData.messageHandler.sendEmptyMessage(StaticData.MESSAGE_PROMPT_DOSE_END);
+			PublicData.messageHandler.sendEmptyMessage (StaticData.MESSAGE_PROMPT_DOSE_END);
 			// ---------------------------------------------------------------------
 		}
 	}

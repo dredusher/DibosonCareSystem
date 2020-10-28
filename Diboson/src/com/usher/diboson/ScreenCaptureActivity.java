@@ -27,6 +27,7 @@ public class ScreenCaptureActivity extends DibosonActivity
 	String		screenCaptureFile;
 	ImageView	screenCaptureImageView;
 	TextView	screenCaptureTextView;
+	TextView	tellUserTextView;
 	// =============================================================================
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -39,7 +40,7 @@ public class ScreenCaptureActivity extends DibosonActivity
 			// 29/10/2015 ECU the activity has been created anew
 			// 14/11/2016 ECU added the 'true' for full screen working
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity(this,true);
+			Utilities.SetUpActivity (this,true);
 			// ---------------------------------------------------------------------
 			setContentView (R.layout.activity_screen_capture);
 			// ---------------------------------------------------------------------
@@ -49,19 +50,29 @@ public class ScreenCaptureActivity extends DibosonActivity
 			screenCaptureImageView 	= (ImageView) findViewById (R.id.screen_capture_imageview);
 			screenCaptureTextView 	= (TextView)  findViewById (R.id.screen_capture_textview);
 			// ---------------------------------------------------------------------
-			screenCaptureImageView.setOnClickListener(new OnClickListener ()
+			// 26/03/2019 ECU update the screen to tell the user what to do
+			// ---------------------------------------------------------------------
+			screenCaptureTextView.setText (String.format (getString (R.string.screen_capture_format),
+														PublicData.emailDetails.recipients));
+			// ---------------------------------------------------------------------
+			// 26/03/2019 ECU Note - set up the listener for clicking on the image
+			// ---------------------------------------------------------------------
+			screenCaptureImageView.setOnClickListener (new OnClickListener ()
 			{
 				// -----------------------------------------------------------------
 				@Override
-				public void onClick(View view) 
+				public void onClick(View theView) 
 				{
 					// -------------------------------------------------------------
-					// 25/04/2015 ECU inform the user that the button has been pressed
+					// 26/03/2019 ECU Note - generate an image of the screen
 					// -------------------------------------------------------------
-					Utilities.popToastAndSpeak (getString (R.string.button_pressed));
+					bitmapOfScreen = Utilities.screenCapture (theView.getRootView(),screenCaptureFile);
 					// -------------------------------------------------------------
-					bitmapOfScreen = Utilities.screenCapture (view.getRootView(),screenCaptureFile);
+					// 26/03/2019 ECU Note - change the displayed image to what has
+					//                       been captured
+					// -------------------------------------------------------------
 					screenCaptureImageView.setImageBitmap (bitmapOfScreen);
+					// -------------------------------------------------------------
 					screenCaptureTextView.setText ("Counter " + counter++);
 					// -------------------------------------------------------------
 					// 24/04/2015 ECU send the email
@@ -71,6 +82,11 @@ public class ScreenCaptureActivity extends DibosonActivity
 												"The attached image is the last screen shot.",
 												null,
 												screenCaptureFile);
+					// -------------------------------------------------------------
+					// 26/03/2019 ECU tell the user what has happened
+					// -------------------------------------------------------------
+					Utilities.popToastAndSpeak (String.format (getString (R.string.screen_capture_done_format),
+																PublicData.emailDetails.recipients));
 					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------

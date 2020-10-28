@@ -13,8 +13,24 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.Message;
 
+
+
 public class ServerThreadForData extends Activity implements Runnable 
 {
+	// =============================================================================
+	// ServerThreadForData
+	// ===================
+	//
+	// This thread is started by the ServerService and is responsible for handling
+	// data passed between compatible devices.
+	//
+	// The start of the message should have a structure that is defined in
+	// PublicData.socketHeader, which is of the form,
+	// 		{StaticData.ASCII_STX,StaticData.ASCII_SOH,0,0,StaticData.ASCII_ETX}
+	// only if the header is of the correct form then the incoming message will be
+	// deemed 'valid' and therefore processed
+	// =============================================================================
+	
 	// =============================================================================
 	// 19/08/2013 ECU changed the logic so that the receiving file name is
 	//                set by the bit in the incoming byte
@@ -30,8 +46,8 @@ public class ServerThreadForData extends Activity implements Runnable
 	private static Context context;
 	// -----------------------------------------------------------------------------
 	Socket 			clientSocket;
-	String 			fileHeader 			= "";						// 03/08/2013 ECU added
-	String 			fileToPlay 			= "";						// 07/08/2013 ECU added - will remember 
+	String 			fileHeader 			= StaticData.BLANK_STRING;	// 03/08/2013 ECU added
+	String 			fileToPlay 			= StaticData.BLANK_STRING;	// 07/08/2013 ECU added - will remember 
 	                                                                //                the name of the file to be played
 	public boolean 	keepRunning = true;								// 22/08/2013 ECU changed to public
 	int 			lastGoodMessageType = StaticData.NO_RESULT;		// 07/08/2013 ECU remember the last good message
@@ -42,6 +58,9 @@ public class ServerThreadForData extends Activity implements Runnable
 	// ============================================================================= 
 	public ServerThreadForData (ServerSocket theServerSocket,Context theContext) 
 	{
+		// -------------------------------------------------------------------------
+		// 19/10/2019 ECU Note - theServerSocket is the socket that is being used
+		//                       for the communication
 		// -------------------------------------------------------------------------
 		// 02/08/2016 ECU Note - save some variables needed later on
 		// -------------------------------------------------------------------------
@@ -65,6 +84,14 @@ public class ServerThreadForData extends Activity implements Runnable
 	// ============================================================================= 
 	public void run() 
 	{
+		// -------------------------------------------------------------------------
+		// 19/10/2019 ECU Note - this is the runnable part of the thread which waits
+		//                       for a connection to be requested by the remote device.
+		//                       
+		//                       When the request is made a 'client thread' is created
+		//                       which will be responsible for receiving and processing
+		//                       the data
+		// -------------------------------------------------------------------------
 		try
 		{  
 			while (keepRunning) 
@@ -96,7 +123,7 @@ public class ServerThreadForData extends Activity implements Runnable
 				// -----------------------------------------------------------------
 			}
 		}
-		catch(IOException theException)   
+		catch (IOException theException)   
 		{
 			// ---------------------------------------------------------------------
 			// 22/07/2013 ECU if the serverSocket is closed then a SocketException
@@ -107,6 +134,10 @@ public class ServerThreadForData extends Activity implements Runnable
 	/* ============================================================================= */
 	private void processClientConnection (Socket theSocket)
 	{
+		// -------------------------------------------------------------------------
+		// 19/10/2019 ECU Note - this method is responsible for processing the data
+		//                       that is being passed from a remote device on 
+		//						 'theSocket'
 		// -------------------------------------------------------------------------
 		// 02/08/2013 ECU order of things is
 		//					1 ..... read in the type of message being sent
@@ -147,7 +178,7 @@ public class ServerThreadForData extends Activity implements Runnable
 			// ---------------------------------------------------------------------
 			// 31/07/2016 ECU store the IP address of the sender of this message
 			// ---------------------------------------------------------------------
-			messageSender	=	theSocket.getInetAddress().getHostAddress();
+			messageSender	=	theSocket.getInetAddress().getHostAddress ();
 			// ---------------------------------------------------------------------
 			// 23/03/2015 ECU details of the message received
 			// 21/04/2015 ECU changed to use static position
@@ -156,6 +187,7 @@ public class ServerThreadForData extends Activity implements Runnable
 			Utilities.LogToProjectFile (TAG,"received message type " +  
 											messageDetails [MESSAGE_TYPE_POSITION] +
 											" from " + messageSender);
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			// 08/01/2014 ECU switch depending on the type of message
 			// 21/04/2015 ECU changed to use the static position
@@ -187,6 +219,15 @@ public class ServerThreadForData extends Activity implements Runnable
 					// -------------------------------------------------------------
 					break;
 				/* ================================================================= */
+				case StaticData.SOCKET_MESSAGE_CANCEL_REMOTE_PLAY:
+					// -------------------------------------------------------------
+					// 25/03/2019 ECU the source of the 'remote music' has indicated
+					//                that the operation has been cancelled
+					// -------------------------------------------------------------
+					PublicData.messageHandler.sendEmptyMessage (StaticData.MESSAGE_PLAY_TRACK_CANCEL);
+					// -------------------------------------------------------------
+					break;
+				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_CHUNK_ACK:
 					PublicData.chunkResponse = ChunkDetails.ACK;
 					break;
@@ -210,7 +251,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					// 31/01/2015 ECU changed the method name
 					// -------------------------------------------------------------
 					ClonerActivity.cloningDetails  
-					= (CloningDetails) Utilities.socketMessagesReadObject (context,theSocket);
+						= (CloningDetails) Utilities.socketMessagesReadObject (context,theSocket);
 					// -------------------------------------------------------------
 					// 06/04/2014 ECU indicate that cloning is being started
 					// -------------------------------------------------------------
@@ -245,7 +286,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					// 03/08/2013 ECU indicate that the datagram is to be actioned
 					// -------------------------------------------------------------
 					PublicData.datagramToAction = true;
-					
+					// -------------------------------------------------------------
 					break;					
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_FILE:
@@ -257,6 +298,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					localNumberOfBytesRead 
 						= Utilities.socketMessages (context,theSocket,localBuffer,localBuffer.length,
 							PublicData.projectFolder + context.getString (R.string.temp_file_socket));
+					// -------------------------------------------------------------
 					break;
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_FILE_ACK:
@@ -289,8 +331,9 @@ public class ServerThreadForData extends Activity implements Runnable
 								Utilities.debugMessage(TAG, "Exception:" + theException);
 							}
 						}
-						
+						// ---------------------------------------------------------
 						Utilities.debugMessage (TAG, "finished waiting for play command to finish");
+						// ---------------------------------------------------------
 					}
 					// -------------------------------------------------------------
 					//            ECU set the file header dependent on the toggle flag
@@ -304,17 +347,13 @@ public class ServerThreadForData extends Activity implements Runnable
 					else
 						fileHeader = context.getString (R.string.received_file_2);
 					// -------------------------------------------------------------
-					//            ECU now toggle the file header flag
-					//
-					//MainActivity.socketFileToggle = !MainActivity.socketFileToggle;
-					// -------------------------------------------------------------
 					//            ECU now pull in the file which will be sent in chunks
 					// 31/01/2015 ECU changed the method name
 					// 01/09/2015 ECU changed to use StaticData
 					// ------------------------------------------------------------- 
 					Utilities.socketMessagesReadFileInChunks (context,theSocket,PublicData.projectFolder +
 							fileHeader + context.getString(R.string.temp_file_socket),StaticData.SOCKET_CHUNK_SIZE);	
-					
+					// -------------------------------------------------------------
 					break;
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_FILE_DETAILS:
@@ -443,6 +482,20 @@ public class ServerThreadForData extends Activity implements Runnable
 					Utilities.ProcessTheObject (context,Utilities.socketMessagesReadObject (context,theSocket));
 					// -------------------------------------------------------------
 					break;
+				// =================================================================
+				case StaticData.SOCKET_MESSAGE_PHONE_CAPABILITY:
+					// -------------------------------------------------------------
+					// 24/01/2020 ECU send the phone capability
+					// -------------------------------------------------------------
+					ObjectOutputStream objOutputStream = new ObjectOutputStream (output);
+					objOutputStream.writeObject ((Object) Utilities.phoneCapability(context));
+					// -------------------------------------------------------------
+					// 24/01/2020 ECU flush the details
+					// -------------------------------------------------------------
+					objOutputStream.flush ();
+					objOutputStream.close ();
+					// -------------------------------------------------------------
+					break;
 				// ================================================================= 
 				case StaticData.SOCKET_MESSAGE_PLAY:
 					// -------------------------------------------------------------
@@ -466,21 +519,41 @@ public class ServerThreadForData extends Activity implements Runnable
 					// -------------------------------------------------------------
 					// 14/08/2013 ECU set up the file to play
 					// -------------------------------------------------------------
-					String fileToPlay = PublicData.projectFolder + fileHeader + context.getString (R.string.temp_file_socket);
+					final String fileToPlay = PublicData.projectFolder + fileHeader + context.getString (R.string.temp_file_socket);
 					// -------------------------------------------------------------
 					// 10/08/2013 ECU increment the number of tracks played and include in the debug message
 					// --------------------------------------------------------------
 					PublicData.remoteTrackCounter++;
 					// --------------------------------------------------------------
-					Utilities.debugMessage(TAG,"file to play " + fileToPlay + 
+					Utilities.debugMessage (TAG,"file to play " + fileToPlay + 
 							" Track Counter = " + PublicData.remoteTrackCounter);
 					// -------------------------------------------------------------
 					// 14/08/2013 ECU check that being asked to play the last good 
 					//				  file that was received
 					// 19/08/2013 ECU take the file name check out because file 
 					//                toggling should not be an issue now
+					// 21/03/2017 ECU change to play the file within a thread so as
+					//                not to hold up this server thread
 					// -------------------------------------------------------------
-					Utilities.PlayAFile (context,fileToPlay);
+					Thread musicThread = new Thread ()
+					{
+						// ---------------------------------------------------------
+						public void run ()
+						{
+							// -----------------------------------------------------
+							// 30/06/2013 ECU process commands from the connected client
+							// 04/07/2013 ECU add in the bit to increment/decrement the 
+							//                number of attached client
+							// -----------------------------------------------------
+							Utilities.PlayAFile (context,fileToPlay,Utilities.createAMethod (MusicPlayer.class,"RemoteCompletionMethod"));
+							// -----------------------------------------------------
+						}
+						// ---------------------------------------------------------
+					};
+					// -------------------------------------------------------------
+					// 01/07/2013 ECU start up the thread to handle the incoming message
+					// -------------------------------------------------------------
+					musicThread.start ();  
 					// -------------------------------------------------------------
 					// 03/08/2013 ECU indicate that the file is being played
 					// -------------------------------------------------------------
@@ -523,7 +596,7 @@ public class ServerThreadForData extends Activity implements Runnable
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_PLAYED:
 					// -------------------------------------------------------------
-					// 03/08/2013 ECU indicate that the remote device has finished playing music
+					// 03/08/2013 ECU indicates that the remote device has finished playing music
 					// -------------------------------------------------------------
 					if (!PublicData.sendingFile)
 					{
@@ -532,6 +605,14 @@ public class ServerThreadForData extends Activity implements Runnable
 						//				  to play the next file
 						// ---------------------------------------------------------
 						PublicData.musicPlayerRemote = false;
+						// ---------------------------------------------------------
+						// 08/01/2018 ECU if the handler is defined then send the
+						//                message
+						// ---------------------------------------------------------
+						if (MusicPlayer.musicRefreshHandler != null)
+						{
+							MusicPlayer.musicRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_REMOTE_TRACK_ENDED);
+						}
 						// ---------------------------------------------------------
 					}
 					else
@@ -551,7 +632,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					// 31/07/2016 ECU changed to use 'messageSender'
 					// -------------------------------------------------------------
 					Utilities.LogToProjectFile (TAG,"REQUEST_DETAILS message received from " + 
-													messageSender);
+															messageSender);
 					// -------------------------------------------------------------
 					// 20/03/2015 ECU incoming message to request details of this 
 					//                device which will be sent as an object
@@ -568,7 +649,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					// 31/07/2016 ECU changed to use 'messageSender'
 					// -------------------------------------------------------------
 					Utilities.LogToProjectFile (TAG,"SENT_DETAILS message sent to " + 
-													messageSender);
+															messageSender);
 					// -------------------------------------------------------------
 					break;
 				// =================================================================
@@ -622,12 +703,17 @@ public class ServerThreadForData extends Activity implements Runnable
 					// 19/03/2014 ECU add the sender's IP address as argument
 					// 31/01/2015 ECU changed the method name
 					// 31/07/2016 ECU changed to use 'messageSender'
+					// 30/11/2018 ECU put in the check on 'null'
 					// -------------------------------------------------------------
 					FileDetails receivedFileDetails 
 						= (FileDetails) Utilities.socketMessagesReadObject (context,theSocket);
-					
-					Utilities.HandleRequestedFile (context,receivedFileDetails,messageSender);
-					
+					// -------------------------------------------------------------
+					// 30/11/2018 ECU it is possible that a null object is returned
+					//                so do not pass through for processing
+					// -------------------------------------------------------------
+					if (receivedFileDetails != null)
+						Utilities.HandleRequestedFile (context,receivedFileDetails,messageSender);
+					// -------------------------------------------------------------
 					break;
 				// =================================================================
 				case StaticData.SOCKET_MESSAGE_REQUESTED_FILE_ERROR:
@@ -674,6 +760,7 @@ public class ServerThreadForData extends Activity implements Runnable
 						= (FileDetails) Utilities.socketMessagesReadObject (context,theSocket);
 					receiveFile 
 						= new ReceiveFile (context,messageSender,chunkFileDetails.GetFileName());
+					// -------------------------------------------------------------
 					break;		
 				// =================================================================
 				case StaticData.SOCKET_MESSAGE_SENT_DETAILS:
@@ -707,6 +794,7 @@ public class ServerThreadForData extends Activity implements Runnable
 					String phraseToSpeak 
 						= (String) Utilities.socketMessagesReadObject (context,theSocket);
 					Utilities.SpeakAPhrase(context, phraseToSpeak);
+					// -------------------------------------------------------------
 					break;
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_START_STREAM:
@@ -758,7 +846,7 @@ public class ServerThreadForData extends Activity implements Runnable
 				    audioTrack.play();
 			        // -------------------------------------------------------------
 				    // 31/07/2016 ECU Note - pass through the data to be played
-				    // 01/08/2016 ECU changd buffer name from 'theBuffer' and 'theNumber...'
+				    // 01/08/2016 ECU changed buffer name from 'theBuffer' and 'theNumber...'
 				    // -------------------------------------------------------------
 					while ((localNumberOfBytesRead = input.read (localBuffer, 0, 4096) ) > 0)
 					{
@@ -771,15 +859,36 @@ public class ServerThreadForData extends Activity implements Runnable
 			        audioTrack.release();
 			        // -------------------------------------------------------------
 					break;
+				// =================================================================
+				case StaticData.SOCKET_MESSAGE_SYNC_ACK:
+					// -------------------------------------------------------------
+					// 25/03/2017 ECU send by a 'client device' to indicate that a
+					//                file that it has been sent as part of the
+					//                synchronisation process has been processed
+					// -------------------------------------------------------------
+					Utilities.synchronisationOfFileComplete ();
+					// -------------------------------------------------------------
+					break;
+				// =================================================================
+				case StaticData.SOCKET_MESSAGE_VIDEO_STREAM_START:
+					// -------------------------------------------------------------
+					// 15/09/2017 ECU created to handle an incoming message to start
+					//                'video streaming'
+					// -------------------------------------------------------------
+					Message videoMessage = PublicData.messageHandler.obtainMessage(StaticData.MESSAGE_VIDEO_STREAM_START,messageSender);
+					PublicData.messageHandler.sendMessage (videoMessage);
+					// -------------------------------------------------------------
+					break;
 				/* ================================================================= */
 				case StaticData.SOCKET_MESSAGE_WAV_FILE:
 					// -------------------------------------------------------------
 					// 31/01/2015 ECU changed the method name
-					// 01/08/2016 ECU changd buffer name from 'theBuffer' and 'theNumber...'
+					// 01/08/2016 ECU changed buffer name from 'theBuffer' and 'theNumber...'
 					// -------------------------------------------------------------
 					localNumberOfBytesRead 
-						= Utilities.socketMessagesReadIntoBuffer(context,theSocket,localBuffer,localBuffer.length);
+						= Utilities.socketMessagesReadIntoBuffer (context,theSocket,localBuffer,localBuffer.length);
 					Utilities.playFromBuffer (context,localBuffer,localNumberOfBytesRead);
+					// -------------------------------------------------------------
 					break;
 				/* ================================================================= */
 				default:
@@ -827,6 +936,8 @@ public class ServerThreadForData extends Activity implements Runnable
 		}
 		catch (IOException theException)
 		{
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 		}
 	}
 	/* ============================================================================= */

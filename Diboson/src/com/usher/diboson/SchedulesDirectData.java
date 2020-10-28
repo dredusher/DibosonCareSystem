@@ -84,10 +84,10 @@ public class SchedulesDirectData implements Serializable
     	// -------------------------------------------------------------------------
     	// 22/07/2016 ECU returns a printed version of the stored data
     	// -------------------------------------------------------------------------
-    	return "Username : " 	+ userName 				+ "\n" +
-    	       "Password : " 	+ password 				+ "\n" +
-    	       "Encrypted : " 	+ passwordEncrypted 	+ "\n" +
-    	       "Base URL : "	+ baseURL 				+ "\n" +
+    	return "Username : " 	+ userName 				+ StaticData.NEWLINE +
+    	       "Password : " 	+ password 				+ StaticData.NEWLINE +
+    	       "Encrypted : " 	+ passwordEncrypted 	+ StaticData.NEWLINE +
+    	       "Base URL : "	+ baseURL 				+ StaticData.NEWLINE +
     	       "Days : " 		+ numberOfDays;
     	// -------------------------------------------------------------------------
     }
@@ -100,7 +100,7 @@ public class SchedulesDirectData implements Serializable
     	// -------------------------------------------------------------------------
     	long currentTime = Utilities.getAdjustedTime (false);
     	SimpleDateFormat dateFormat = new SimpleDateFormat ("yyyy-MM-dd",Locale.getDefault());
-    	String returnString = "";
+    	String returnString = StaticData.BLANK_STRING;
     	// -------------------------------------------------------------------------
     	// 24/07/2016 ECU on a brand installation it seems that numberOfDays could
     	//                be 0 so just check for this
@@ -144,6 +144,11 @@ public class SchedulesDirectData implements Serializable
     	// 20/07/2016 ECU generate the encrypted password
     	// -------------------------------------------------------------------------
     	passwordEncrypted 	= generateSecureString ("SHA1",password);
+    	// -------------------------------------------------------------------------
+    	// 16/12/2017 ECU write the encrypted password to the project log in case
+    	//                it is required for POSTMAN
+    	// -------------------------------------------------------------------------
+        Utilities.LogToProjectFile ("Schedules Direct","Encrypted Password : " + passwordEncrypted,true);
     	// -------------------------------------------------------------------------
     	// 22/07/2016 ECU set up the folder
     	// -------------------------------------------------------------------------

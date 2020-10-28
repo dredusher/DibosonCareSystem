@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
@@ -31,11 +32,15 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 	//                data has changed but the logic, at the moment, does not require
 	//                it for medication details because just browsing the data does
 	//                not cause a write to disk.
+	// 02/08/2019 ECU set up actions that will be processed if a dose is given
+	//                correctly (confirmed) or not given (rejected)
 	//==============================================================================
 	//private static final String TAG = "MedicationInput";
 	/* ============================================================================= */
 
 	/* ============================================================================= */
+	static	String		actionsConfirmed;					// 02/08/2019 ECU added
+	static	String      actionsRejected;					// 02/09/2019 ECU added
 			Context		context;							// 14/12/2015 ECU added
 			Boolean		keepExistingDoseTimes  	= false;	// 16/01/2014 ECU added
 			Button		medicationDeleteButton;				// 16/01/2014 ECU added
@@ -114,7 +119,7 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			// ---------------------------------------------------------------------		
 			// 16/01/2014 ECU try and picked up text changes in name field
 			// ---------------------------------------------------------------------
-			medicationName.addTextChangedListener(this);
+			medicationName.addTextChangedListener (this);
 			// ---------------------------------------------------------------------
 			// 24/03/2014 ECU check whether the activity has been called with the index
 			//                to a record of medication details
@@ -135,6 +140,15 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 	 	   		// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
+			// 26/03/2017 ECU inform the user about checking the medication name for
+			//                new entries - not for edits
+			// ---------------------------------------------------------------------
+			if (medicationIndex == StaticData.NO_RESULT)
+			{
+				Utilities.popToastAndSpeak (String.format (getString (R.string.medication_name_check_format),
+												StaticData.MEDICATION_INPUT_LENGTH),true);
+			}
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -148,9 +162,59 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 	}
 	/* ============================================================================= */
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
+	public boolean onCreateOptionsMenu (Menu menu) 
 	{
+		// -------------------------------------------------------------------------
+		// Inflate the menu; this adds items to the action bar if it is present.
+		// -------------------------------------------------------------------------
+		getMenuInflater ().inflate (R.menu.medication_input, menu);
+		// -------------------------------------------------------------------------
 		return true;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public boolean onOptionsItemSelected (MenuItem item)
+	{
+		// -------------------------------------------------------------------------
+		switch (item.getItemId())
+		{
+			// =====================================================================
+			case R.id.menu_confirm_actions:
+				// -----------------------------------------------------------------
+				// 02/08/2019 ECU give user chance to define the 'confirmation actions'
+				// -----------------------------------------------------------------
+				DialogueUtilities.multilineTextInput (context,
+						  context.getString (R.string.medication_details),
+						  context.getString (R.string.action_command_summary),
+						  6,
+						  actionsConfirmed,
+						  Utilities.createAMethod (MedicationInput.class,"ConfirmActionsMethod",StaticData.BLANK_STRING),
+						  null,
+						  StaticData.NO_RESULT,
+						  context.getString (R.string.press_to_define_command));
+				// -----------------------------------------------------------------
+				break;
+			// =====================================================================
+			case R.id.menu_reject_actions:
+				// -----------------------------------------------------------------
+				// 02/08/2019 ECU give user chance to define the 'rejection actions'
+				// -----------------------------------------------------------------
+				DialogueUtilities.multilineTextInput (context,
+						  context.getString (R.string.medication_details),
+						  context.getString (R.string.action_command_summary),
+						  6,
+						  actionsRejected,
+						  Utilities.createAMethod (MedicationInput.class,"RejectActionsMethod",StaticData.BLANK_STRING),
+						  null,
+						  StaticData.NO_RESULT,
+						  context.getString (R.string.press_to_define_command));
+				// -----------------------------------------------------------------
+				break;
+			// =====================================================================
+		}
+		// -------------------------------------------------------------------------
+		return true;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	private View.OnClickListener deleteMedication = new View.OnClickListener() 
@@ -175,7 +239,7 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 	private View.OnClickListener enterMedicationDetails = new View.OnClickListener() 
 	{
 		@Override
-		public void onClick(View view) 
+		public void onClick (View view) 
 		{
 			// ---------------------------------------------------------------------
 			// 29/05/2013 ECU get main details of the medication
@@ -187,7 +251,7 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			// ---------------------------------------------------------------------
 			// 16/01/2014 ECU check that a name has been given
 			// ---------------------------------------------------------------------
-			if (!medicationDetails.name.equalsIgnoreCase(""))
+			if (!medicationDetails.name.equalsIgnoreCase (StaticData.BLANK_STRING))
 			{
 				medicationDetails.description = medicationDescription.getText ().toString();
 				// -----------------------------------------------------------------
@@ -195,11 +259,16 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 				//                folder is stored
 				// 16/11/2016 ECU changed to use 'getRela...' rather than 'Rela...'
 				// -----------------------------------------------------------------
-				medicationDetails.photo = Utilities.getRelativeFileName (medicationPhoto.getText ().toString());	// 23/06/2013 ECU added
+				medicationDetails.photo = Utilities.getRelativeFileName (medicationPhoto.getText ().toString ());	// 23/06/2013 ECU added
 			
 				int medicationFormID = medicationForm.getCheckedRadioButtonId();
 				RadioButton inputForm = (RadioButton) findViewById (medicationFormID);
 				medicationDetails.form = inputForm.getText ().toString();
+				// -----------------------------------------------------------------
+				// 02/08/2019 ECU set up the confirm/reject actions
+				// -----------------------------------------------------------------
+				medicationDetails.actionsConfirmed = actionsConfirmed;
+				medicationDetails.actionsRejected  = actionsRejected;
 				// -----------------------------------------------------------------
 				// 16/01/2014 ECU check if the dose administration times are to changes
 				// -----------------------------------------------------------------
@@ -209,23 +278,28 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 					// 29/05/2013 ECU now get the details of doses for this medication
 					// -------------------------------------------------------------
 					GetDoseData ();
+					// -------------------------------------------------------------
 				}
 				else
 				{
+					// -------------------------------------------------------------
 					// 16/01/2014 ECU copy across the stored details ready for update - bit clumsy
-					
+					// -------------------------------------------------------------
 					medicationDetails.dailyDoseTimes = PublicData.medicationDetails.get(medicationIndex).dailyDoseTimes;
-					
+					// -------------------------------------------------------------
 					// 16/01/2014 ECU as not going through dose handling then update the record
-					
-					PublicData.medicationDetails.set(medicationIndex, medicationDetails);
+					// -------------------------------------------------------------
+					PublicData.medicationDetails.set (medicationIndex, medicationDetails);
+					// -------------------------------------------------------------
 				}
 			}
 			else
 			{
+				// -----------------------------------------------------------------
 				// 16/01/2014 ECU indicate that certain fields need to be completed
-				
+				// -----------------------------------------------------------------
 				Utilities.popToast	("You must specify the medication's name");
+				// -----------------------------------------------------------------
 			}
 		}
 	};
@@ -316,9 +390,11 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			// 17/12/2015 ECU changed to use FileChooser.displayImage to determine
 			//                if images are to be displayed
 			//            ECU changed to use new selectAFile method
+			// 23/06/2017 ECU add the final 'true' to indicate that images are to be
+			//                displayed 
 			// ---------------------------------------------------------------------
 			Utilities.selectAFile (context,StaticData.EXTENSION_PHOTOGRAPH,
-					new MethodDefinition <MedicationInput> (MedicationInput.class,"SelectedPhotograph"));
+					new MethodDefinition <MedicationInput> (MedicationInput.class,"SelectedPhotograph"),true);
 			// ---------------------------------------------------------------------
 		}		
 	};
@@ -334,9 +410,15 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
     }
 	/* ============================================================================= */
 	@Override
-	public void afterTextChanged(Editable theData) 
+	public void afterTextChanged (Editable theData) 
 	{
-		CheckForMedication (theData.toString());
+		// -------------------------------------------------------------------------
+		// 26/03/2017 ECU only check for existing medicines only if 3 or more characters 
+		//                have been typed in
+		// -------------------------------------------------------------------------
+		if (theData.length() >= StaticData.MEDICATION_INPUT_LENGTH)
+			CheckForMedication (theData.toString());
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
@@ -358,7 +440,7 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			{
 				MedicationDetails localMedicationDetails = PublicData.medicationDetails.get(theIndex);
 				
-				if (!theInputString.equalsIgnoreCase("") && localMedicationDetails.name.startsWith(theInputString))
+				if (!theInputString.equalsIgnoreCase (StaticData.BLANK_STRING) && localMedicationDetails.name.startsWith (theInputString))
 				{
 					// -------------------------------------------------------------
 					// 16/01/2014 ECU remember the index of this medication
@@ -393,6 +475,7 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 				    // 16/01/2014 ECU tell user was is happening (true means centred)
 				    // --------------------------------------------------------------
 				    Utilities.popToast ("The existing administration times will\nbe kept unless you press the 'reset' button",true);
+				    // --------------------------------------------------------------
 				}
 			}			
 		}
@@ -418,7 +501,12 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			medicationName.setText (localMedicationDetails.name);
 			medicationDescription.setText (localMedicationDetails.description);
 			medicationPhoto.setText (localMedicationDetails.photo);
-
+			// ---------------------------------------------------------------------
+			// 02/08/2019 ECU remember the confirm/reject actions
+			// ---------------------------------------------------------------------
+			actionsConfirmed = localMedicationDetails.actionsConfirmed;
+			actionsRejected  = localMedicationDetails.actionsRejected;
+			// ---------------------------------------------------------------------
 		    for (int index = 0; index < medicationForm.getChildCount(); index++)
 		    {	
 		    	if (((RadioButton)medicationForm.getChildAt (index)).getText().toString().equalsIgnoreCase(localMedicationDetails.form))
@@ -438,9 +526,9 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 			// ---------------------------------------------------------------------
 			// 16/01/2014 ECU clear fields
 			// ---------------------------------------------------------------------				
-			medicationName.setText ("");
-			medicationDescription.setText ("");
-			medicationPhoto.setText ("");
+			medicationName.setText (StaticData.BLANK_STRING);
+			medicationDescription.setText (StaticData.BLANK_STRING);
+			medicationPhoto.setText (StaticData.BLANK_STRING);
 			
 			((RadioButton)medicationForm.getChildAt (0)).setChecked(true);
 			// ---------------------------------------------------------------------
@@ -479,9 +567,55 @@ public class MedicationInput extends DibosonActivity implements TextWatcher
 	
     // =============================================================================
     // =============================================================================
-    // 30/03/2016 ECU Note - decalre the methods used in the various dialogues
+    // 30/03/2016 ECU Note - declare the methods used in the various dialogues
 	// =============================================================================
     // =============================================================================
+    // =============================================================================
+ 	public static void ConfirmActionsMethod (String theActionCommands)
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 02/08/2019 ECU set up the 'confirm dose' actions
+ 		// -------------------------------------------------------------------------
+ 		actionsConfirmed = theActionCommands;
+ 		// -------------------------------------------------------------------------
+ 	}
+    // =============================================================================
+    public static void HelpHandler (int theMedicationIndex)
+    {
+        // -------------------------------------------------------------------------
+        // 24/01/2020 ECU create to handle the HELP icon
+        // -------------------------------------------------------------------------
+        Utilities.popToast (PublicData.medicationDetails.get(theMedicationIndex).PrintMedication());
+        // -------------------------------------------------------------------------
+    }
+    // =============================================================================
+    public static void HelpDoseHandler (int theDoseIndex)
+    {
+        // -------------------------------------------------------------------------
+        // 24/01/2020 ECU create to handle the HELP icon
+        // -------------------------------------------------------------------------
+        Utilities.popToast ("Dose : " + theDoseIndex);
+        // -------------------------------------------------------------------------
+    }
+    // =============================================================================
+    public static void HelpDoseTimeHandler (int theDoseIndex)
+    {
+        // -------------------------------------------------------------------------
+        // 24/01/2020 ECU create to handle the HELP icon
+        // -------------------------------------------------------------------------
+        Utilities.popToast ("DoseTime : " + theDoseIndex);
+        // -------------------------------------------------------------------------
+    }
+ 	// =============================================================================
+ 	public static void RejectActionsMethod (String theActionCommands)
+ 	{
+ 		// -------------------------------------------------------------------------
+ 		// 02/08/2019 ECU set up the 'reject dose' actions
+ 		// -------------------------------------------------------------------------
+ 		actionsRejected = theActionCommands;
+ 		// -------------------------------------------------------------------------
+ 	}
+ 	// =============================================================================
 	public static void SelectedPhotograph (String theFileName)
 	{
 		// -------------------------------------------------------------------------

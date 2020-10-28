@@ -19,12 +19,13 @@ public class ShoppingProduct implements Serializable
 	//                          introduce the 'deleted' variable which will indicate
 	//                          that the carer has been deleted but its object will
 	//                          remain with this variable set to true.
+	// 08/09/2017 ECU added the 'hashCode' method to take account of the delete flag
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
 	
 	// =============================================================================
-	public boolean  deleted;		// 31/01/2016 ECU added - this carer has been deleted
+	public boolean  deleted;		// 31/01/2016 ECU added - this product has been deleted
 		   String	name;
 	// =============================================================================
 	
@@ -96,7 +97,18 @@ public class ShoppingProduct implements Serializable
 		// -------------------------------------------------------------------------
 		// 01/03/2016 ECU and invalidate all other relevant fields
 		// -------------------------------------------------------------------------
-		name 		= "";
+		name 		= StaticData.BLANK_STRING;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	@Override
+	public int hashCode ()
+	{
+		// -------------------------------------------------------------------------
+		// 08/09/2017 ECU override the default method so that the hashcode can
+		//                accommodate the 'delete' flag
+		// -------------------------------------------------------------------------
+		return super.hashCode () + (deleted ? 1 : 0);
 		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
@@ -105,20 +117,28 @@ public class ShoppingProduct implements Serializable
 		return "Name : " + name;
 	}
 	// =============================================================================
-	String PrintRecord ()
+	String PrintRecord (int theIndex)
 	{
-		return "Name : " + name + "   Deleted : " + deleted;
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
+		return String.format ("Index : %3d  Name : %-30s  Deleted : %b",
+								theIndex,name,deleted);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String PrintAll ()
 	{
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
 		String printString = "Products (Size = " + PublicData.shoppingData.products.size() + ")\n=================\n";
 		for (int theIndex=0; theIndex < PublicData.shoppingData.products.size(); theIndex++)
 		{
-			printString += "Index : " + theIndex + "\n";
-			printString += PublicData.shoppingData.products.get(theIndex).PrintRecord () + "\n";
+			printString += PublicData.shoppingData.products.get (theIndex).PrintRecord (theIndex) + StaticData.NEWLINE;
 		}
 		return printString;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public static int GetIndex (String theName)
@@ -163,6 +183,40 @@ public class ShoppingProduct implements Serializable
 		// -------------------------------------------------------------------------
 		return Arrays.copyOf (localNames,localNameIndex);
 		// -------------------------------------------------------------------------
+	}// =============================================================================
+	public static int Size ()
+	{
+		int localCounter = 0;
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU created to return the size of the product list taking into
+		//                account whether an object is deleted or not
+		// -------------------------------------------------------------------------
+		if (PublicData.shoppingData.products != null)
+		{
+			// ---------------------------------------------------------------------
+			// 09/09/2017 ECU now loop through the list counting objects which have
+			//                not been deleted
+			// ---------------------------------------------------------------------
+			if (PublicData.shoppingData.products.size () > 0)
+			{
+				for (int index = 0; index < PublicData.shoppingData.products.size(); index++)
+				{
+					// -------------------------------------------------------------
+					// 09/09/2017 ECU only count objects which are not deleted
+					// -------------------------------------------------------------
+					if (!PublicData.shoppingData.products.get(index).deleted)
+					{
+						localCounter++;
+					}
+					// -------------------------------------------------------------
+				}
+			}
+		}
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU return the number of 'non-deleted' products or 0 if the list
+		//                has not been set yet or there are none
+		// -------------------------------------------------------------------------
+		return localCounter;
 	}
 	// =============================================================================
 }

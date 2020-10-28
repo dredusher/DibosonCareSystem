@@ -17,6 +17,10 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 	//                          introduce the 'deleted' variable which will indicate
 	//                          that the brand has been deleted but its object will
 	//                          remain with this variable set to true.
+	// 08/09/2017 ECU override the hashCode method to accommodate the deleted flag
+	//                which the root method was not doing
+	// 16/04/2019 ECU if the 'amount', which is a free text field, is blank then
+	//                do not print anything out
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	// =============================================================================
@@ -126,6 +130,20 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 		return false;
 	}
 	// =============================================================================
+	public String GetShopName ()
+	{
+		// -------------------------------------------------------------------------
+		// 23/04/2018 ECU return the name of the shop where this item is being 
+		//                purchased - first step is to get the index.
+		// -------------------------------------------------------------------------
+		int shopIndex = PublicData.shoppingData.transactions.get (transactionIndex).shopIndex;
+		// -------------------------------------------------------------------------
+		// 23/04/2018 ECU return the name corresponding to the index
+		// -------------------------------------------------------------------------
+		return PublicData.shoppingData.shops.get (shopIndex).name;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public void Delete ()
 	{
 		// -------------------------------------------------------------------------
@@ -134,18 +152,35 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 		deleted 			= true;
 		// -------------------------------------------------------------------------
 		// 01/03/2016 ECU and invalidate all other relevant fields
+		// 09/09/2017 ECU changed to use BLANK_STRING
 		// -------------------------------------------------------------------------
-		amount 				= "";
+		amount 				= StaticData.BLANK_STRING;
 		order 				= StaticData.NO_RESULT;				// 13/06/2015 ECU added
 		selected 			= false;							// 31/03/2014 ECU added
 		transactionIndex	= StaticData.NO_RESULT;
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+	@Override
+	public int hashCode ()
+	{
+		// -------------------------------------------------------------------------
+		// 08/09/2017 ECU override the default method so that the hashcode can
+		//                accommodate the 'delete' flag
+		// -------------------------------------------------------------------------
+		return super.hashCode () + (deleted ? 1 : 0);
+		// -------------------------------------------------------------------------
+	}
 	/* ============================================================================= */
 	public String Print ()
 	{
-		return PublicData.shoppingData.transactions.get(transactionIndex).Print() + 
-				"\nAmount : " +	amount;
+		// -------------------------------------------------------------------------
+		// 16/04/2019 ECU change so that if the amount is blank then do not print
+		//                anything
+		// -------------------------------------------------------------------------
+		return PublicData.shoppingData.transactions.get (transactionIndex).Print() + 
+				(!Utilities.isStringBlank(amount) ? ("\nAmount : " + amount) : StaticData.BLANK_STRING);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String PrintAll (List<ShoppingList> theList,String theTitleMessage)
@@ -153,15 +188,21 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 		// -------------------------------------------------------------------------
 		// 14/06/2015 ECU created to print all the whole of the list
 		// -------------------------------------------------------------------------
-		String resultString = theTitleMessage + "\n";
+		String resultString = theTitleMessage + StaticData.NEWLINE;
+		// -------------------------------------------------------------------------
+		// 23/04/2018 ECU include the order
+		// 16/04/2019 ECU change so that if the amount is blank then do not print
+		//                anything
 		// -------------------------------------------------------------------------
 		if (theList != null && theList.size() > 0)
 		{
 			for (int theIndex = 0; theIndex < theList.size(); theIndex++)
 			{
-				resultString += PublicData.shoppingData.transactions.get(theList.get(theIndex).transactionIndex).Print() +
-						" " + theList.get(theIndex).amount + 
-						" " + theList.get(theIndex).selected + "\n";			
+				resultString += PublicData.shoppingData.transactions.get (theList.get(theIndex).transactionIndex).Print() +
+						(!Utilities.isStringBlank(theList.get(theIndex).amount) ? (" " + theList.get(theIndex).amount) 
+								                                                : StaticData.BLANK_STRING) +
+						" " + theList.get(theIndex).selected + StaticData.NEWLINE +
+						"Order : " + theList.get(theIndex).order + StaticData.NEWLINE;			
 			}
 		}
 		// -------------------------------------------------------------------------
@@ -171,20 +212,28 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 		// --------------------------------------------------------------------------
 	}
 	// =============================================================================
-	String PrintRecord ()
+	String PrintRecord (int theIndex)
 	{
-		return "Transaction Index : " + transactionIndex + " Amount : " + amount + "  Deleted : " + deleted;
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
+		return String.format ("Index : %3d  Transaction Index : %3d  Amount : %-20s  Deleted : %b",
+										theIndex,transactionIndex,amount,deleted);
+		//--------------------------------------------------------------------------						
 	}
 	// =============================================================================
 	public static String PrintAllRecords ()
 	{
+		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU changed the format
+		// -------------------------------------------------------------------------
 		String printString = "List\n====\n";
 		for (int theIndex=0; theIndex < PublicData.shoppingData.lists.size(); theIndex++)
 		{
-			printString += "Index : " + theIndex + "\n";
-			printString += PublicData.shoppingData.lists.get(theIndex).PrintRecord () + "\n";
+			printString += PublicData.shoppingData.lists.get(theIndex).PrintRecord (theIndex) + StaticData.NEWLINE;
 		}
 		return printString;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public void SetOrder (int theOrder)
@@ -207,37 +256,49 @@ public class ShoppingList implements Serializable,Comparable<ShoppingList>
 	// =============================================================================
 	public static int Size ()
 	{
+		int localCounter = 0;
 		// -------------------------------------------------------------------------
-		// 01/03/2016 ECU return the size of the array taking into account any
-		//                deleted entries
+		// 09/09/2017 ECU created to return the size of the list list taking into
+		//                account whether an object is deleted or not
 		// -------------------------------------------------------------------------
-		int localSize = PublicData.shoppingData.lists.size ();
-		if (localSize == 0)
+		if (PublicData.shoppingData.lists != null)
 		{
-			return 0;
-		}
-		else
-		{
-			int	localCounter = 0;
-			for (int theIndex = 0; theIndex < localSize; theIndex++)
+			// ---------------------------------------------------------------------
+			// 09/09/2017 ECU now loop through the list counting objects which have
+			//                not been deleted
+			// ---------------------------------------------------------------------
+			if (PublicData.shoppingData.lists.size () > 0)
 			{
-				if (!PublicData.shoppingData.lists.get(theIndex).deleted)
-					localCounter++;
+				for (int index = 0; index < PublicData.shoppingData.lists.size(); index++)
+				{
+					// -------------------------------------------------------------
+					// 09/09/2017 ECU only count objects which are not deleted
+					// -------------------------------------------------------------
+					if (!PublicData.shoppingData.lists.get(index).deleted)
+					{
+						localCounter++;
+					}
+					// -------------------------------------------------------------
+				}
 			}
-			return localCounter;
 		}
 		// -------------------------------------------------------------------------
+		// 09/09/2017 ECU return the number of 'non-deleted' lists or 0 if the list
+		//                has not been set yet or there are none
+		// -------------------------------------------------------------------------
+		return localCounter;
 	}
 	/* ============================================================================= */
 	public boolean ToggleSelected ()
 	{
-		// ----------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		// 30/03/2014 ECU toggle the state of the 'selected' flag and return
 		//                the new state
-		// ----------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		selected = !selected;
-		
+		// -------------------------------------------------------------------------
 		return selected;
+		// -------------------------------------------------------------------------
 	}
-	/* ========================================================================== */
+	/* ============================================================================= */
 }

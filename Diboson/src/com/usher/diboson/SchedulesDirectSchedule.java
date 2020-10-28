@@ -29,7 +29,9 @@ public class SchedulesDirectSchedule implements Serializable
 		startTime = theStartTime;
 		long localEndTime   = startTime + (long) (duration * 1000);
 		// -------------------------------------------------------------------------
-		SimpleDateFormat timeFormat = new SimpleDateFormat ("HH:mm:ss",Locale.getDefault());
+		// 24/07/2017 ECU changed to use ALARM...
+		// -------------------------------------------------------------------------
+		SimpleDateFormat timeFormat = new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT,Locale.getDefault());
 		timeFormat.setTimeZone (TimeZone.getDefault());
 		endTime = timeFormat.format (localEndTime);
 		// -------------------------------------------------------------------------

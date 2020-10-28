@@ -21,7 +21,11 @@ public class StartUpActivity extends DibosonActivity implements OnGestureListene
 	// =============================================================================
 	//final static String TAG = "StartUpActivity";
 	// =============================================================================
+
+	// =============================================================================
 	private GestureDetector gestureScanner;
+	// =============================================================================
+
 	// =============================================================================
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -55,11 +59,12 @@ public class StartUpActivity extends DibosonActivity implements OnGestureListene
 			// 02/11/2015 ECU 				" - " + PublicData.lastUpdateDate);
 			// ---------------------------------------------------------------------
 			// 01/11/2015 ECU update the text view with the  copyright information
+			// 06/06/2017 ECU changed to use NEWLINE resource
 			// ---------------------------------------------------------------------
 			((TextView) findViewById (R.id.start_up_textview)).setText (Utilities.Version (this) + " - " + 
-							                                            getString(R.string.build_copyright) + "\n" +
+							                                            getString(R.string.build_copyright) + StaticData.NEWLINE +
 							                                            PublicData.lastUpdateTime + " on " + PublicData.lastUpdateDate);
-			// ---------------------------------------------------------------------	
+			// ---------------------------------------------------------------------
 			// 03/06/2013 ECU indicate gesture handling
 			// ---------------------------------------------------------------------	
 			gestureScanner = new GestureDetector (this,this);
@@ -114,6 +119,7 @@ public class StartUpActivity extends DibosonActivity implements OnGestureListene
 						// 03/11/2013 ECU just exit this activity
 						// ---------------------------------------------------------
 						finish ();
+						// ---------------------------------------------------------
 					}
 				}
 				catch (InterruptedException theException)
@@ -124,7 +130,8 @@ public class StartUpActivity extends DibosonActivity implements OnGestureListene
 		 // ------------------------------------------------------------------------
 		 // 03/11/2013 ECU start the thread
 		 // ------------------------------------------------------------------------
-		 thread.start();        
+		 thread.start();
+		 // ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -205,17 +212,23 @@ public class StartUpActivity extends DibosonActivity implements OnGestureListene
 	@Override
 	public void onRestart () 
 	{
-		// -------------------------------------------------------------------------
-		super.onStop();   
+		// ------------------------------------------------------------------------
+		// 03/07/2020 ECU changed from 'onStop'
+		// ------------------------------------------------------------------------
+		super.onRestart ();
+		// ------------------------------------------------------------------------
 	}
 	// ============================================================================ 
 	@Override
 	public void onStart () 
 	{
+		// ------------------------------------------------------------------------
+		// 03/07/2020 ECU changed from 'onStop'
 		// -------------------------------------------------------------------------
-		super.onStop();   
+		super.onStart();
+		// -------------------------------------------------------------------------
 	}
-	// ============================================================================ 
+	// =============================================================================
 	@Override
 	public void onStop() 
 	{

@@ -1,22 +1,24 @@
 package com.usher.diboson;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
-import android.os.Bundle;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.View;
+import android.view.View.OnClickListener;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.SeekBar;
+import android.widget.SeekBar.OnSeekBarChangeListener;
 import android.widget.TextView;
 import android.widget.TimePicker;
-import android.widget.SeekBar.OnSeekBarChangeListener;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class SpeakingClockActivity extends DibosonActivity 
 {
@@ -31,6 +33,8 @@ public class SpeakingClockActivity extends DibosonActivity
 	//                spoken
 	// 10/03/2017 ECU added the Westminster Chimes
 	// 14/03/2017 ECU add a seek bar to help with the input of the 'interval'
+	// 25/07/2017 ECU added the Westminster chime end handling
+	// 26/07/2017 ECU added the checkbox listener to initiate the chime end dialogue
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -41,6 +45,7 @@ public class SpeakingClockActivity extends DibosonActivity
 	
 	/* =============================================================================== */
 	static	PendingIntent 		alarmPendingIntent;						// 23/02/2014 ECU added
+			Context				context;
 			CheckBox			enable;
 			Button				confirmDetails;
 			TextView			interval;
@@ -49,6 +54,7 @@ public class SpeakingClockActivity extends DibosonActivity
 			TimePicker			startTime;	
 			TimePicker			stopTime;
 			CheckBox			westminsterChimes;						// 10/03/2017 ECU added
+	static  boolean				westminsterChimesEnd;					// 26/07/2017 ECU added
 	/* ============================================================================= */
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
@@ -64,7 +70,9 @@ public class SpeakingClockActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			Utilities.SetUpActivity (this,true,true,false);
 			// ---------------------------------------------------------------------
-			setContentView(R.layout.activity_speaking_clock);
+			setContentView (R.layout.activity_speaking_clock);
+			// ---------------------------------------------------------------------
+			context = this;
 			// ---------------------------------------------------------------------
 			enable				= (CheckBox)   findViewById (R.id.speaking_clock_checkbox);
 			interval			= (TextView)   findViewById (R.id.input_speaking_clock_edittext);
@@ -117,6 +125,40 @@ public class SpeakingClockActivity extends DibosonActivity
 	            // -----------------------------------------------------------------
 	        });
 			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU preset the current setting for the chime end
+			// ---------------------------------------------------------------------
+			westminsterChimesEnd = PublicData.storedData.speakingClock.westminsterChimeEnd;
+			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU add the listener for the Westminster chimes
+			// ---------------------------------------------------------------------
+			westminsterChimes.setOnClickListener(new OnClickListener() 
+			{
+				// -----------------------------------------------------------------
+	            @Override
+	            public void onClick (View theView) 
+	            {
+	                if (westminsterChimes.isChecked())
+	                {
+	                	// ---------------------------------------------------------
+	                	// 26/07/2017 ECU ask the user when the chimes are to start 
+	                	//                or end
+	                	// ---------------------------------------------------------
+	                	DialogueUtilities.yesNo (context,
+								 				 getString (R.string.chime_title),
+								 				 getString (R.string.chime_summary),
+								 				 0, 
+								 				 true,
+								 				 getString (R.string.chime_end), 
+								 				 Utilities.createAMethod (SpeakingClockActivity.class,"ChimeEndMethod",(Object) null),
+								 				 true,
+								 				 getString (R.string.chime_start), 
+								 				 Utilities.createAMethod (SpeakingClockActivity.class,"ChimeStartMethod",(Object) null));
+	                }
+	                // -------------------------------------------------------------
+	            }
+	            // -----------------------------------------------------------------
+	        });
+			// ---------------------------------------------------------------------
 			DisplayCurrentValues ();
 			// ---------------------------------------------------------------------
 		}
@@ -149,13 +191,13 @@ public class SpeakingClockActivity extends DibosonActivity
 					//                appointment from entered details
 					// -------------------------------------------------------------
 					UpdateDetails ();
-					
+					// -------------------------------------------------------------
 					InitialiseTheAlarm (getBaseContext());
 					// -------------------------------------------------------------
 					// 09/02/2014 ECU terminate this activity
 					// -------------------------------------------------------------
 					finish ();
-							
+					// -------------------------------------------------------------		
 					break;
 				}	
 			}
@@ -180,8 +222,8 @@ public class SpeakingClockActivity extends DibosonActivity
 	    InputMethodManager inputMethodManager 
 	    	= (InputMethodManager)getSystemService(Context.INPUT_METHOD_SERVICE);
 
-	    inputMethodManager.hideSoftInputFromWindow(startTime.getWindowToken(),0);
-	    inputMethodManager.hideSoftInputFromWindow(stopTime.getWindowToken(),0);
+	    inputMethodManager.hideSoftInputFromWindow (startTime.getWindowToken(),0);
+	    inputMethodManager.hideSoftInputFromWindow (stopTime.getWindowToken(),0);
 	    // ---------------------------------------------------------------------------
 
 	    super.onPause(); 
@@ -192,21 +234,23 @@ public class SpeakingClockActivity extends DibosonActivity
 	{ 	
 	   	super.onResume(); 
 	}
-	/* =============================================================================== */
+	/* ============================================================================= */
 	private CompoundButton.OnCheckedChangeListener enableListener = new CompoundButton.OnCheckedChangeListener() 
 	{		
 		@Override
 		public void onCheckedChanged(CompoundButton buttonView,
 				boolean isChecked) 
 		{
+			// ---------------------------------------------------------------------
 			// 09/02/2014 ECU display / hide the fields depending on whether the clock is enabled
 			//                or not
 			// 13/02/2014 ECU placed the code in new method
-			
+			// ---------------------------------------------------------------------
 			HideDisplayFields (isChecked);
+			// ---------------------------------------------------------------------
 		}
 	};
-	/* =============================================================================== */
+	/* ============================================================================= */
 	public static void CancelAlarm (Context theContext)
 	{
 		// ---------------------------------------------------------------------------
@@ -214,8 +258,13 @@ public class SpeakingClockActivity extends DibosonActivity
 		//                speaking clock
 		// 01/01/2016 ECU changed to use the new method
 		// 03/11/2016 ECU add the false to indicate no pending intent cancel
+		// 21/07/2017 ECU could get here with a null intent so check. This could happen
+		//                if the onDestroy method in MainActivity is called up by an error
+		//                condition before the speaking clock has been initialise 
+		//                properly
 		// ---------------------------------------------------------------------------
-		Utilities.cancelAnAlarm (theContext,alarmPendingIntent,false);
+		if (alarmPendingIntent != null)
+			Utilities.cancelAnAlarm (theContext,alarmPendingIntent,false);
 		// ---------------------------------------------------------------------------
 	}
 	/* =============================================================================== */
@@ -249,6 +298,7 @@ public class SpeakingClockActivity extends DibosonActivity
 		//                is enabled
 		// -------------------------------------------------------------------------
 		HideDisplayFields (PublicData.storedData.speakingClock.enabled);
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	void HideDisplayFields (boolean theShowFlag)
@@ -305,6 +355,7 @@ public class SpeakingClockActivity extends DibosonActivity
 				// 01/09/2015 ECU changed to use StaticData
 				// -----------------------------------------------------------------
 				alarmTime += StaticData.MILLISECONDS_PER_DAY;
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 23/02/2014 ECU now set the alarm
@@ -339,7 +390,7 @@ public class SpeakingClockActivity extends DibosonActivity
 				PublicData.storedData.speakingClock.nextAlarmTime != 0)
 		{
 			// ---------------------------------------------------------------------
-			// 24/02/2014 ECU check that the staored alarm is in the future
+			// 24/02/2014 ECU check that the stored alarm is in the future
 			// ---------------------------------------------------------------------
 			Calendar calendar = Calendar.getInstance ();
 			
@@ -412,7 +463,7 @@ public class SpeakingClockActivity extends DibosonActivity
 		// 24/02/2014 ECU rearrange because the time when an alarm is actioned can drift
 		//                (particularly with KitKat) so base the nextAlarmTime on the time
 		//                when the original alarm was initialised this is held in
-		//				  MainActivity.storedData.speakingClock.nextAlarmTime
+		//				  PublicData.storedData.speakingClock.nextAlarmTime
 		// -------------------------------------------------------------------------
 		Calendar calendar = Calendar.getInstance ();
 		// -------------------------------------------------------------------------
@@ -424,17 +475,19 @@ public class SpeakingClockActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 23/02/2014 ECU set 'calendar' so that it can be used later
 		// -------------------------------------------------------------------------
-		calendar.setTimeInMillis( nextAlarmTime);
+		calendar.setTimeInMillis (nextAlarmTime);
 		// -------------------------------------------------------------------------
 		// 23/02/2014 ECU want to check if the next reminder is in the active period
 		// -------------------------------------------------------------------------
-		if (PublicData.storedData.speakingClock.IsActive (calendar.get(Calendar.HOUR_OF_DAY),calendar.get(Calendar.MINUTE)))
+		if (PublicData.storedData.speakingClock.IsActive (calendar.get (Calendar.HOUR_OF_DAY),
+				                                          calendar.get (Calendar.MINUTE)))
 		{
 			// ---------------------------------------------------------------------
 			// 23/02/2014 ECU speaking clock is still active to do a repeat alarm
 			// 11/03/2017 ECU add the alarm ID as an argument
 			// ---------------------------------------------------------------------
 			SpeakingClockActivity.SetAnAlarm (theContext,nextAlarmTime,StaticData.ALARM_ID_SPEAKING_CLOCK);
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -456,17 +509,28 @@ public class SpeakingClockActivity extends DibosonActivity
 		//                ALARM_ID_SPEAKING_CLOCK
 		// 28/10/2016 ECU changed to use dateFormatDDMMYY
 		// 11/03/2017 ECU add the alarm ID as an argument and change the code accordingly
+		// 24/07/2017 ECU changed to ALARM....
 		// -------------------------------------------------------------------------
-		Utilities.LogToProjectFile (TAG,"SetAnAlarm : " + theAlarmID + " " + new SimpleDateFormat("HH:mm:ss " + PublicData.dateFormatDDMMYY,Locale.getDefault()).format(theTime));
+		Utilities.LogToProjectFile (TAG,"SetAnAlarm : " + theAlarmID + " " + new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT +
+				                          " " + PublicData.dateFormatDDMMYY,Locale.getDefault()).format(theTime));
 		// --------------------------------------------------------------------------
 		AlarmManager theAlarmManager = (AlarmManager)theContext.getSystemService(ALARM_SERVICE);
 		Intent alarmIntent = new Intent(theContext, AlarmManagerReceiver.class);
 		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_ID,theAlarmID);
 		// -------------------------------------------------------------------------
+		// 26/07/2017 ECU because the alarms are not guaranteed to be received at
+		//                exactly the right time then include the time in the intent
+		// -------------------------------------------------------------------------
+		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_TIME,theTime);
+		// -------------------------------------------------------------------------
 		// 18/06/2013 ECU use alarmCounter as a unique request code - currently not used
+		// 15/03/2019 ECU added PendingIntent.FLAG_UPDATE_CURRENT
+		// 09/05/2020 ECU changed to use 'ALARM.....FLAGS'
 		// -------------------------------------------------------------------------
 		alarmPendingIntent = PendingIntent.getBroadcast (theContext,
-									theAlarmID,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK); 
+														 theAlarmID,
+														 alarmIntent,
+														 StaticData.ALARM_PENDING_INTENT_FLAGS);
 		// -------------------------------------------------------------------------
 		// 24/12/2015 ECU changed to use the new method
 		// -------------------------------------------------------------------------
@@ -502,14 +566,49 @@ public class SpeakingClockActivity extends DibosonActivity
 			int minutesTillNextChime = ((minute / StaticData.WESTMINSTER_CHIME_GAP) * StaticData.WESTMINSTER_CHIME_GAP) +
 					StaticData.WESTMINSTER_CHIME_GAP - minute;
 			// ---------------------------------------------------------------------
+			// 16/03/2019 ECU add remember this chime
+			// ---------------------------------------------------------------------
+			PublicData.westminsterChimeLast = theTime +  (long)(minutesTillNextChime * StaticData.MILLISECONDS_PER_MINUTE);
+			// ---------------------------------------------------------------------
 			// 11/03/2017 ECU get the time for the first chime
 			// ---------------------------------------------------------------------
 			// 11/03/2017 ECU set an alarm for the first chime
+			// 16/03/2019 ECU changed to use 'westminsterChimeLast'
 			// ---------------------------------------------------------------------
 			SetAnAlarm (theContext,
-					    theTime +  (long)(minutesTillNextChime * StaticData.MILLISECONDS_PER_MINUTE),
+						PublicData.westminsterChimeLast,
 					    StaticData.ALARM_ID_WESTMINSTER_CHIME);
 			// ---------------------------------------------------------------------		
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void SpeakingClock (Context theContext,long theTime)
+	{
+		// -------------------------------------------------------------------------
+		// 26/07/2017 ECU created to be called from the alarm receiver when the 
+		//                current time is to be 'spoken'
+		// -------------------------------------------------------------------------
+		if (theTime == StaticData.NOT_SET)
+		{
+			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU a time has not been provided so use the current time
+			// ---------------------------------------------------------------------
+			Utilities.SpeakingClock (theContext);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU a time has been provided so base the spoken time on that
+			// ---------------------------------------------------------------------
+			Calendar localCalendar = Calendar.getInstance ();
+			localCalendar.setTimeInMillis (theTime);
+			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU speak the time based on that supplied
+			// ---------------------------------------------------------------------
+			Utilities.SpeakingClock (theContext,localCalendar);
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -522,14 +621,23 @@ public class SpeakingClockActivity extends DibosonActivity
 		// 09/02/2014 ECU pull in the new settings
 		// 01/02/2017 ECU added the showText
 		// 10/03/2017 ECU added the westminsterChimes
+		// 25/07/2017 ECU added the westminsterChimesEnd
 		// -------------------------------------------------------------------------
 		PublicData.storedData.speakingClock 
-			= new SpeakingClock (enable.isChecked(),
-							     startTime.getCurrentHour(),startTime.getCurrentMinute(),
-					             stopTime.getCurrentHour(),stopTime.getCurrentMinute(),
-					             Integer.parseInt (interval.getText().toString()),
-					             showText.isChecked(),
-					             westminsterChimes.isChecked());
+							= new SpeakingClock (enable.isChecked (),
+												 startTime.getCurrentHour (),
+												 startTime.getCurrentMinute (),
+												 stopTime.getCurrentHour (), 
+												 stopTime.getCurrentMinute (),
+												 Integer.parseInt (interval.getText().toString ()),
+												 showText.isChecked (),
+												 westminsterChimes.isChecked (),
+												 westminsterChimesEnd);
+		// -------------------------------------------------------------------------
+		// 27/07/2017 ECU make sure that the 'time of last chime' is reset to 'not
+		//                set' so that the previous speaking clock is not remembered
+		// -------------------------------------------------------------------------
+		PublicData.westminsterChimeLast = StaticData.NOT_SET;
 		// -------------------------------------------------------------------------
 		// 09/02/2014 ECU print details to confirm details
 		// 22/02/2014 ECU added argument to centre the text
@@ -549,9 +657,27 @@ public class SpeakingClockActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		Calendar calendar = Calendar.getInstance ();
 		// -------------------------------------------------------------------------
+		// 25/07/2017 ECU if an adjustment was applied to the time to allow for the
+		//                length of the westminster chime then use the 'unmodified'
+		//                time
+		// 27/07/2017 ECU changed check from NO_RESULT
+		// -------------------------------------------------------------------------
+		if (PublicData.westminsterChimeLast != StaticData.NOT_SET)
+		{
+			// ---------------------------------------------------------------------
+			// 25/07/2017 ECU reset the time to that stored
+			//            ECU added the 'clear' as was getting issues when checking
+			//                the 'minute' lower down
+			// ---------------------------------------------------------------------
+			calendar.clear ();
+			calendar.setTimeInMillis (PublicData.westminsterChimeLast);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 		// 11/03/2017 ECU remember the hour which will be used later
 		// -------------------------------------------------------------------------
-		int hour = calendar.get (Calendar.HOUR);
+		int hour 	= calendar.get (Calendar.HOUR);
+		int minute	= calendar.get (Calendar.MINUTE);
 		// -------------------------------------------------------------------------
 		// 11/03/2017 ECU adjust because midnight and noon are '0' and we want 12
 		//                hour 'gongs'
@@ -568,19 +694,30 @@ public class SpeakingClockActivity extends DibosonActivity
 		// 11/03/2017 ECU now check if the speaking clock is active
 		// -------------------------------------------------------------------------
 		calendar.setTimeInMillis (nextChimeTime);
+		// -------------------------------------------------------------------------
 		if (PublicData.storedData.speakingClock.IsActive (calendar.get(Calendar.HOUR_OF_DAY),calendar.get (Calendar.MINUTE)))
 		{
+			
 			// ---------------------------------------------------------------------
 			// 11/03/2017 ECU the speaking clock will still be active when the next
 			//                chime will happen so set an alarm
+			// 24/07/2017 ECU subtract the length of the chime so that it finishes,
+			//                rather than starts, at the specified time.
+			// 25/07/2017 ECU put in the check on ...ChimeEnd
 			// ---------------------------------------------------------------------
-			SetAnAlarm (theContext,nextChimeTime,StaticData.ALARM_ID_WESTMINSTER_CHIME);
+			SetAnAlarm (theContext,nextChimeTime - 
+					(PublicData.storedData.speakingClock.westminsterChimeEnd ? westminsterChimeLength (nextChimeTime) : 0),StaticData.ALARM_ID_WESTMINSTER_CHIME);
+			// ---------------------------------------------------------------------
+			// 25/07/2017 ECU remember the 'unmodified' next chime time
+			// ---------------------------------------------------------------------
+			PublicData.westminsterChimeLast = nextChimeTime;
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 10/03/2017 ECU want Westminster chimes so decide which one to do
+		// 25/07/2017 ECU changed to use 'minute' rather than getting from Calendar
 		// -------------------------------------------------------------------------
-		switch ((Calendar.getInstance()).get (Calendar.MINUTE))
+		switch (minute)
 		{	
 			// ---------------------------------------------------------------------
 			case 0:
@@ -612,6 +749,85 @@ public class SpeakingClockActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 		}
 		// ---------------------------------------------------------------------
+	}
+	// =============================================================================
+	static int westminsterChimeLength (long theTime)
+	{
+		// -------------------------------------------------------------------------
+		// 24/07/2017 ECU created to return the length of the Westminster Chime at
+		//				  the specified time
+		// -------------------------------------------------------------------------
+		Calendar calendar = Calendar.getInstance ();
+		// -------------------------------------------------------------------------
+		// 24/07/2017 ECU set the calendar to the specified time
+		// -------------------------------------------------------------------------
+		calendar.setTimeInMillis (theTime);
+		// -------------------------------------------------------------------------
+		// 24/07/2017 ECU remember the 'hour' for later use
+		// -------------------------------------------------------------------------
+		int hour 	= calendar.get (Calendar.HOUR);
+		// -------------------------------------------------------------------------
+		// 24/07/2017 ECU adjust because midnight and noon are '0' and we want 12
+		//                hour 'gongs'
+		// -------------------------------------------------------------------------
+		if (hour == 0)
+		{
+			hour = 12;
+		}
+		// -------------------------------------------------------------------------
+		// 10/03/2017 ECU want Westminster chimes so decide which one to do
+		// -------------------------------------------------------------------------
+		switch (calendar.get (Calendar.MINUTE))
+		{	
+			// ---------------------------------------------------------------------
+			case 0:
+				// -----------------------------------------------------------------
+				// 24/07/2017 ECU for the hour chime then the length depends on the
+				//                number of hours
+				// 26/07/2017 ECU take off the 'tail' (cannot do in StaticData because
+				//                the position of the start of the 'hour gong' is
+				//                hard coded and this would mess this up
+				// -----------------------------------------------------------------
+				return StaticData.WESTMINSTER_CHIME_HOUR + (calendar.get (Calendar.HOUR) * StaticData.WESTMINSTER_CHIME_PER_HOUR) - StaticData.WESTMINSTER_CHIME_TAIL_HOUR;
+			// ---------------------------------------------------------------------
+			case 15:
+				return StaticData.WESTMINSTER_CHIME_QUARTER;
+			// ---------------------------------------------------------------------
+			case 30:
+				return StaticData.WESTMINSTER_CHIME_HALF;
+			// ---------------------------------------------------------------------
+			case 45:
+				return StaticData.WESTMINSTER_CHIME_THREE_QUARTER;
+			// ---------------------------------------------------------------------
+			default:
+				break;
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 24/07/2017 ECU if get here then do not return any length
+		// -------------------------------------------------------------------------
+		return 0;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	
+	// =============================================================================
+	public static void ChimeEndMethod (Object theObject)
+	{
+		// -------------------------------------------------------------------------
+		// 26/07/2017 ECU indicate that the chimes are to end on the quarter hour
+		// -------------------------------------------------------------------------
+		westminsterChimesEnd = true;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void ChimeStartMethod (Object theObject)
+	{
+		// -------------------------------------------------------------------------
+		// 26/07/2017 ECU indicate that the chimes are to start on the quarter hour
+		// -------------------------------------------------------------------------
+		westminsterChimesEnd = false;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

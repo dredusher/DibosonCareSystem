@@ -54,6 +54,17 @@ public class MusicPlayerData implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public boolean AnyTracks ()
+	{
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU return whether there are any tracks
+		//					true ..... there are music tracks
+		//                  false .... there are no music tracks
+		// -------------------------------------------------------------------------
+		return ((tracks != null) && (tracks.size() > 0));
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public void setDeviceID (String theDeviceID)
 	{
 		// -------------------------------------------------------------------------
@@ -62,16 +73,61 @@ public class MusicPlayerData implements Serializable
 		// -------------------------------------------------------------------------
 		deviceID = theDeviceID;
 	}
-	/* ============================================================================= */
-	public String Print ()
+	// =============================================================================
+	public void SavedTracks ()
 	{
-		return "Track Number   : " + trackNumber + "\n" +
-	           "Track Playing  : " + trackPlaying + "\n" +
-			   "Tracks Playing : " + tracksPlaying + "\n" +
-	           "Total Tracks   : " + tracks.size() + "\n" +
-			   "Track Position : " + trackPosition + "\n" +
-			   "Shuffle Mode   : " + shuffleMode + "\n" +
-			   "Device ID      : " + deviceID;						// 03/02/2015 ECU added
+		// -------------------------------------------------------------------------
+		// 04/01/2017 ECU copy the current tracks to the saved array
+		// -------------------------------------------------------------------------
+		savedTracks = new ArrayList <TrackDetails> ();
+		// -------------------------------------------------------------------------
+		// 04/01/2018 ECU if there are any tracks then copy across
+		// -------------------------------------------------------------------------
+		if ((tracks != null) && (tracks.size() > 0))
+		{
+			for (int index = 0; index < tracks.size(); index++)
+				savedTracks.add(tracks.get(index));
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void Tracks ()
+	{
+		// -------------------------------------------------------------------------
+		// 04/01/2017 ECU copy the current tracks to the saved array
+		// -------------------------------------------------------------------------
+		tracks = new ArrayList <TrackDetails> ();
+		// -------------------------------------------------------------------------
+		// 04/01/2018 ECU if there are any tracks then copy across
+		// -------------------------------------------------------------------------
+		if ((savedTracks != null) && (savedTracks.size() > 0))
+		{
+			for (int index = 0; index < savedTracks.size(); index++)
+				tracks.add(savedTracks.get(index));
+		}
+		// -------------------------------------------------------------------------
+	}
+	/* ============================================================================= */
+	public String Print (String theTitle)
+	{
+		// -------------------------------------------------------------------------
+		// 04/01/2018 ECU added the title and tidied up
+		// -------------------------------------------------------------------------
+		return theTitle 							+ StaticData.NEWLINE +
+			   "Root Folder    : " + rootFolder     + StaticData.NEWLINE +
+			   "Track Number   : " + trackNumber 	+ StaticData.NEWLINE +
+	           "Track Playing  : " + trackPlaying 	+ StaticData.NEWLINE +
+			   "Tracks Playing : " + tracksPlaying 	+ StaticData.NEWLINE +
+			   ((tracks != null) ? 
+					   "Total Tracks   : " + tracks.size() 	    + StaticData.NEWLINE : StaticData.BLANK_STRING) +
+	           ((savedTracks != null) ? 
+	        		   "Saved Tracks   : " + savedTracks.size() + StaticData.NEWLINE : StaticData.BLANK_STRING) +
+			   "Track Position : " + trackPosition 	+ StaticData.NEWLINE +
+			   "Shuffle Mode   : " + shuffleMode 	+ StaticData.NEWLINE +
+			   "Repeat Mode    : " + repeatMode 	+ StaticData.NEWLINE +
+			   "Device ID      : " + deviceID       + 
+			   							"(" + PublicData.deviceID + ")";	// 03/02/2015 ECU added
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 

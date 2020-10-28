@@ -20,13 +20,13 @@ public class MonitorPhoneStatus extends PhoneStateListener
 		// -------------------------------------------------------------------------
 		// 15/02/2014 ECU copy across any supplied variables
 		// -------------------------------------------------------------------------
-		audioManager = (AudioManager) theContext.getSystemService(Context.AUDIO_SERVICE);  
-		context		=	theContext;
+		audioManager	 = (AudioManager) theContext.getSystemService (Context.AUDIO_SERVICE);  
+		context			 =	theContext;
 		telephonyManager = ((TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE)); 
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-    public void onCallStateChanged(int phoneState, String incomingNumber)
+    public void onCallStateChanged (int phoneState, String incomingNumber)
     {
     	// -------------------------------------------------------------------------
     	// 15/02/2014 ECU this method is called when the status of the phone changes
@@ -44,6 +44,8 @@ public class MonitorPhoneStatus extends PhoneStateListener
     	//                                      In the latter case, another call is already active.
     	// -------------------------------------------------------------------------
     	// 15/02/2014 ECU depending on the state decide on the action to take
+    	// 14/04/2019 ECU need to take into account the use Alexa which may be
+    	//                trying to communicate to a connected bluetooth speaker
     	// -------------------------------------------------------------------------
         switch (phoneState) 
         {
@@ -51,9 +53,20 @@ public class MonitorPhoneStatus extends PhoneStateListener
         	case TelephonyManager.CALL_STATE_IDLE:
         		// --------------------------------------------------------------
         		// 15/02/2014 ECU want to switch the speaker phone off
+        		// 14/04/2019 ECU if Alexa is trying to use communication to
+        		//                the attached bluetooth speaker then do not change
+        		//                the 'idle' state
         		// --------------------------------------------------------------
-        		audioManager.setMode(AudioManager.MODE_NORMAL); 
-    			audioManager.setSpeakerphoneOn (false);
+        		if (!Alexa.enabledOnBluetooth)
+        		{
+        			// ----------------------------------------------------------
+        			// 14/04/2019 ECU only change state if Alexa has NOT configured
+        			//                the audio manager
+        			// ----------------------------------------------------------
+        			audioManager.setMode (AudioManager.MODE_NORMAL); 
+        			audioManager.setSpeakerphoneOn (false);
+        			// ----------------------------------------------------------
+        		}
         		// --------------------------------------------------------------
     			break;
             // ------------------------------------------------------------------
@@ -61,7 +74,7 @@ public class MonitorPhoneStatus extends PhoneStateListener
         		// --------------------------------------------------------------       		
         		// 15/02/2014 ECU want to force the speaker phone to be on
         		// --------------------------------------------------------------
-        		audioManager.setMode(AudioManager.MODE_IN_CALL);
+        		audioManager.setMode (AudioManager.MODE_IN_CALL);
     			audioManager.setSpeakerphoneOn (true); 
     			// --------------------------------------------------------------
         		break;

@@ -38,7 +38,7 @@ public class RunActivity extends Activity
 			Bundle receivedData = getIntent().getExtras();
 			intentData = (IntentData) receivedData.getSerializable (StaticData.PARAMETER_INTENT_DATA);
 				
-			requestCodeMethod 	= Utilities.createAMethod(intentData.intentClass,intentData.intentMethodName,"");
+			requestCodeMethod 	= Utilities.createAMethod(intentData.intentClass,intentData.intentMethodName,StaticData.BLANK_STRING);
 			// ---------------------------------------------------------------------
 			// 15/10/2014 ECU now activity the required activity
 			// ---------------------------------------------------------------------
