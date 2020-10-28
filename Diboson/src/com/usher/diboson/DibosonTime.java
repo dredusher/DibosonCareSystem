@@ -121,8 +121,9 @@ public class DibosonTime implements Serializable
 	{
 		// -------------------------------------------------------------------------
 		// 26/11/2015 ECU created to return the time in printable form
+		// 03/12/2019 ECU changed to use TIME....
 		// -------------------------------------------------------------------------
-		return String.format ("%02d:%02d",hour,minute);
+		return String.format (StaticData.TIME_FORMAT,hour,minute);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

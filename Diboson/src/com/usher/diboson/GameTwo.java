@@ -3,6 +3,7 @@ package com.usher.diboson;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -106,8 +107,15 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// ---------------------------------------------------------------------
 			// 16/02/2014 ECU call up routine to set common activity features
 			// 08/04/2014 ECU changed to use the variable
+			// 03/01/2020 ECU changed to use new method following issues if
+			//                the settings are set to 'show' the navigation bar
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
+			Utilities.SetUpActivity (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+								     this,
+									 StaticData.ACTIVITY_FULL_SCREEN,
+									 !StaticData.ACTIVITY_SCREEN_ON,
+									 !StaticData.TITLE_BAR_SHOW,
+									 !StaticData.NAVIGATION_BAR_SHOW);
 			// ---------------------------------------------------------------------
 			// 07/07/2019 ECU check if this activity has been restarted
 			// ---------------------------------------------------------------------
@@ -554,7 +562,7 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		// -------------------------------------------------------------------------
 		velocityX -= accelerationX * timeInterval;
 		velocityY += accelerationY * timeInterval;
-		
+		// -------------------------------------------------------------------------
 		ballX += (int)(timeInterval * (velocityX + 0.5 * accelerationX * timeInterval));
 		ballY += (int)(timeInterval * (velocityY + 0.5 * accelerationY * timeInterval));		 
 		// -------------------------------------------------------------------------
@@ -569,9 +577,9 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 			// --------------------------------------------------------------------- 
 			if (!haveLanded && (Math.abs(velocityX) < TARGET_VELOCITY) && (Math.abs(velocityY) < TARGET_VELOCITY))
 			{
+				// -----------------------------------------------------------------
 				fastMessage = true;
-				
-				haveLanded = true;
+				haveLanded  = true;
 			    // -----------------------------------------------------------------	
 				// 17/02/2014 ECU pass through the image id as a parameter
 				// 18/02/2014 ECU changed to use the new DisplayADrawable method
@@ -584,6 +592,7 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 				Utilities.SpeakAPhrase (context,context.getString (R.string.game_two_landed));
 				// -----------------------------------------------------------------	
 				finish ();
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -616,26 +625,34 @@ public class GameTwo extends DibosonActivity implements SensorEventListener
 		// -------------------------------------------------------------------------
 		if (ballX < BALL_SIZE)
 		{
+			// ---------------------------------------------------------------------
 			ballX 		= BALL_SIZE;
 			velocityX 	= -velocityX * FACTOR_BOUNCEBACK;
+			// ---------------------------------------------------------------------
 		}
 		else
 		if (ballX > (PublicData.screenWidth - BALL_SIZE))
 		{
+			// ---------------------------------------------------------------------
 			ballX 		= PublicData.screenWidth - BALL_SIZE;
 			velocityX 	= -velocityX * FACTOR_BOUNCEBACK;
+			// ---------------------------------------------------------------------
 		}
-		
+		// -------------------------------------------------------------------------
 		if (ballY < BALL_SIZE)  
-		{  
+		{
+			// ---------------------------------------------------------------------
 			ballY 		= BALL_SIZE;  
-			velocityY 	= -velocityY * FACTOR_BOUNCEBACK;  
+			velocityY 	= -velocityY * FACTOR_BOUNCEBACK;
+			// ---------------------------------------------------------------------
 		}  
 		else 
  		if (ballY > PublicData.screenHeight - (2 * BALL_SIZE))
 		{
+			// ---------------------------------------------------------------------
 			ballY 		= PublicData.screenHeight - (2 * BALL_SIZE);
 			velocityY 	= -velocityY * FACTOR_BOUNCEBACK;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}

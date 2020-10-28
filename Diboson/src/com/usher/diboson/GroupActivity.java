@@ -1,22 +1,26 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.view.View;
 import android.widget.Button;
+import com.usher.diboson.utilities.SelectAnActivity;
+
+import java.util.ArrayList;
 
 
 public class GroupActivity extends Activity 
 {
 	// =============================================================================
+	// 25/07/2020 ECU change the way groups are defined using a dialogue instead of
+	//                using GridActivity
+	// =============================================================================
 		   int				  action;					// 11/10/2016 ECU added
 		   Context			  context;					// 09/10/2016 ECU added
-	       int				  currentGroup;
+	static int				  currentGroup;
 	       Button			  groupCreateButton;
 	       Button			  groupDeleteGroupButton;
 	       Button			  groupDeleteGroupsButton;
@@ -183,9 +187,17 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 	};
 	// =============================================================================
+	public void CancelMethod (String theName)
+	{
+		// -------------------------------------------------------------------------
+		// 25/07/2020 ECU want to cancel the current 'group definition
+		// -------------------------------------------------------------------------
+		PublicData.storedData.groupLists.remove (currentGroup);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	void defineAGroup (Context theContext,int theGroup)
 	{
-		Utilities.popToastAndSpeak (theContext.getString (R.string.group_select_activities),true);
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU check if this is a new group or an existing one
 		// -------------------------------------------------------------------------
@@ -203,24 +215,45 @@ public class GroupActivity extends Activity
 				PublicData.storedData.groupLists = new ArrayList<GroupList> ();
 			}
 			// ---------------------------------------------------------------------
-			PublicData.storedData.groupLists.add (new GroupList ());
-			// ---------------------------------------------------------------------
 			// 08/10/2016 ECU remember the current size
+			// 28/07/2020 ECU change the order in which the current group is set
 			// ---------------------------------------------------------------------
-			currentGroup = PublicData.storedData.groupLists.size () - 1;
+			currentGroup = PublicData.storedData.groupLists.size ();
+			// ---------------------------------------------------------------------
+			// 28/07/2020 ECU set a default name for this group
+			// ---------------------------------------------------------------------
+			PublicData.storedData.groupLists.add (new GroupList ("Group " + currentGroup));
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
-		// 19/10/2016 ECU changed from GridImages to Integer
-		// -------------------------------------------------------------------------
-		PublicData.storedData.groupLists.get (currentGroup).activities = new ArrayList <Integer> ();
-		// -------------------------------------------------------------------------
 		// 28/11/2014 ECU ask the GridActivity to return the selected intent
+		// 25/07/2020 ECU change to use a dialogue rather than using GridActivity
+		// 28/07/2020 ECU add the 'activities' as an arguments
 		// -------------------------------------------------------------------------
-		Intent intent = new Intent (theContext,GridActivity.class);
-		intent.putExtra (StaticData.PARAMETER_GROUP,true);
-		theContext.startActivity (intent);
+		SelectAnActivity.ChooseActivities (theContext,Utilities.createAMethod
+								(GroupActivity.class,"DefineActivitiesMethod",new int [1]),
+								PublicData.storedData.groupLists.get (currentGroup).activities);
 		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void DefineActivitiesMethod (int [] theChosenActivities)
+	{
+		// -------------------------------------------------------------------------
+		// 28/07/2020 ECU want to clear the existing list
+		// -------------------------------------------------------------------------
+		PublicData.storedData.groupLists.get (currentGroup).ClearActivities ();
+		// -------------------------------------------------------------------------
+		// 25/07/2020 ECU add the designated activities into the current group
+		// -------------------------------------------------------------------------
+		for (int index = 0; index < theChosenActivities.length; index++)
+		{
+			PublicData.storedData.groupLists.get (currentGroup).AddActivity (theChosenActivities [index]);
+		}
+		// ------------------------------------------------------------------------
+		// 25/07/2020 ECU now get the name of the group
+		// ------------------------------------------------------------------------
+		groupMessageHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	void deleteAGroup (int theGroup)
@@ -230,7 +263,8 @@ public class GroupActivity extends Activity
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU tell the user what has happened
 		// -------------------------------------------------------------------------
-		Utilities.popToast (String.format(context.getString(R.string.group_delete_format),PublicData.storedData.groupLists.get (theGroup).groupListName));
+		Utilities.popToast (String.format(context.getString(R.string.group_delete_format),
+					PublicData.storedData.groupLists.get (theGroup).groupListName));
 		// -------------------------------------------------------------------------
 		// 11/10/2016 ECU now delete the group
 		// -------------------------------------------------------------------------
@@ -273,13 +307,14 @@ public class GroupActivity extends Activity
 		// 11/10/2016 ECU created to display the contents of a group list
 		// 18/04/2017 ECU added context as argument to ....Titles
 		// 22/03/2018 ECU changed to specify the underlying object
+		// 28/07/2020 ECU change the message on the button from '.cancel'
 		// -------------------------------------------------------------------------
 		DialogueUtilitiesNonStatic.listChoice (context,
 											   underlyingObject,
 											   String.format (context.getString(R.string.group_list_format),PublicData.storedData.groupLists.get(theGroup).groupListName),
 											   GroupList.getActivityTitles (context,theGroup),
 											   null,
-											   context.getString (R.string.cancel),
+											   context.getString (R.string.remove_this_message),
 											   null);
 		// -------------------------------------------------------------------------
 	}
@@ -298,15 +333,6 @@ public class GroupActivity extends Activity
 			// ---------------------------------------------------------------------
 			switch (theMessage.what)
 			{
-				// -----------------------------------------------------------------
-				case StaticData.MESSAGE_DATA:
-					// -------------------------------------------------------------
-					// 04/10/2016 ECU stop the refresh
-					// 18/04/2017 ECU added the context as an argument
-					// -------------------------------------------------------------
-					GroupList.Add (context,currentGroup,theMessage.arg1);
-					// -------------------------------------------------------------
-					break;
 	        	// -----------------------------------------------------------------	
 				case StaticData.MESSAGE_FINISH:
 					// -------------------------------------------------------------
@@ -317,14 +343,16 @@ public class GroupActivity extends Activity
 					//            ECU Note - the following Dialogue does not display
 					//                       a cursor - is this because not on the
 					//                       UI ?? Not sure this is a big issue.
+					// 25/07/2020 ECU added the cancel method
+					// 28/07/2020 ECU display the current group list name
 					// -------------------------------------------------------------
 					DialogueUtilitiesNonStatic.textInput (context,
 													      underlyingObject,
 													      context.getString (R.string.title_group_list_name),
 													      context.getString (R.string.enter_group_list_name),
-													      StaticData.HINT + context.getString (R.string.type_in_group_name),
+													      PublicData.storedData.groupLists.get(currentGroup).groupListName,
 													      Utilities.createAMethod (GroupActivity.class,"GroupNameMethod",StaticData.BLANK_STRING),
-													      null);
+														  Utilities.createAMethod (GroupActivity.class,"CancelMethod",StaticData.BLANK_STRING));
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -417,13 +445,14 @@ public class GroupActivity extends Activity
 		action = theAction;
 		// -------------------------------------------------------------------------
 		// 22/03/2018 ECU change to specify the underlying object
+		// 28/07/2020 ECU change button legend from '.cancel'
 		// -------------------------------------------------------------------------
 		DialogueUtilitiesNonStatic.listChoice (context,
 										       underlyingObject,
 										       "Select a Group",
 										       GroupList.getTitles (),
 										       Utilities.createAMethod (GroupActivity.class,"SelectGroupMethod",0),
-										       context.getString (R.string.cancel),
+										       context.getString (R.string.remove_this_message),
 										       null);
 		// -------------------------------------------------------------------------
 	}

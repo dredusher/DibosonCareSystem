@@ -1,7 +1,5 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -22,10 +20,13 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.DatePicker;
 import android.widget.EditText;
-import android.widget.ImageView;
 import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 @SuppressLint("InflateParams") 
 public class DialogueUtilitiesNonStatic
@@ -39,6 +40,27 @@ public class DialogueUtilitiesNonStatic
 	//                object in the invoke call being set to 'null'). This class
 	//                supports the 'invoke'-ing of both static and non-static
 	//                methods - the underlying object being passed as an argument
+	// 10/09/2020 ECU Occasionally if the the app is restarted by the OS after having
+	//                been put to sleep then get an uncaught exception of the form
+	//
+	//                  android.view.WindowManager$BadTokenException : Unable to add
+	//                     window -- token android.os.BinderProxy@b37eebd is not valid;
+	//                     is your activity running
+	//
+	//                I think the issue is to do with doing 'new AlertDialog' using
+	//                a 'context' of an activity which has been stopped and so does
+	//                not exist. Things to look at :-
+	//
+	// 					1) Never declare/instantiate Dialogs as local variables.
+	//					2) Make all Dialogs instance variables of the Activity.
+	//					3) Override onDestroy and call if (dialog != null) dialog.dismiss ();
+	//
+	//			  ECU Noticed that in 'yesNo' the dialogue is not being dismissed
+	//                when the buttons are pressed - wondered if this is a cause of
+	//                the above error - added the dismiss commands in both places.
+	//                Also noticed that were a number of places where the 'dismiss'
+	//                was missing so added - seems strange as there was no
+	//                consistency.
 	// =============================================================================
 	
 	// =============================================================================
@@ -57,6 +79,7 @@ public class DialogueUtilitiesNonStatic
 	// 10/08/2019 ECU sliderChoice - added the 'cancellable' flag and created
 	//                               a new method (the old master method) which has
 	//                               this flag set to 'false'
+	// 28/10/2020 ECU by default set cancelable to false
 	// =============================================================================
 	
 	// =============================================================================
@@ -103,6 +126,10 @@ public class DialogueUtilitiesNonStatic
 		// -------------------------------------------------------------------------
 		builder.setTitle (theTitle);
 		// -------------------------------------------------------------------------
+		//28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
+		// -------------------------------------------------------------------------
 		// 07/07/2016 ECU set up the adapter that will be used
 		// -------------------------------------------------------------------------
 		CustomListViewAdapter customListViewAdapter = new CustomListViewAdapter (context,theLayoutID,theListItems); 
@@ -144,6 +171,10 @@ public class DialogueUtilitiesNonStatic
 				// -----------------------------------------------------------------
 				try 
 				{
+					// -------------------------------------------------------------
+					// 10/09/2020 ECU dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
 					// -------------------------------------------------------------
 					// 10/04/2015 ECU call the method that handles the cancellation
 					// 24/03/2016 ECU put in the check on null
@@ -387,7 +418,11 @@ public class DialogueUtilitiesNonStatic
 			{
 				// -----------------------------------------------------------------
 				try 
-				{ 
+				{
+					// -------------------------------------------------------------
+					// 10/09/2020 ECU dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
 					// -------------------------------------------------------------
 					// 16/03/2015 ECU call up the method that will handle the 
 					//                input text
@@ -413,7 +448,11 @@ public class DialogueUtilitiesNonStatic
 			{
 				// -----------------------------------------------------------------
 				try 
-				{ 
+				{
+					// -------------------------------------------------------------
+					// 10/09/2020 ECU dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
 					// -------------------------------------------------------------
 					// 10/04/2015 ECU call the method that will handle the cancellation
 					// 24/03/2016 ECU put in the check on null
@@ -430,6 +469,10 @@ public class DialogueUtilitiesNonStatic
 				// -----------------------------------------------------------------
 			}
 		});
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call the common method to set fonts
 		// -------------------------------------------------------------------------
@@ -503,9 +546,13 @@ public class DialogueUtilitiesNonStatic
 		AlertDialog.Builder builder 
 			= new AlertDialog.Builder (new ContextThemeWrapper (theContext, DIALOGUE_THEME));
 		// -------------------------------------------------------------------------
-		// 01/03/2015 ECU added the friendlyName
+		// 01/03/2015 ECU add the title
 		// -------------------------------------------------------------------------
 		builder.setTitle (theTitle);
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU prevent the use of back key to cancel the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 27/02/2015 ECU changed the preset option from '-1' to that stored so
 		// 				  that can accommodate editing
@@ -604,6 +651,8 @@ public class DialogueUtilitiesNonStatic
 				}
 			});
 		}
+		// -------------------------------------------------------------------------
+
 		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call the common method to set font sizes
 		// -------------------------------------------------------------------------
@@ -825,7 +874,11 @@ public class DialogueUtilitiesNonStatic
 				{
 					// -------------------------------------------------------------
 					try 
-					{ 
+					{
+						// ---------------------------------------------------------
+						// 10/09/2020 ECU dismiss the dialogue
+						// ---------------------------------------------------------
+						dialog.dismiss ();
 						// ---------------------------------------------------------
 						// 16/03/2015 ECU call up the method that will handle the 
 						//                input text
@@ -859,7 +912,11 @@ public class DialogueUtilitiesNonStatic
 				{
 				// -----------------------------------------------------------------
 					try 
-					{ 
+					{
+						// ---------------------------------------------------------
+						// 10/09/2020 ECU dismiss the dialogue
+						// ---------------------------------------------------------
+						dialog.dismiss ();
 						// ---------------------------------------------------------
 						// 10/04/2015 ECU call the method that will handle the cancellation
 						// 24/03/2016 ECU put in the check on null
@@ -878,6 +935,10 @@ public class DialogueUtilitiesNonStatic
 				// -----------------------------------------------------------------
 			}
 		});
+		// -------------------------------------------------------------------------
+		//28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call the common method to set fonts
 		// -------------------------------------------------------------------------
@@ -1159,6 +1220,10 @@ public class DialogueUtilitiesNonStatic
 				try 
 				{
 					// -------------------------------------------------------------
+					// 10/09/2020 ECU dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
+					// -------------------------------------------------------------
 					// 10/04/2015 ECU call the method that handles the confirmation
 					// 24/03/2016 ECU put in the check on null
 					// 09/04/2018 ECU add the underlying object as an argument
@@ -1184,6 +1249,10 @@ public class DialogueUtilitiesNonStatic
 				try 
 				{
 					// -------------------------------------------------------------
+					// 10/09/2020 ECU dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
+					// -------------------------------------------------------------
 					// 10/04/2015 ECU call the method that handles the cancellation
 					// 24/03/2016 ECU put in the check on null
 					// 09/04/2018 ECU add the underlying object as an argument
@@ -1198,6 +1267,10 @@ public class DialogueUtilitiesNonStatic
 				// -----------------------------------------------------------------
 			}
 		});
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call the common method to set font sizes
 		// -------------------------------------------------------------------------
@@ -1262,6 +1335,10 @@ public class DialogueUtilitiesNonStatic
 			}
 			// ---------------------------------------------------------------------
 		});
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 20/12/2015 ECU adjust font 
 		// -------------------------------------------------------------------------
@@ -1424,6 +1501,10 @@ public class DialogueUtilitiesNonStatic
 				// -----------------------------------------------------------------
 			}
 		});
+		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
 		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call the common method to set font sizes
 		// 10/04/2015 ECU call the new method with the positive button initially
@@ -1592,6 +1673,10 @@ public class DialogueUtilitiesNonStatic
 			}
 		});
 		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
+		// -------------------------------------------------------------------------
 		// 06/12/2015 ECU create the dialogue and then show it
 		// -------------------------------------------------------------------------
 		adjustFonts (builder);
@@ -1654,6 +1739,10 @@ public class DialogueUtilitiesNonStatic
 					try 
 					{
 						// ---------------------------------------------------------
+						// 10/09/2020 ECU dismiss the dialogue
+						// ---------------------------------------------------------
+						dialog.dismiss ();
+						// ---------------------------------------------------------
 						// 15/03/2015 ECU call the method that will handle the selection
 						// 24/03/2016 ECU put in the check on null
 						// 09/04/2018 ECU add the underlying object as an argument
@@ -1680,6 +1769,10 @@ public class DialogueUtilitiesNonStatic
 					try 
 					{
 						// ---------------------------------------------------------
+						// 10/09/2020 ECU dismiss the dialogue
+						// ---------------------------------------------------------
+						dialog.dismiss ();
+						// ---------------------------------------------------------
 						// 15/03/2015 ECU call up the method that handles the cancellation
 						// 24/03/2016 ECU put in the check on null
 						// 09/04/2018 ECU add the underlying object as an argument
@@ -1695,6 +1788,10 @@ public class DialogueUtilitiesNonStatic
 					// -------------------------------------------------------------
 				}
 			});
+			// -------------------------------------------------------------------------
+			// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+			// -------------------------------------------------------------------------
+			builder.setCancelable (false);
 			// ---------------------------------------------------------------------
 			// 08/04/2015 ECU call the common method to set font sizes
 			// ---------------------------------------------------------------------
@@ -2361,6 +2458,8 @@ public class DialogueUtilitiesNonStatic
 		// -------------------------------------------------------------------------
 		// 10/06/2015 ECU created to handle a simple yes no decision
 		// 02/01/2016 ECU added arguments to tailor the buttons
+		// 10/09/2020 ECU for some reason had forgot to 'dismiss' the dialigoue when
+		//                the buttons are pressed
 		// -------------------------------------------------------------------------
 		context = theContext;
 		// -------------------------------------------------------------------------
@@ -2385,7 +2484,11 @@ public class DialogueUtilitiesNonStatic
 			{
 				// -----------------------------------------------------------------
 				try 
-				{ 
+				{
+					// -------------------------------------------------------------
+					// 10/09/2020 ECU want to dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
 					// -------------------------------------------------------------
 					// 16/03/2015 ECU call up the method that will handle the 
 					//                input text
@@ -2410,7 +2513,11 @@ public class DialogueUtilitiesNonStatic
 			{
 				// -----------------------------------------------------------------
 				try 
-				{ 
+				{
+					// -------------------------------------------------------------
+					// 10/09/2020 ECU want to dismiss the dialogue
+					// -------------------------------------------------------------
+					dialog.dismiss ();
 					// -------------------------------------------------------------
 					// 10/06/2015 ECU call the method that will handle the cancellation
 					// 24/03/2016 ECU put in the check on null
@@ -2445,6 +2552,10 @@ public class DialogueUtilitiesNonStatic
 		// -------------------------------------------------------------------------
 		messageView.setBackgroundColor (theContext.getResources().getColor (R.color.white));
 		// -------------------------------------------------------------------------
+		// 28/10/2020 ECU want to prevent the back key dismissing the dialogue
+		// -------------------------------------------------------------------------
+		builder.setCancelable (false);
+		// -------------------------------------------------------------------------
 		// 10/06/2015 ECU call the common method to set fonts
 		// 02/01/2016 ECU pass through the button states
 		// -------------------------------------------------------------------------
@@ -2478,39 +2589,52 @@ public class DialogueUtilitiesNonStatic
 	// =============================================================================
 	static void adjustFonts (AlertDialog.Builder theBuilder,boolean thePositiveState,boolean theNegativeState)
 	{
-		// --------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		// 08/04/2015 ECU call to adjust the fonts for buttons after showing the
 		//                dialogue
 		// 10/04/2015 ECU added the state of the buttons
 		// 14/12/2015 ECU moved the definition of 'alertDialog'
-		// --------------------------------------------------------------------------
-		alertDialog = theBuilder.create();
-		alertDialog.show();
-		// --------------------------------------------------------------------------
-		// 10/04/2015 ECU get the buttons
-		// --------------------------------------------------------------------------
-		negativeButton = (alertDialog.getButton (DialogInterface.BUTTON_NEGATIVE));
-		positiveButton = (alertDialog.getButton (DialogInterface.BUTTON_POSITIVE));
-		// --------------------------------------------------------------------------
-		// 10/04/2015 ECU process each button, if it exists
-		//            ECU set the colour of the positive / negative buttons
-		//            ECU decide whether to enable or disable the buttons
-		//            ECU took out font changes because it did not look good on small
-		//                devices
-		// --------------------------------------------------------------------------
-		if (negativeButton != null)
+		// 10/09/2020 ECU added the try/catch because was getting an 'uncaught
+		//                exception' when the app was being automatically restarted
+		// -------------------------------------------------------------------------
+		try
 		{
-			//negativeButton.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
-			//negativeButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,context.getResources().getDimension(R.dimen.default_font_size_smaller));
-			negativeButton.setBackgroundColor (context.getResources().getColor(R.color.light_grey));
-			negativeButton.setEnabled (theNegativeState);
+			// ---------------------------------------------------------------------
+			alertDialog = theBuilder.create ();
+			alertDialog.show ();
+			// ---------------------------------------------------------------------
+			// 10/04/2015 ECU get the buttons
+			// ---------------------------------------------------------------------
+			negativeButton = (alertDialog.getButton (DialogInterface.BUTTON_NEGATIVE));
+			positiveButton = (alertDialog.getButton (DialogInterface.BUTTON_POSITIVE));
+			// ---------------------------------------------------------------------
+			// 10/04/2015 ECU process each button, if it exists
+			//            ECU set the colour of the positive / negative buttons
+			//            ECU decide whether to enable or disable the buttons
+			//            ECU took out font changes because it did not look good on small
+			//                devices
+			// ---------------------------------------------------------------------
+			if (negativeButton != null)
+			{
+				//negativeButton.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
+				//negativeButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,context.getResources().getDimension(R.dimen.default_font_size_smaller));
+				negativeButton.setBackgroundColor (context.getResources().getColor(R.color.light_grey));
+				negativeButton.setEnabled (theNegativeState);
+			}
+			if (positiveButton != null)
+			{
+				//positiveButton.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
+				//positiveButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,context.getResources().getDimension(R.dimen.default_font_size_smaller));
+				positiveButton.setBackgroundColor (context.getResources().getColor(R.color.light_grey));
+				positiveButton.setEnabled (thePositiveState);
+			}
+			// ---------------------------------------------------------------------
 		}
-		if (positiveButton != null)
+		catch (Exception theException)
 		{
-			//positiveButton.setTextSize(TypedValue.COMPLEX_UNIT_SP,16);
-			//positiveButton.setTextSize(TypedValue.COMPLEX_UNIT_DIP,context.getResources().getDimension(R.dimen.default_font_size_smaller));
-			positiveButton.setBackgroundColor (context.getResources().getColor(R.color.light_grey));
-			positiveButton.setEnabled (thePositiveState);
+			// ----------------------------------------------------------------------
+			// 10/09/2020 ECU catch the excption but do not do anything
+			// ----------------------------------------------------------------------
 		}
 		// --------------------------------------------------------------------------
 	}

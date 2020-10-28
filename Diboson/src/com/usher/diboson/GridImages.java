@@ -1,13 +1,41 @@
 package com.usher.diboson;
 
+import android.content.Context;
 import java.io.Serializable;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 
-import android.content.Context;
-
 public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 {
+	// =============================================================================
+	// 22/09/2020 ECU GridImages
+	//                ==========
+	//				  This class defines the data structure that is used by the
+	//                'user interface' (GridActivity) to determine the actions to
+	//                be taken in response to the user 'clicking' or 'long clicking'
+	//                on a displayed image, which may be displayed in either list
+	//                or grid form.
+	//
+	//                The structure contains the 'legends' to be displayed to
+	//                inform the user of the actions associated with an icon.
+	//
+	//                The structure indicates whether an action is allowed in a
+	//                particular mode, i.e. 'development' mode or not, and keeps
+	//                a count of the use of particular actions.
+	//
+	//                Some of the actions need some form of 'validation' to decide
+	//                if they are to be displayed - this is provided by the
+	//                defined 'validation class/method'.
+	//
+	//                NOTE
+	//                ====
+	//                Normally an action is triggered by the user clicking on an item
+	//                and this, in GridActivity, results in a 'switch' based on the
+	//                'imageId'. As of 22/09/2020 a test has been performed to directly
+	//                 perform the required activity by calling 'clickActivityClass' and
+	//                 'longClickActivityClass' - this is under test.
+	// =============================================================================
+
 	// =============================================================================
 	private static final long serialVersionUID = 1L;
 	// =============================================================================
@@ -22,16 +50,25 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 	//                StaticData.NO_RESULT then no legend will be displayed
 	// 07/02/2018 ECU added methods for handling requests for information on
 	//                'long press' processing
+	// 21/09/2020 ECU added the 'clickActivityClass' which can be called if the
+	//                associated activity is activated
+	// 27/10/2020 ECU some of the constructors were using an argument of 'Class'
+	//                which generated a warning so changed them to be 'Class<T>' to
+	//                be consistent with the main constructor
 	// =============================================================================
-	public int		imageId;		// the R.drawable number
-	public int		legendId;		// 26/01/2014 ECU legend to display
-									// 01/04/2017 ECU changed from String
-	public int		legendLongId;	// 19/07/2017 ECU legend to display - long press
-	public boolean  longPress;		// 27/01/2015 ECU added to indicate that entry
-									//                can be long pressed
-	public boolean	mode;			// true  = development and normal mode
-									// false = normal mode only
-	public int		usage;			// 18/01/2015 ECU added - the number of calls
+	public Class <T>	clickActivityClass;
+										// 21/09/2020 ECU the associated activity
+	public int			imageId;		// the R.drawable number
+	public int			legendId;		// 26/01/2014 ECU legend to display
+										// 01/04/2017 ECU changed from String
+	public int			legendLongId;	// 19/07/2017 ECU legend to display - long press
+	public Class <T> 	longClickActivityClass;
+										// 22/09/2020 ECU the associated activity
+	public boolean  	longPress;		// 27/01/2015 ECU added to indicate that entry
+										//                can be long pressed
+	public boolean		mode;			// true  = development and normal mode
+										// false = normal mode only
+	public int			usage;			// 18/01/2015 ECU added - the number of calls
 	// -----------------------------------------------------------------------------
 	// 19/07/2017 ECU Note the following 'validation..' variables will be used to
 	//                     define the method that will be invoked to perform the
@@ -48,6 +85,8 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 					   boolean 		theMode,
 					   boolean 		theLongPress,
 					   int			theLegendLongId,
+					   Class <T>    theClickActivityClass,
+					   Class <T>    theLongClickActivityClass,
 					   Class <T> 	theValidationClass,
 					   String		theValidationMethod)
 	{
@@ -55,6 +94,8 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 		// 01/04/2017 ECU changed to use the resource ID of the legend rather than
 		//                the literal string
 		// 19/07/2017 ECU added the setting of 'legendLongId'
+		// 21/09/2020 ECU added 'theClickActivityClass'
+		// 22/09/2020 ECU added 'theLongClickActivityClass'
 		// -------------------------------------------------------------------------
 		imageId			= theImageId;
 		legendId		= theLegendId;	// 26/01/2014 ECU added
@@ -70,6 +111,44 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 		// -------------------------------------------------------------------------
 		validationClass		= theValidationClass;
 		validationMethod 	= theValidationMethod;
+		// -------------------------------------------------------------------------
+		// 21/09/2020 ECU store the class of the associated activity for 'click'
+		// 22/09/2020 ECU store the class of the associated activity for 'long click'
+		// -------------------------------------------------------------------------
+		clickActivityClass       = theClickActivityClass;
+		longClickActivityClass	 = theLongClickActivityClass;
+		// -------------------------------------------------------------------------
+	}
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	public GridImages (int 			theImageId,
+					   int			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress,
+					   int			theLegendLongId,
+					   Class <T>    theClickActivityClass,
+					   Class <T> 	theValidationClass,
+					   String		theValidationMethod)
+	{
+		this (theImageId,theLegendId,theMode,theLongPress,theLegendLongId,theClickActivityClass,null,theValidationClass,theValidationMethod);
+	}
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	public GridImages (int 			theImageId,
+					   int			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress,
+					   int			theLegendLongId,
+					   Class <T> 	theValidationClass,
+					   String		theValidationMethod)
+	{
+		// -------------------------------------------------------------------------
+		// 21/09/2020 ECU this used to be the main constructor before the
+		//                'clickActivityClass' was added
+		// 22/09/2020 ECU added the second 'null' for 'longClickActivityClass'
+		// -------------------------------------------------------------------------
+		this (theImageId,theLegendId,theMode,theLongPress,theLegendLongId,null,null,theValidationClass,theValidationMethod);
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------
@@ -89,7 +168,10 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 	}
 	// -----------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------
-	public GridImages (int theImageId,int theLegendId,boolean theMode,boolean theLongPress)
+	public GridImages (int 			theImageId,
+					   int 			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress)
 	{
 		// -------------------------------------------------------------------------
 		// 09/03/2015 ECU call the new master constructor
@@ -99,7 +181,11 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 	}
 	// -----------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------
-	public GridImages (int theImageId,int theLegendId,boolean theMode,boolean theLongPress,int theLegendLongId)
+	public GridImages (int 			theImageId,
+					   int 			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress,
+					   int 			theLegendLongId)
 	{
 		// -------------------------------------------------------------------------
 		// 19/07/2017 ECU created to handle when the 'legendLongId' is to be set
@@ -110,7 +196,46 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 	}
 	// -----------------------------------------------------------------------------
 	// -----------------------------------------------------------------------------
-	public GridImages (int theImageId,int theLegendId,boolean theMode)
+	public GridImages (int 			theImageId,
+					   int 			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress,
+					   int 			theLegendLongId,
+					   Class <T>	theClickActivityClass)
+	{
+		// -------------------------------------------------------------------------
+		// 21/09/2020 ECU created to add the 'clickActivityClass'
+		// 27/10/2020 ECU change to Class <T>
+		// -------------------------------------------------------------------------
+		this (theImageId,theLegendId,theMode,theLongPress,theLegendLongId,theClickActivityClass,null,null,null);
+		// -------------------------------------------------------------------------
+	}
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	public GridImages (int 			theImageId,
+					   int 			theLegendId,
+					   boolean 		theMode,
+					   boolean 		theLongPress,
+					   int 			theLegendLongId,
+					   boolean  	theDummyArgument,				// not used
+					   Class <T>	theClickActivityClass,
+					   Class <T>	theLongClickActivityClass)
+	{
+		// -------------------------------------------------------------------------
+		// 21/09/2020 ECU created to add the 'clickActivityClass' and
+		// 22/09/2020 ECU 'longClickActivityClass'
+		//            ECU Note - the dummy argument is added to make this constructor
+		//                       unique
+		// 27/10/2020 ECU change arguments to Class <T>
+		// -------------------------------------------------------------------------
+		this (theImageId,theLegendId,theMode,theLongPress,theLegendLongId,theClickActivityClass,theLongClickActivityClass,null,null);
+		// -------------------------------------------------------------------------
+	}
+	// -----------------------------------------------------------------------------
+	// -----------------------------------------------------------------------------
+	public GridImages (int 			theImageId,
+					   int 			theLegendId,
+					   boolean 		theMode)
 	{
 		// -------------------------------------------------------------------------
 		// 27/01/2015 ECU changed to call modified method above
@@ -281,8 +406,9 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 		//                through the context as an argument
 		// 19/04/2017 ECU remove try/catch
 		// 03/03/2019 ECU changed the format
+		// 09/05/2020 ECU changed the format from '...%-25s...'
 		// -------------------------------------------------------------------------
-		return String.format ("%-25s%10d",theContext.getString (legendId),usage);
+		return String.format ("%-30s%10d",theContext.getString (legendId),usage);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -331,11 +457,12 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static String [] returnLegends (@SuppressWarnings("rawtypes") GridImages [] theGridImages)
+	public static String [] returnLegends (@SuppressWarnings("rawtypes") GridImages [] theGridImages,boolean theSortFlag)
 	{
 		// -------------------------------------------------------------------------
 		// 14/06/2017 ECU created to return an array of legends associated with the
 		//                grid images
+		// 25/07/2020 ECU added the sort flag
 		// -------------------------------------------------------------------------
 		if (theGridImages != null && theGridImages.length != 0)
 		{
@@ -351,6 +478,12 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 			{
 				legends [theIndex] = theGridImages [theIndex].Legend();
 			}
+
+			// ---------------------------------------------------------------------
+			if (theSortFlag)
+				Arrays.sort (legends);
+			// ---------------------------------------------------------------------
+			// 25/07/2020 ECU check if sorting is required
 			// ---------------------------------------------------------------------
 			// 14/06/2017 ECU return the generated list
 			// ---------------------------------------------------------------------
@@ -374,6 +507,7 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 		// -------------------------------------------------------------------------
 		// 07/02/2018 ECU created to return an array of legends associated with the
 		//                grid images when the long press is used
+		// 25/07/2020 ECU added the 'sort' flag
 		// -------------------------------------------------------------------------
 		if (theGridImages != null && theGridImages.length != 0)
 		{
@@ -395,15 +529,19 @@ public class GridImages <T> implements Serializable,Comparable <GridImages <T>>
 					// -------------------------------------------------------------
 					// 07/02/2018 ECU this entry has a 'long press' option so add it to
 					//                string and use NEWLINE as a delimiter
+					// 20/07/2020 ECU change so that both the legend and long legend
+					//                are returned
 					// -------------------------------------------------------------
-					legends += theGridImages [theIndex].LegendLong () + StaticData.NEWLINE;
+					legends += theGridImages [theIndex].Legend () + StaticData.LEGEND_SEPARATOR +
+									theGridImages [theIndex].LegendLong () + StaticData.NEWLINEx2;
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 07/02/2018 ECU want to return a string array based on the legends string
 			// ---------------------------------------------------------------------
-			return legends.split (StaticData.NEWLINE);
+			return legends.split (StaticData.NEWLINEx2);
 			// ---------------------------------------------------------------------
 		}
 		else

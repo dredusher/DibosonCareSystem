@@ -3,10 +3,12 @@ package com.usher.diboson;
 import android.app.Activity;
 import android.os.Bundle;
 import android.text.Html;
-import android.view.GestureDetector.OnGestureListener;
+import android.util.Base64;
 import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Menu;
 import android.view.MotionEvent;
+import android.webkit.WebView;
 import android.widget.ImageView;
 import android.widget.ImageView.ScaleType;
 import android.widget.TextView;
@@ -64,6 +66,7 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 	//
 	//				  as this is not a 'user activity' the ability to add test documentation (via long press on 
 	//                the BACK KEY is not necessary
+	// 13/07/2020 ECU added HTML handling
 	// -----------------------------------------------------------------------
 	// Testing
 	// =======
@@ -75,8 +78,10 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 	/* ----------------------------------------------------------------------- */
 	   int				displayImage 	= R.drawable.help;	// 17/02/2014 ECU added
 	   String			displayText 	= null;				// 13/02/2014 ECU added
+	   boolean          finishAction	= false;			// 12/10/2020 ECU added
 	   boolean          flingEnabled 	= true;				// 15/09/2013 ECU added
 	   GestureDetector	gestureScanner;
+	   String			imagePath;							// 12/10/2020 ECU added
 	   ImageView		imageView;
 	   boolean			scaleImage		= false;			// 09/08/2016 ECU added
 	   int				textLayout		= StaticData.NO_RESULT;	
@@ -123,6 +128,14 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 				// -----------------------------------------------------------------
 				displayText = extras.getString (StaticData.PARAMETER_HELP_TEXT);
 				// -----------------------------------------------------------------
+				// 12/10/2020 ECU get the path to an image
+				// -----------------------------------------------------------------
+				imagePath = extras.getString (StaticData.PARAMETER_FILE_PATH);
+				// -----------------------------------------------------------------
+				// 12/10/2020 ECU get the flag that indicates when thae action is finished
+				// -----------------------------------------------------------------
+				finishAction = extras.getBoolean(StaticData.PARAMETER_FINISH_ACTION,false);
+				// -----------------------------------------------------------------
 				// 17/02/2014 ECU get help id or use a default
 				// -----------------------------------------------------------------
 				displayImage = extras.getInt (StaticData.PARAMETER_HELP_ID, R.drawable.help); 
@@ -148,13 +161,25 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 				imageView.setScaleType (ScaleType.FIT_XY);
 			}
 			// ---------------------------------------------------------------------
-			// 09/08/2016 ECU Note - now set the image
+			// 12/10/2020 ECU check if the photograph, whose path has been given,
+			//                will be displayed
 			// ---------------------------------------------------------------------
-			imageView.setImageResource (displayImage);
-			// ---------------------------------------------------------------------
-			// 11/09/2015 ECU set up the opacity that is required
-			// ---------------------------------------------------------------------
-			imageView.setAlpha (PublicData.storedData.drawableOpacity);
+			if (imagePath != null)
+			{
+				Utilities.displayAnImage (imageView,imagePath);
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 09/08/2016 ECU Note - now set the image
+				// -----------------------------------------------------------------
+				imageView.setImageResource (displayImage);
+				// -----------------------------------------------------------------
+				// 11/09/2015 ECU set up the opacity that is required
+				// -----------------------------------------------------------------
+				imageView.setAlpha (PublicData.storedData.drawableOpacity);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 			// 30/05/2013 ECU this activity will handle the gestures
 			// ---------------------------------------------------------------------
@@ -168,39 +193,73 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 				// 13/02/2014 ECU now display the text
 				// 09/10/2016 ECU changed from .help_text_layout
 				// 11/10/2016 ECU check the layout to be used
+				// 13/07/2020 ECU check for an initial 'html' tag
 				// -----------------------------------------------------------------
-				if (textLayout == StaticData.NO_RESULT)
-					setContentView (R.layout.help_text_layout);
-				else
-					setContentView (textLayout);
-				// -----------------------------------------------------------------
-				// 13/02/2014 ECU get text view
-				// -----------------------------------------------------------------
-				textView = (TextView) findViewById (R.id.help_textview);
-				// -----------------------------------------------------------------
-				// 01/04/2016 ECU decide whether the text is of HTML format or not
-				//                - files requiring HTML must start with the HTML_INTRODUCER
-				// ------------------------------------------------------------------
-				if (displayText.startsWith (StaticData.HTML_INTRODUCER))
+				if (!displayText.startsWith (StaticData.HTML_TAG))
 				{
 					// -------------------------------------------------------------
-					// 01/04/2016 ECU the file is has HTML commands
+					if (textLayout == StaticData.NO_RESULT)
+						setContentView (R.layout.help_text_layout);
+					else
+						setContentView (textLayout);
 					// -------------------------------------------------------------
-					textView.setText (Html.fromHtml (displayText));
+					// 13/02/2014 ECU get text view
+					// -------------------------------------------------------------
+					textView = (TextView) findViewById (R.id.help_textview);
+					// -------------------------------------------------------------
+					// 01/04/2016 ECU decide whether the text is of HTML format or not
+					//                - files requiring HTML must start with the
+					//                HTML_INTRODUCER
+					// -------------------------------------------------------------
+					if (displayText.startsWith (StaticData.HTML_INTRODUCER))
+					{
+						// ---------------------------------------------------------
+						// 01/04/2016 ECU the file is has HTML commands
+						// ---------------------------------------------------------
+						textView.setText (Html.fromHtml (displayText));
+						// ---------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 01/04/2016 ECU just normal text
+						// ---------------------------------------------------------
+						textView.setText (displayText);
+						// ----------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					// 30/05/2013 ECU this activity will handle the gestures
+					// -------------------------------------------------------------
+					gestureScanner = new GestureDetector(this,this);
 					// -------------------------------------------------------------
 				}
 				else
 				{
 					// -------------------------------------------------------------
-					// 01/04/2016 ECU just normal text
+					// 13/07/2020 ECU set the appropriate layout
 					// -------------------------------------------------------------
-					textView.setText (displayText);
-					// --------------------------------------------------------------
+					setContentView (R.layout.help_html_layout);
+					// -------------------------------------------------------------
+					// 13/07/2020 ECU display the supplied HTML text
+					// -------------------------------------------------------------
+					// 15/09/2020 ECU when compiling and setting the version to >=
+					//                Oreo then the following statement
+					//
+					//                  ((WebView) findViewById (R.id.web_view)).loadData (displayText,StaticData.HTML_MIME_TYPE, StaticData.HTML_ENCODING);
+					//
+					//				  stopped displaying the content - so changed to
+					//                'base 64' encoding
+
+					// -------------------------------------------------------------
+					((WebView) findViewById (R.id.web_view)).loadData (Base64.encodeToString (displayText.getBytes(),Base64.DEFAULT),
+								StaticData.HTML_MIME_TYPE,StaticData.HTML_ENCODING_BASE64);
+					// -------------------------------------------------------------
+					// 13/07/2020 ECU this activity will handle the gestures
+					// -------------------------------------------------------------
+					gestureScanner = new GestureDetector(this,this);
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
-				// 30/05/2013 ECU this activity will handle the gestures
-				// -----------------------------------------------------------------
-				gestureScanner = new GestureDetector(this,this);
 			}
 			// ---------------------------------------------------------------------
 			// 11/09/2013 ECU check if need to wait before terminating this activity
@@ -213,6 +272,7 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 				// 30/05/2013 ECU wait a bit before exiting
 				// -----------------------------------------------------------------
 				waitABitThenFinish (waitTime);
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -222,6 +282,7 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 				// 22/09/2013 ECU add the parameters to centre and show for a short time
 				// -----------------------------------------------------------------
 				Utilities.popToast (getString (R.string.touch_to_clear_help),true,Toast.LENGTH_SHORT);
+				// -----------------------------------------------------------------
 			}
 		}
 		else
@@ -243,7 +304,19 @@ public class DisplayDrawableActivity extends Activity implements OnGestureListen
 	/* ============================================================================ */
 	@Override
     public void onDestroy()
-    {	
+    {
+    	// ------------------------------------------------------------------------
+    	// 12/10/2020 ECU check if need to indicate that the action has been completed
+    	// ------------------------------------------------------------------------
+    	if (finishAction)
+		{
+			// --------------------------------------------------------------------
+			// 12/10/2020 ECU call the method to indicate 'action processed'
+			// --------------------------------------------------------------------
+			Utilities.actionIsFinished ();
+			// --------------------------------------------------------------------
+		}
+		// ------------------------------------------------------------------------
         super.onDestroy();
     }
 	/* ============================================================================ */

@@ -42,32 +42,32 @@ public class ExplosionView extends View
     }
     // =============================================================================
     @Override
-    public void draw (Canvas canvas) 
-    {
-    	// -------------------------------------------------------------------------
-    	boolean refresh = false;
-    	
-    	
-    	xPointer += 2;
-        if (xPointer < originalBitmap.getWidth() / 2)
-        { 
-        	refresh = true;
-        	for (int y = 0; y < originalBitmap.getHeight(); y += 2)
-        	{
-            	originalBitmap.setPixel (xPointer,y,0);
-            	originalBitmap.setPixel (originalBitmap.getWidth() - xPointer -1, y, 0);
-        	}
+    public void draw (Canvas canvas)
+     {
+        // -------------------------------------------------------------------------
+        // 03/07/2020 ECU added the 'super' call
+        // -------------------------------------------------------------------------
+        super.draw (canvas);
+        // -------------------------------------------------------------------------
+        boolean refresh = false;
+        // -------------------------------------------------------------------------
+        xPointer += 2;
+        if (xPointer < originalBitmap.getWidth() / 2) {
+            refresh = true;
+            for (int y = 0; y < originalBitmap.getHeight(); y += 2) {
+                originalBitmap.setPixel(xPointer, y, 0);
+                originalBitmap.setPixel(originalBitmap.getWidth() - xPointer - 1, y, 0);
+            }
         }
         // ------------------------------------------------------------------------------
         if (refresh)
         {
-        	
-        	// -------------------------------------------------------------------------
-        	postInvalidate ();
-        	// -------------------------------------------------------------------------
-        	canvas.save();
-        	canvas.drawBitmap(originalBitmap,0,0,null);
-        	canvas.restore();
+            // -------------------------------------------------------------------------
+            postInvalidate();
+            // -------------------------------------------------------------------------
+            canvas.save();
+            canvas.drawBitmap(originalBitmap, 0, 0, null);
+            canvas.restore();
         }
         // =========================================================================
     }

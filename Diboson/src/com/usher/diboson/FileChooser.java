@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-
+import android.content.Context;
 import android.os.Bundle;
 import android.app.ListActivity;
 import android.content.Intent;
@@ -32,6 +32,9 @@ public class FileChooser extends ListActivity
 	// 18/12/2015 ECU general tidy up
 	// 23/05/2017 ECU changed to allow multiple extensions to be specified in the
 	//                extensions
+	// 06/01/2020 ECU changed MENU_READ_FILE to .._PROCESS_..
+	//            ECU provide the option, via the PARAMETER_MENU, to either display,
+	//                or not, the menu option
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -40,17 +43,19 @@ public class FileChooser extends ListActivity
 	//private static final String TAG					  = "FileChooser";
 	/* ============================================================================= */
 	private static final int MENU_DISPLAY_IMAGE     = 1;
-	private static final int MENU_READ_FILE		    = 2;	// 31/10/2015 ECU added
+	private static final int MENU_PROCESS_FILE		= 2;	// 31/10/2015 ECU added
 	/* ============================================================================= */
 
 	/* ============================================================================= */
 	private FileArrayAdapter 	adapter;
+	private Context				context;							// 08/01/2020 ECU added
 	private File			 	currentDir;
 	private	boolean	 			displayImage 		= false;		// 01/01/2014 ECU added
 	private String []		 	extensionWanted 	= null;			// 23/05/2017 ECU changed from String
 	private String			 	folder;
 	private boolean			 	immediateResponse 	= false;		// 17/03/2015 ECU added
-	private boolean   		 	readTheFile 		= false;		// 31/10/2015 ECU added
+	private boolean   		 	processTheFile 		= false;		// 31/10/2015 ECU added
+	private boolean   		 	processMenu 		= false;		// 06/01/2020 ECU added
 	private	Method				selectMethod		= null;			// 17/12/2015 ECU added
 	/* ============================================================================= */
 	@Override
@@ -63,6 +68,10 @@ public class FileChooser extends ListActivity
 		{
 			// ---------------------------------------------------------------------
 			// 29/10/2015 ECU the activity has been created anew
+			// ---------------------------------------------------------------------
+			// 08/01/2020 ECU save the context for future use
+			// ---------------------------------------------------------------------
+			context = this;
 			// ---------------------------------------------------------------------
 			// 06/12/2013 ECU default the root directory to the project's folder
 			// ---------------------------------------------------------------------
@@ -136,6 +145,10 @@ public class FileChooser extends ListActivity
  	   			//------------------------------------------------------------------
  	   			displayImage = extras.getBoolean (StaticData.PARAMETER_DISPLAY,false);
  	   			// -----------------------------------------------------------------
+ 	   			// 06/01/2020 ECU check if the menus are to be displayed
+ 	   			// -----------------------------------------------------------------
+ 	   			processMenu  = extras.getBoolean (StaticData.PARAMETER_MENU,false);
+ 	   			// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 09/12/2013 ECU now build the screen started at the specified folder
@@ -162,11 +175,16 @@ public class FileChooser extends ListActivity
 		// -------------------------------------------------------------------------
 		// 01/01/2014 ECU added
 		//            ECU change the legend displayed
+		// 06/01/2020 ECU changed legend from read to process
+		//            ECU check if options are to be shown
 		// -------------------------------------------------------------------------
-		menu.add (0,MENU_DISPLAY_IMAGE,0,displayImage ? R.string.menu_display_icon 
-													  : R.string.menu_display_image);
-		menu.add (0,MENU_READ_FILE,0,readTheFile      ? R.string.menu_read_file_off 
-													  : R.string.menu_read_file_on);
+		if (processMenu)
+		{
+			menu.add (0,MENU_DISPLAY_IMAGE,0,displayImage ? R.string.menu_display_icon
+													      : R.string.menu_display_image);
+			menu.add (0,MENU_PROCESS_FILE,0,processTheFile   ? R.string.menu_process_file_off
+													         : R.string.menu_process_file_on);
+		}
 		// -------------------------------------------------------------------------
 		return true;
 	}
@@ -182,6 +200,7 @@ public class FileChooser extends ListActivity
 		selectMethod = null;
 		// -------------------------------------------------------------------------
 		super.onDestroy();
+		// -------------------------------------------------------------------------
 	}
     /* ============================================================================= */ 
     @Override
@@ -220,7 +239,7 @@ public class FileChooser extends ListActivity
 			// ---------------------------------------------------------------------
 		}
 	}
-    /* ============================================================================= */
+	// =============================================================================
     public boolean onOptionsItemSelected (MenuItem item)
 	{
     	// -------------------------------------------------------------------------
@@ -241,11 +260,12 @@ public class FileChooser extends ListActivity
 				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
-			case MENU_READ_FILE:
+			case MENU_PROCESS_FILE:
 				// -----------------------------------------------------------------
 				// 31/10/2015 ECU toggle the 'read file' flag
+				// 06/01/2020 ECU changed to process from read
 				// -----------------------------------------------------------------
-				readTheFile = !readTheFile;
+				processTheFile = !processTheFile;
 				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
@@ -261,9 +281,13 @@ public class FileChooser extends ListActivity
 		// -------------------------------------------------------------------------
 		menu.clear ();
 		// -------------------------------------------------------------------------	
-		// 01/01/2014 ECU used the method to build menu
-		// -------------------------------------------------------------------------	
-		onCreateOptionsMenu (menu);
+		// 01/01/2014 ECU use the method to build menu
+		// 06/01/2020 ECU check if the options are to be displayed
+		// -------------------------------------------------------------------------
+		if (processMenu)
+		{
+			onCreateOptionsMenu (menu);
+		}
 		// -------------------------------------------------------------------------	
 		return true;
 	}
@@ -312,6 +336,80 @@ public class FileChooser extends ListActivity
 		}
 		// --------------------------------------------------------------------------
 	};
+	// =============================================================================
+	private void actionTheFile (Context theContext, String theFileName)
+	{
+		// -------------------------------------------------------------------------
+		// 08/01/2020 ECU created to action the specified file
+		// -------------------------------------------------------------------------
+		// 31/10/2015 ECU try and speak the selected file - only allow files
+		//                with EXTENSION_TEXT)
+		// -------------------------------------------------------------------------
+		if (theFileName.toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_TEXT))
+		{
+			// ---------------------------------------------------------------------
+			// 31/10/2015 ECU speak out the contents and indicate that want
+			//                to use the TTS service (the 'true' flag) if
+			//                it is running
+			// ---------------------------------------------------------------------
+			Utilities.readAFile (theFileName,null,true);
+			// ---------------------------------------------------------------------
+		}
+		else
+		// -------------------------------------------------------------------------
+		// 06/01/2020 ECU if the selected file is a 'video' then play it
+		// -------------------------------------------------------------------------
+		if (theFileName.toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_VIDEO))
+		{
+			//----------------------------------------------------------------------
+			// 06/01/2020 ECU if a video then play it
+			// ---------------------------------------------------------------------
+			Intent localIntent = new Intent (theContext,VideoViewer.class);
+			localIntent.putExtra (StaticData.PARAMETER_FILE_NAME,theFileName);
+			localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
+			theContext.startActivity (localIntent);
+			// ---------------------------------------------------------------------
+		}
+		else
+		// -------------------------------------------------------------------------
+		// 06/01/2020 ECU if the selected file is a 'music' then play it
+		// 08/01/2020 ECU added the AUDIO type
+		// -------------------------------------------------------------------------
+		if ((theFileName.toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_MUSIC)) ||
+			(theFileName.toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_AUDIO)))
+		{
+			//----------------------------------------------------------------------
+			// 06/01/2020 ECU if a music file then play it
+			// ---------------------------------------------------------------------
+			Utilities.PlayAFile (theContext,theFileName);
+			// ---------------------------------------------------------------------
+		}
+		else
+		// -------------------------------------------------------------------------
+		// 07/01/2020 ECU if the selected file is a 'pdf document' then
+		//                display it
+		// -------------------------------------------------------------------------
+		if (theFileName.toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_DOCUMENT))
+		{
+			//----------------------------------------------------------------------
+			// 07/01/2020 ECU if a document file then display it
+			// ---------------------------------------------------------------------
+			Utilities.displayDocument (theContext,theFileName);
+			// ---------------------------------------------------------------------
+		}
+		else
+		// -------------------------------------------------------------------------
+		// 07/01/2020 ECU Note - have clicked on a file which does not have
+		//                       an extension that was processed above
+		// -------------------------------------------------------------------------
+		{
+			// ---------------------------------------------------------------------
+			// 06/01/2020 ECU changed to use the resource
+			// ---------------------------------------------------------------------
+			Utilities.popToast (getString (R.string.file_cannot_be_processed),true);
+			// ---------------------------------------------------------------------
+		}
+	}
     // =============================================================================
     private void handleFileClick (FileOptions fileOptions)
     {
@@ -337,30 +435,20 @@ public class FileChooser extends ListActivity
     		}
     		else
     		{
+    		    // -----------------------------------------------------------------
     			Utilities.popToast ("File Selected\n" + fileOptions.Print(),true);
     			// -----------------------------------------------------------------
     			// 31/10/2015 ECU check if the contents of the file is to be spoken
+    			// 06/01/2020 ECU changed to process from read
     			// -----------------------------------------------------------------
-    			if (readTheFile)
+    			if (processTheFile)
     			{
     				// -------------------------------------------------------------
-    				// 31/10/2015 ECU try and speak the selected file - only allow files
-    				//                with EXTENSION_TEXT)
+    				// 08/01/2020 ECU changed to use the new method to process the
+    				//                selected file
     				// -------------------------------------------------------------
-    				if (fileOptions.getFullFileName().toLowerCase(Locale.getDefault()).endsWith (StaticData.EXTENSION_TEXT))
-    				{
-    					// ---------------------------------------------------------
-    					// 31/10/2015 ECU speak out the contents and indicate that want
-    					//                to use the TTS service (the 'true' flag) if
-    					//                it is running
-    					// ---------------------------------------------------------
-    					Utilities.readAFile (fileOptions.getFullFileName(),null,true);
-    					// ---------------------------------------------------------
-    				}
-    				else
-    				{
-    					Utilities.popToast ("The selected file does not have a '" + StaticData.EXTENSION_TEXT + "' extension so cannot read it",true);
-    				}
+    				actionTheFile (context,fileOptions.getFullFileName());
+    				// -------------------------------------------------------------
     			}
     			// -----------------------------------------------------------------
     		}
@@ -466,6 +554,7 @@ public class FileChooser extends ListActivity
     					// 05/12/2013 ECU file name is of directory so add to that list
     					// ---------------------------------------------------------
     					directories.add (new FileOptions(fileIndex));
+    					// ---------------------------------------------------------
     				}
     				else
     				{
@@ -514,14 +603,38 @@ public class FileChooser extends ListActivity
     		//                introduction
         	// ---------------------------------------------------------------------
         	this.setTitle (theFileName.getPath());
+        	// ---------------------------------------------------------------------
+        	// 08/01/2020 ECU added process menu
+        	//            ECU changed to pass through 'context' with the method
+        	//                creation
     		// ---------------------------------------------------------------------
-    		adapter = new FileArrayAdapter (FileChooser.this,null,R.layout.file_list_view,directories,displayImage);
+    		adapter = new FileArrayAdapter (FileChooser.this,
+    										null,
+    										R.layout.file_list_view,directories,displayImage,
+    										processMenu ? Utilities.createAMethod (FileChooser.class,"ActionMethod",context,StaticData.BLANK_STRING)
+    										            : null);
     		// ---------------------------------------------------------------------
     		// 09/12/2013 ECU display the files via the adapter
     		// ---------------------------------------------------------------------
     		this.setListAdapter (adapter);
+    		// ---------------------------------------------------------------------
     	}
     	// -------------------------------------------------------------------------
     }
+    // =============================================================================
+
+    // =============================================================================
+    public void ActionMethod (Context theContext,String theFileName)
+	{
+		// -------------------------------------------------------------------------
+		// 08/01/2020 ECU action the file - NOT happy to use MainActivity.....
+		//                need to investigate
+		//            ECU resolved the issue above by including 'context' with
+		//                the createMethod used when creating the FileArrayAdapter
+		//                and adding this as the first argument to this method
+		// -------------------------------------------------------------------------
+		actionTheFile (theContext,theFileName);
+		// -------------------------------------------------------------------------
+	}
     // =============================================================================
 }

@@ -1,13 +1,14 @@
 package com.usher.diboson;
 
-import com.usher.diboson.util.SystemUiHider;
 import android.annotation.TargetApi;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.View;
 import android.widget.TextView;
+import com.usher.diboson.util.SystemUiHider;
 
 public class ExerciseActivity extends DibosonActivity 
 {
@@ -31,7 +32,7 @@ public class ExerciseActivity extends DibosonActivity
 	@Override
 	protected void onCreate (Bundle savedInstanceState) 
 	{
-		super.onCreate(savedInstanceState);
+		super.onCreate (savedInstanceState);
 		// -------------------------------------------------------------------------
 		if (savedInstanceState == null)
 		{
@@ -39,14 +40,23 @@ public class ExerciseActivity extends DibosonActivity
 			// 29/10/2015 ECU the activity has been created anew
 			// ---------------------------------------------------------------------
 			// 08/04/2014 ECU changed to use the variable
+			// 03/01/2020 ECU changed to use the new method. This was because with
+			//                the introduction of the setting to show/hide the
+			//                navigation bar then if 'show' then the animation did
+			//                not seem to work
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
-			
-			setContentView(R.layout.activity_exercise);
-		
-			controlsView = findViewById(R.id.fullscreen_content_controls);
-			contentView  = (TextView)findViewById(R.id.fullscreen_content);
-		
+			Utilities.SetUpActivity (ActivityInfo.SCREEN_ORIENTATION_PORTRAIT,
+									 this,
+					                 StaticData.ACTIVITY_FULL_SCREEN,
+									!StaticData.ACTIVITY_SCREEN_ON,
+									!StaticData.TITLE_BAR_SHOW,
+									!StaticData.NAVIGATION_BAR_SHOW);
+			// ---------------------------------.------------------------------------
+			setContentView (R.layout.activity_exercise);
+			// ---------------------------------------------------------------------
+			controlsView = findViewById (R.id.fullscreen_content_controls);
+			contentView  = (TextView)findViewById (R.id.fullscreen_content);
+			// ---------------------------------------------------------------------
 			contentView.setText (StaticData.BLANK_STRING);
 			// ---------------------------------------------------------------------
 			// 21/03/2014 ECU set up the listeners for the buttons
@@ -58,7 +68,7 @@ public class ExerciseActivity extends DibosonActivity
 			//                be controlled - this is based on 'contentView'
 			// ---------------------------------------------------------------------
 			systemUiHider = SystemUiHider.getInstance (this,contentView,HIDER_FLAGS);
-			systemUiHider.setup();
+			systemUiHider.setup ();
 			// ---------------------------------------------------------------------
 			systemUiHider.setOnVisibilityChangeListener (new SystemUiHider.OnVisibilityChangeListener() 
 			{
@@ -71,20 +81,20 @@ public class ExerciseActivity extends DibosonActivity
 				public void onVisibilityChange (boolean visible) 
 				{
 					// -------------------------------------------------------------
-					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) 
+					if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2)
 					{
 						// ---------------------------------------------------------
 						// 21/03/2014 ECU at this API level then an animator can be used
 						// ---------------------------------------------------------
 						if (controlsHeight == 0) 
-							controlsHeight = controlsView.getHeight();
+							controlsHeight = controlsView.getHeight ();
 					
 						if (shortAnimationTime == 0) 
-							shortAnimationTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+							shortAnimationTime = getResources().getInteger (android.R.integer.config_shortAnimTime);
 						// ---------------------------------------------------------
 						// 21/03/2014 ECU set up the required animation
 						// ---------------------------------------------------------
-						controlsView.animate().translationY (visible ? 0 : controlsHeight).setDuration(shortAnimationTime);
+						controlsView.animate().translationY (visible ? 0 : controlsHeight).setDuration (shortAnimationTime);
 						// ---------------------------------------------------------
 					} 
 					else 
@@ -107,11 +117,11 @@ public class ExerciseActivity extends DibosonActivity
 						//                set up the timer to hide them
 						// ---------------------------------------------------------
 						delayedHide(AUTO_HIDE_DELAY_MILLIS);
-						
 						// ---------------------------------------------------------
 						// 21/03/2014 ECU remove the text with a bit of animation
 						// ---------------------------------------------------------
 						Utilities.AnimateATextView (contentView,StaticData.BLANK_STRING,FADE_TIME,false);
+						// ---------------------------------------------------------
 					}
 				}
 			});

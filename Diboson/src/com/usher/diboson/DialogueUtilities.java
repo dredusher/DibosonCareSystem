@@ -1,9 +1,10 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import android.content.Context;
 import android.media.MediaPlayer;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
 
 public class DialogueUtilities
 {
@@ -333,13 +334,15 @@ public class DialogueUtilities
 			// ---------------------------------------------------------------------
 		}
 	// =============================================================================
-	static void multipleChoice (Context theContext,
+	public static void multipleChoice (Context theContext,
 				                String theTitle,
 				                String [] theOptions,
 				                final boolean [] theInitialOptions,
 				                final Method theConfirmMethod,
 				                final Method theCancelMethod)
 	{
+		// -------------------------------------------------------------------------
+		// 25/07/2020 ECU made public
 		// -------------------------------------------------------------------------
 		DialogueUtilitiesNonStatic.multipleChoice (theContext,
 												   StaticData.STATIC_METHOD,
@@ -439,16 +442,17 @@ public class DialogueUtilities
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void singleChoice (Context 	theContext,
-			  				  String 	theTitle,
-			  				  String [] theOptions,
-			  				  int 		theInitialOption,
-			  				  final Method theConfirmMethod,
-			  				  final Method theCancelMethod)
+	public static void singleChoice (Context 	theContext,
+			  				  		 String 	theTitle,
+			  				  		 String [] theOptions,
+			  				  		 int 		theInitialOption,
+			  				  		 final Method theConfirmMethod,
+			  				  		 final Method theCancelMethod)
 	{
 		// -------------------------------------------------------------------------
 		// 15/06/2016 ECU created to call the main method with no changes to the
 		//                legends on the button
+		// 24/07/2020 ECU made public
 		// -------------------------------------------------------------------------
 		singleChoice (theContext,
 				      theTitle,

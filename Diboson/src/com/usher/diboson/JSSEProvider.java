@@ -13,6 +13,7 @@ public final class JSSEProvider extends Provider
 	// -----------------------------------------------------------------------------
 	public JSSEProvider() 
     {
+        // -------------------------------------------------------------------------
         super("HarmonyJSSE", 1.0, "Harmony JSSE Provider");
         AccessController.doPrivileged(new java.security.PrivilegedAction<Void>() 
         {
@@ -28,6 +29,7 @@ public final class JSSEProvider extends Provider
                 return null;
             }
         });
+        // -------------------------------------------------------------------------
     }
 	// -----------------------------------------------------------------------------
 }

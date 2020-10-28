@@ -1,13 +1,5 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
@@ -17,6 +9,10 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.text.InputType;
 import android.util.TypedValue;
 import android.view.GestureDetector;
@@ -41,7 +37,38 @@ import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
- 
+
+import com.usher.diboson.utilities.UncaughtExceptionUtilities;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+
+/**
+ * This class is the main interface between the Diboson Care System and the user.
+ * <p>
+ * It provides a list of tasks that the user can perform - presented in either a
+ * 'grid' of 'list' form which is selectable from the settings task.
+ * <p>
+ * The interface is defined in the 'GridImages' list.
+ *
+ * @author Ed Usher
+ *
+ *
+ */
+// ==================================================================================
+// ==================================================================================
+// 17/09/2020 ECU I M P O R T A N T  I N T R O D U C T I O N
+//                ===========================================
+//                This activity provides the main interface between the user and
+//                the activities that provide the required facilities. It was one of
+//                the first activities to be developed and as such has 'grown like
+//                topsy' so that the coding is not to a high logical standard.
+//                Attemts will be made to rectify this situation - be patient !!
+// ==================================================================================
+// ==================================================================================
+
+// ==================================================================================
 // ==================================================================================
 // 02/06/2013 ECU ***** BE CAREFUL *****
 // =====================================
@@ -152,25 +179,37 @@ import android.widget.Toast;
 //                like torch to force the displayed to be updated correctly.
 // 02/04/2019 ECU added 'devices'
 // 13/06/2019 ECU added 'RevCounterActivity'
+// 06/12/2019 ECU just add some comments about the interaction with the MonitorService
+//                - to do with onPause and onResume
+// 27/12/2019 ECU added the activation of the BatterySavingActivity by long pressing
+//                the 'test' entry
+// 29/01/2020 ECU make the BatterySavingActivity a separate entry
+// 05/03/2020 ECU added 'ArithmeticActivity'
+// 30/03/2020 ECU DisplayUserView - sort out a problem whereby if the display is being
+//                sorted by usage then the 'notification button' was not being
+//                displayed. This was because 'onResume' is causing a refresh of
+//                the display and this was removing the button. Added
+//				  MESSAGE_NOTIFICATION_REFRESH to sort this out.
+// 22/04/2020 ECU changed from 'Activity' to 'DibosonActivity' so that can monitor it's
+//                life-cycle
+// 25/07/2020 ECU removed 'actionActivity' and all associated code and it's setting via
+//                PARAMETER_INTENT in the extras
+//            ECU remove 'groupActivities' and all associated code and it's setting via
+//                PARAMETER_GROUP
+// 01/09/2020 ECU 'barcode' handling - swap around the 'click' and 'long click'
+//                handling
+// 17/09/2020 ECU do some general tidying up - especially to do with changing
+//                StartTheActivity to StartTheSpecificActivity - see comments
+//                further on
 // ==================================================================================
-public class GridActivity extends Activity implements SensorEventListener,OnGestureListener
+// ==================================================================================
+public class GridActivity extends DibosonActivity implements SensorEventListener,OnGestureListener
 {
-	/* ============================================================================= */
-	// Revision History
-	// ================
-	// 09/06/2013 ECU added the call to the mail app
-	// 29/09/2014 ECU changed every occurrence of 'myIntent' to
-	//                be 'localIntent'
-	/* ============================================================================= */
+	// =============================================================================
 	final static String TAG = "GridActivity";
-	/* ============================================================================= */
-	final static int    	BACK_KEY_COUNTER	= 5;		// 20/02/2014 ECU number of times the 'back' key must
-															//                be pressed before the activity is
-															//                exited
-	final static int    	COLUMNS_DEFAULT		= 2;		// 16/02/2014 ECU added
-	final static int    	DOSE_REQUEST_CODE	= 667;		// 25/03/2014 ECU added
-	final static int    	FILE_REQUEST_CODE   = 666;		// 06/12/2013 ECU added
-	/* ============================================================================= */
+	// =============================================================================
+
+	// =============================================================================
 	// 18/01/2015 ECU declare the indices into the activeImages 2d array
 	// -----------------------------------------------------------------------------
 	public final static int IMAGE_INDEX			= 0;		// 18/01/2015 ECU added
@@ -199,8 +238,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	// =============================================================================
 		   static Context	context;					// 03/03/2016 ECU added
 	/* ============================================================================= */
-	boolean					actionActivity	= true;		// 28/11/2014 ECU added
-	int						backKeyCounter  = BACK_KEY_COUNTER;	
+	int						backKeyCounter  = StaticData.BACK_KEY_COUNTER;
 														// 20/02/2014 ECU added - running counter of
 														//                back key counter
 														// 06/02/2014 ECU made public
@@ -213,12 +251,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	boolean					activityStarted = false;	// 30/11/2014 ECU added
 	boolean					beenPaused = false;			// 20/11/2014 ECU added
 	int						clickCounter = 0;			// 25/01/2016 ECU added
+	CustomGridViewAdapter	customGridViewAdapter;		// 17/09/2020 ECU returned here from PublicData
+	// 10/02/2014 ECU move here from GridActivity
 	boolean					enableMonitor = false;		// 30/11/2014 ECU added
 	GestureDetector 		gestureDetector;			// 09/11/2014 ECU added
 	boolean					gridType = PublicData.gridType;
 														// 11/10/2014 ECU remember the grid type
 	GridView 				gridView;
-	boolean					groupActivities = false;	// 06/10/2016 ECU added
 	RelativeLayout			groupLayout;				// 18/10/2016 ECU added
 	ImageButton				groupNextButton;			// 19/10/2016 ECU added
 	ImageButton				groupPreviousButton;		// 19/10/2016 ECU added
@@ -228,6 +267,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 														// 26/01/2014 ECU made public
 	boolean					ignoreUserActions = false;	// 17/08/2018 ECU added to indicate when to action or not
 														//                action user actions
+	ImageAdapter 	  		imageAdapter;				// 17/09/2020 ECU returned here from PublicData
 	int						lastPosition = StaticData.NO_RESULT;
 														// 25/01/2016 ECU remember the last position clicked
 	Sensor 		   			lightSensor; 				// 17/02/2014 ECU moved here from MainActivity
@@ -286,6 +326,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	//                          is held on disk is to retain the usage.
 	//            ECU Changed the logic so that the usage for each element is stored
 	//                in an array which will be stored to disk.
+	// 01/01/2020 ECU added the 'app selector' like a 'launcher'
+	// 29/01/2020 ECU added the battery saving app as a separate entry
 	// -----------------------------------------------------------------------------
 	// NOTES about the following 'gridImages' array
 	// ===== 
@@ -347,7 +389,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 								new GridImages<Object> 			(R.drawable.falling,			R.string.legend_fall_detector,				true),
 								new GridImages<Object> 			(R.drawable.photoalbum,			R.string.legend_family_album,				true),
 								new GridImages<Object> 			(R.drawable.files,				R.string.legend_file_explorer,				false),	
-								new GridImages<Object> 			(R.drawable.groups,				R.string.legend_group_activities,			false),
+								new GridImages<Object> 			(R.drawable.groups,				R.string.legend_group_activities,			true),
 								new GridImages<Object> 			(R.drawable.hospital,			R.string.legend_hospital_appointments,		true,	true,	R.string.legend_hospital_appointments_long),
 								new GridImages<LiquidActivity> 	(R.drawable.liquid,   			R.string.legend_liquid_selection,			true,	false, 	LiquidActivity.class, "validation"),
 								new GridImages<Object> 			(R.drawable.mail,				R.string.legend_mail_system,				true,   true,	R.string.legend_mail_system_long),
@@ -362,25 +404,28 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 								new GridImages<Object> 			(R.drawable.rev_counter,		R.string.legend_rev_counter,				false),	
 								new GridImages<Object>			(R.drawable.screen_capture,		R.string.legend_screen_capture,				true),
 								new GridImages<Object>			(R.drawable.shopping,   		R.string.legend_shopping,					true,	true,	R.string.legend_shopping_long),
-								new GridImages<Object> 			(R.drawable.microphone,			R.string.legend_sound_recorder,				true),
+								new GridImages<Object> 			(R.drawable.microphone,			R.string.legend_sound_recorder,				true,true,R.string.legend_sound_recorder_long),
 								new GridImages<Object> 			(R.drawable.speaking_clock,   	R.string.legend_speaking_clock,				true,	true,	R.string.legend_speaking_clock_long),
 								new GridImages<Object> 			(R.drawable.dialogue,			R.string.legend_start_a_dialogue,			true),
 								new GridImages<Object> 			(R.drawable.swipe,   			R.string.legend_swipe_tests,				false),	
 								new GridImages<Object> 			(R.drawable.system_information,	R.string.legend_system_details,		   		false,	true,	R.string.legend_system_details_long),
 								new GridImages<Object> 			(R.drawable.settings,			R.string.legend_system_settings,			true),	
-								new GridImages<Object> 			(R.drawable.tcp,				R.string.legend_tcp_utilities,				false),	
-								new GridImages<Object> 			(R.drawable.test,				R.string.legend_test_facilities,			false),	
+								new GridImages<Object> 			(R.drawable.tcp,				R.string.legend_tcp_utilities,				false),
+								new GridImages<Object> 			(R.drawable.test,				R.string.legend_test_facilities,			false,	true,	R.string.legend_test_facilities_long),
 								new GridImages<Object> 			(R.drawable.theft,				R.string.legend_theft_protection,			true,	true,	R.string.legend_theft_protection_long),
 								new GridImages<Object> 			(R.drawable.timer,				R.string.legend_timers,						true,	true,	R.string.legend_timers_long),
 								new GridImages<Object>			(R.drawable.tone_generator,		R.string.legend_tone_generator,				false,	true,	R.string.legend_tone_generator_long),
 								new GridImages<Validation> 		(R.drawable.torch,				R.string.legend_torch,						true,	true,	R.string.legend_torch_long, Validation.class, "torchValidation"),
-								new GridImages<Object> 			(R.drawable.location,			R.string.legend_tracking_facility,			true),
+								new GridImages<Object> 			(R.drawable.location,			R.string.legend_tracking_facility,			true,	true,	R.string.legend_tracking_facility_long),
 								new GridImages<Object>			(R.drawable.tv_guide,			R.string.legend_tv_program_guide,			true,	true,	R.string.legend_tv_program_guide_long),
 								new GridImages<Object> 			(R.drawable.upnp,				R.string.legend_upnp_wemo,					true,	true,	R.string.legend_upnp_wemo_long),
 								new GridImages<Object> 			(R.drawable.video,				R.string.legend_video_recorder,				true,	StaticData.VIDEO_STREAMING,	R.string.legend_video_recorder_long),
 								new GridImages<Object> 			(R.drawable.gameone,			R.string.legend_visual_game,				true),
 								new GridImages<Object> 			(R.drawable.voice_recognition,	R.string.legend_voice_commands,				true,	true,	R.string.legend_voice_commands_long),
-								new GridImages<WeMoActivity>	(R.drawable.wemo,   		 	R.string.legend_wemo_tasks,					true,	true,	R.string.legend_wemo_tasks_long, WeMoActivity.class, "validation")	
+								new GridImages<WeMoActivity>	(R.drawable.wemo,   		 	R.string.legend_wemo_tasks,					true,	true,	R.string.legend_wemo_tasks_long, WeMoActivity.class, "validation"),
+								new GridImages<Object> 			(R.drawable.app_selector,		R.string.legend_app_selector,				false),
+								new GridImages<Object> 			(R.drawable.battery,			R.string.legend_battery,					false),
+								new GridImages<Object> 			(R.drawable.arithmetic,			R.string.legend_arithmetic,					false)
 						};
 	// =============================================================================
 	// 16/01/2015 ECU changed to public static
@@ -388,7 +433,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	public static ArrayList<GridItem> gridItems = new ArrayList<GridItem>();
 	// =============================================================================
 	public static GridImages <?> [] gridImages; 
-	/* ============================================================================= */
+	// =============================================================================
 	@Override
 	protected void onCreate (Bundle savedInstanceState) 
 	{
@@ -419,15 +464,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			underlyingObject = this;
 			// ---------------------------------------------------------------------
+			// 04/01/2020 ECU Note - check whether any parameters have been passed
+			//                       through to this activity in the intent
+			// ----------------------------------------------------------------------
 			Bundle extras = getIntent().getExtras();
-			if (extras != null) 
-			{
-				// -----------------------------------------------------------------
-				// 06/10/2016 ECU check for grouping of activities
-				// -----------------------------------------------------------------
-				groupActivities = extras.getBoolean (StaticData.PARAMETER_GROUP,false);
-				// -----------------------------------------------------------------
-			}
 			// ---------------------------------------------------------------------
 			// 01/01/2019 ECU before copying the original grid images then set the
 			//                usages
@@ -442,16 +482,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			//                is to be reset
 			// 08/10/2016 ECU check on grouping
 			// 09/10/2016 ECU add the null check on lists
+			// 25/07/2020 ECU remove check on 'groupActivities'
 			// ---------------------------------------------------------------------
-			if (!PublicData.storedData.groupActivities || groupActivities || PublicData.storedData.groupLists == null)
+			if (!PublicData.storedData.groupActivities || PublicData.storedData.groupLists == null)
 			{
 				// -----------------------------------------------------------------
 				// 28/12/2018 ECU now decide how whether the images need sorting
 				// -----------------------------------------------------------------
 				// 28/12/2018 ECU first check for sorting by legend
 				//            ECU added the groupActivities check
+				// 25/07/2020 ECU remove check on 'groupActivities'
 				// -----------------------------------------------------------------
-				if (PublicData.storedData.sortByLegend || groupActivities)
+				if (PublicData.storedData.sortByLegend)
 				{
 					SortGridImagesByLegend ();
 				}
@@ -489,10 +531,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			gridRefreshHandler = new GridRefreshHandler ();
 			// ---------------------------------------------------------------------
-			// 10/11/2014 ECU check if any parameter fed through in the Intent
+			// 10/11/2014 ECU check if any other parameters fed through in the Intent
 			// ---------------------------------------------------------------------
 			if (extras != null) 
 			{
+				// -----------------------------------------------------------------
+				// 04/01/2020 ECU Note - check if a particular activity is to be
+				//                       automatically started on creation
+				// -----------------------------------------------------------------
 				positionToAction = extras.getInt(StaticData.PARAMETER_POSITION, StaticData.NO_RESULT);
 				// -----------------------------------------------------------------
 				// 30/12/2014 ECU make sure that the specified command is in range
@@ -511,14 +557,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// 28/11/2014 ECU check if being asked to action or return intent
 				//            ECU this is used by the TimerActivity when trying to
 				//                schedule the starting of a particular activity
+				// 25/07/2020 ECU removed 'actionActivity'
 				// -----------------------------------------------------------------
-				actionActivity = extras.getBoolean (StaticData.PARAMETER_INTENT,true);
+				// 25/07/2020 ECU actionActivity = extras.getBoolean (StaticData.PARAMETER_INTENT,true);
 				// -----------------------------------------------------------------
 				// 23/09/2017 ECU check for the 'sort inhibit' parameter which
 				//                indicates whether the image array is to be sorted 
 				//                or not
 				// -----------------------------------------------------------------
 				sortInhibit = extras.getBoolean (StaticData.PARAMETER_SORT_INHIBIT,false);
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 10/11/2014 ECU check whether the activity is being called with a
@@ -527,7 +575,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			if (positionToAction == StaticData.NO_RESULT)
 			{
 				// -----------------------------------------------------------------
-				// 10/11/2014 ECU activity called without a parameter
+				// 10/11/2014 ECU activity called without a parameter so just allow
+				//                this activity to be the main interface with the user
 				// -----------------------------------------------------------------
  		
 				// -----------------------------------------------------------------
@@ -542,10 +591,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				//                replaced StaticData.ACTIVITY_SCREEN_ON with
 				//                actionActivity
 				// 08/10/2016 ECU add the check on grouping
+				// 25/07/2020 ECU changed to 'true' was 'actionActivity'
 				// -----------------------------------------------------------------
 				if (!PublicData.storedData.groupActivities)
 				{
-					Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN,actionActivity);
+					Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN,true);
 				}
 				else
 				{
@@ -590,8 +640,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// ----------------------------------------------------------------- 
 				if (!StaticData.SENSOR_SERVICE)
 				{
+					// -------------------------------------------------------------
 					sensorManager 	= (SensorManager) getSystemService(SENSOR_SERVICE); 
-					lightSensor 	= sensorManager.getDefaultSensor (Sensor.TYPE_LIGHT); 
+					lightSensor 	= sensorManager.getDefaultSensor (Sensor.TYPE_LIGHT);
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 				// 11/09/2013 ECU put up a message about help options
@@ -600,55 +652,71 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// 09/10/2015 ECU only display the drawable is app started manually
 				// 06/03/2016 ECU changed the '0' wait time in the call to 
 				//                DRAWABLE_WAIT_TIME
+				// 25/07/2020 ECU remove check on 'actionActivity'
 				// -----------------------------------------------------------------
-				if (actionActivity)
+				// 30/04/2020 ECU added the check on whether there is only one
+				//                instance running
+				// -----------------------------------------------------------------
+				if (PublicData.startedManually && Utilities.OneInstanceCheck ())
 				{
-					if (PublicData.startedManually)
+					// -------------------------------------------------------------
+					// 09/08/2016 ECU added the final 'true' to indicate that the
+					//                image should be scaled to fit the screen
+					// 08/10/2016 ECU put in the check on grouping
+					// 17/06/2017 ECU put in the 'panic alarm' check
+					// 08/05/2020 ECU put in the check on 'startedByAlarm'
+					// 25/07/2020 ECU remove check on 'groupActivities'
+					// -------------------------------------------------------------
+					if (!PublicData.storedData.groupActivities &&
+							!PublicData.storedData.startPanicAlarm &&
+							!PublicData.startedByAlarm)
 					{
-						// ---------------------------------------------------------
-						// 09/08/2016 ECU added the final 'true' to indicate that the
-						//                image should be scaled to fit the screen
-						// 08/10/2016 ECU put in the check on grouping
-						// 17/06/2017 ECU put in the 'panic alarm' check
-						// ---------------------------------------------------------
-						if (!PublicData.storedData.groupActivities && 
-								!groupActivities && 
-								!PublicData.storedData.startPanicAlarm)
-						{
-							Utilities.DisplayADrawable (context,R.drawable.grid_help,StaticData.DRAWABLE_WAIT_TIME,false,true);
-						}
-						// ---------------------------------------------------------
-						// 12/07/2016 ECU put in the check on the number of clicks
-						//                needed to start an activity
-						// 20/03/2017 ECU put in check on groupActivities
-						// ---------------------------------------------------------
-						if (!groupActivities)
-							clickCounterReminder ();
-						// ---------------------------------------------------------
+						Utilities.DisplayADrawable (context,R.drawable.grid_help,StaticData.DRAWABLE_WAIT_TIME,false,true);
 					}
-					else
-					{
-						// ---------------------------------------------------------
-						// 24/10/2015 ECU the app was automatically restarted
-						// ---------------------------------------------------------
-						// 22/10/2015 ECU check on the last activity that was actioned
-						// ---------------------------------------------------------
-						if (PublicData.storedData.lastActivity != StaticData.NO_RESULT)
-						{
-							// -----------------------------------------------------
-							// 24/10/2015 ECU try and restart the activity that was
-							//                interrupted by the Android OS
-							// -----------------------------------------------------
-							SwitchOnImage (PublicData.storedData.lastActivity,null);
-							// -----------------------------------------------------
-						}
-						// ---------------------------------------------------------
-					}
+					// -------------------------------------------------------------
+					// 12/07/2016 ECU put in the check on the number of clicks
+					//                needed to start an activity
+					// 20/03/2017 ECU put in check on groupActivities
+					// 25/07/2020 ECU remove check on 'groupActivities'
+					// -------------------------------------------------------------
+					clickCounterReminder ();
+					// -------------------------------------------------------------
 				}
+				else
+				{
+					// -------------------------------------------------------------
+					// -------------------------------------------------------------
+					// 24/10/2015 ECU the app was automatically restarted
+					// -------------------------------------------------------------
+					// -------------------------------------------------------------
+					// 22/10/2015 ECU check on the last activity that was actioned
+					// 19/09/2020 ECU added the check on 'restartActivity'
+					// -------------------------------------------------------------
+					if (PublicData.storedData.restartActivity &&
+						(PublicData.storedData.lastActivity != StaticData.NO_RESULT))
+					{
+						// ---------------------------------------------------------
+						// 24/10/2015 ECU try and restart the activity that was
+						//                interrupted by the Android OS
+						// ---------------------------------------------------------
+						SwitchOnImage (PublicData.storedData.lastActivity,null);
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
 				// -----------------------------------------------------------------
 				// 28/11/2015 ECU at this point the user interface is running
 				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
 				PublicData.userInterfaceRunning = true;
+				// -----------------------------------------------------------------
+				// 17/12/2019 ECU start the MonitorService
+				// -----------------------------------------------------------------
+				if (PublicData.storedData.monitor.enabled)
+				{
+					startService (new Intent (this,MonitorService.class));
+				}
 				// -----------------------------------------------------------------
 				// 06/03/2016 ECU action the stored alarms - this used to be done
 				//                in MainActivity.InitialiseServices but do not want
@@ -658,17 +726,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				//                to select a specific activity
 				// 16/03/2016 ECU moved the panic alarm initialise into here from
 				//                the main activity
+				//25/07/2020 ECU remove check on 'actionActivity'
+				// ----------------------------------------------------------------
+				TimerActivity.actionStoredAlarms (MainActivity.activity);
+				PanicAlarmActivity.Initialise (MainActivity.activity);
 				// -----------------------------------------------------------------
-				if (actionActivity)
-				{
-					TimerActivity.actionStoredAlarms (MainActivity.activity);
-					PanicAlarmActivity.Initialise (MainActivity.activity);
-					// -------------------------------------------------------------
-					// 21/06/2018 ECU handle the random event
-					// -------------------------------------------------------------
+				// 21/06/2018 ECU handle the random event
+				// 29/07/2020 ECU added the check on null
+				// -----------------------------------------------------------------
+				if (PublicData.storedData.randomEvent != null)
 					PublicData.storedData.randomEvent.setAlarm (context);
-					// -------------------------------------------------------------
-				}
 				// -----------------------------------------------------------------
 				// 10/03/2018 ECU check if there is a countdown timer running
 				// -----------------------------------------------------------------
@@ -690,6 +757,28 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				{
 					PanicAlarmActivity.Actions (this);
 				}
+				// -----------------------------------------------------------------
+				// 25/04/2020 ECU tell the user that the app is in debug mode
+				// -----------------------------------------------------------------
+				if (PublicData.startedManually && PublicData.storedData.debugMode)
+				{
+					// -------------------------------------------------------------
+					// 25/04/2020 ECU add an appropriate notification to inform the
+					//                user about what is going on
+					// 15/07/2020 ECU added the title
+					// 29/09/2020 ECU added the 'single entry' flag
+					// -------------------------------------------------------------
+					NotificationMessage.Add (getString (R.string.debug_version),
+											 getString (R.string.debug_mode_info),
+							                 android.R.color.holo_blue_light,
+											 NotificationMessage.NOTIFICATION_TYPE_DEBUG,
+											 NotificationMessage.NOTIFICATION_SINGLE_ENTRY);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+				// 06/09/2020 ECU check if there is an 'uncaught exception' file
+				// -----------------------------------------------------------------
+				UncaughtExceptionUtilities.Notification (this);
 				// -----------------------------------------------------------------
 			}
 			else
@@ -735,13 +824,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	}
 	/* ============================================================================= */
 	public void onAccuracyChanged (Sensor sensor, int accuracy) 
-	{ 
-	  	if(sensor.getType() == Sensor.TYPE_LIGHT)
+	{
+		// -------------------------------------------------------------------------
+	  	if (sensor.getType() == Sensor.TYPE_LIGHT)
 	   	{	
 	  		// ---------------------------------------------------------------------
 	   		//          ECU the accuracy of the sensor has changed
 	  		// ---------------------------------------------------------------------
-	   	} 
+	   	}
+	   	// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -756,7 +847,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	/* ============================================================================= */
 	@Override
     public void onDestroy()
-    {	
+    {
+		// -------------------------------------------------------------------------
+		// 25/09/2020 ECU indicate that the 'user interface' has finished
+		// -------------------------------------------------------------------------
+		PublicData.userInterfaceRunning = false;
 		// -------------------------------------------------------------------------
 		// 21/09/2013 ECU added
 		// -------------------------------------------------------------------------
@@ -774,30 +869,32 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    {	
 	    	// ---------------------------------------------------------------------
 	    	// 06/10/2016 ECU check if grouping of activities is on
+	    	// 25/07/2020 ECU removed the 'groupActivities' code
 	    	// ---------------------------------------------------------------------
-	    	if (groupActivities)
-	    	{
-	    		// -----------------------------------------------------------------
-	    		// 06/10/2016 ECU grouping of activities is switched on
-	    		// -----------------------------------------------------------------
-	    		GroupActivity.groupMessageHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
-	    		// -----------------------------------------------------------------
-	    		// 06/10/2016 ECU finish this activity
-	    		// -----------------------------------------------------------------
-	    		finish ();
-	    		// -----------------------------------------------------------------
-	    		// 06/10/2016 ECU exit this activity
-	    		// -----------------------------------------------------------------
-	    		return true;
-	    		// -----------------------------------------------------------------
-	    	}
+	    	// 25/07/2020 ECU if (groupActivities)
+			// 25/07/2020 ECU {
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	// 06/10/2016 ECU grouping of activities is switched on
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	GroupActivity.groupMessageHandler.sendEmptyMessage (StaticData.MESSAGE_FINISH);
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	// 06/10/2016 ECU finish this activity
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	finish ();
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	// 06/10/2016 ECU exit this activity
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU 	return true;
+			// 25/07/2020 ECU 	// -----------------------------------------------------------------
+			// 25/07/2020 ECU }
 	    	// ---------------------------------------------------------------------
 	    	// 01/10/2014 ECU if the screen has been 'zoomed' then reset it
 	    	//            ECU added the 'zoomed' flag
+	    	// 17/09/2020 ECU changed to use Static.....
 	    	// ---------------------------------------------------------------------
 	    	if (!PublicData.storedData.userView && zoomed)
 	    	{
-	    		ZoomDisplay (COLUMNS_DEFAULT);
+	    		ZoomDisplay (StaticData.COLUMNS_DEFAULT);
 	    	}	
 	    	// ---------------------------------------------------------------------
 	    	// 20/02/2014 ECU decrement the 'back' key counter - if it reaches
@@ -820,7 +917,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    			// -------------------------------------------------------------
 	    		}
 	    		// -----------------------------------------------------------------
-	    		return true;	    		
+	    		return true;
+	    		// -----------------------------------------------------------------
 	    	}
 	    	else
 	    	{
@@ -874,8 +972,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    {
 	    	 // --------------------------------------------------------------------
 	    	 // 20/02/2014 ECU reset the 'back key' counter
+	    	 // 17/09/2020 ECU changed to use Static....
 			 // -------------------------------------------------------------------- 
-			 backKeyCounter = BACK_KEY_COUNTER;
+			 backKeyCounter = StaticData.BACK_KEY_COUNTER;
 			 // --------------------------------------------------------------------
 	         return super.onKeyDown(keyCode,event);
 	         // --------------------------------------------------------------------
@@ -930,8 +1029,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	// =============================================================================
 	private View.OnClickListener nextGroupButtonOnClickListener = new View.OnClickListener() 
 	{
+		// -------------------------------------------------------------------------
 		@Override
-		public void onClick(View view) 
+		public void onClick (View view)
 		{
 			if (PublicData.storedData.groupListCurrent < (PublicData.storedData.groupLists.size() - 1))
 			{
@@ -947,6 +1047,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			}
 			// ---------------------------------------------------------------------
 		}
+		// -------------------------------------------------------------------------
 	};
 	// =============================================================================
 	private View.OnClickListener notificationButtonOnClickListener = new View.OnClickListener() 
@@ -980,8 +1081,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------	
 		if (!StaticData.SENSOR_SERVICE)
 		{
+			// ---------------------------------------------------------------------
 			if (sensorManager != null)
-				sensorManager.unregisterListener (this); 
+				sensorManager.unregisterListener (this);
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		//11/10/2014 ECU remember the state of the grid display
@@ -996,18 +1099,26 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 		beenPaused = true;
 		// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		// MONITOR SERVICE interaction
+		// ===============
+		// -------------------------------------------------------------------------
 		// 30/11/2014 ECU if the monitoring service is running then stop it
 		//            ECU put in the activityStarted check because only want
 		//                to action if an activity is started rather than the
 		//                device going into 'sleep mode' for example.
+		// 05/12/2019 ECU added the check on '...sending' because do not want to
+		//                stop the service if an email message is being transmitted
 		// -------------------------------------------------------------------------
-		if (activityStarted && PublicData.monitorServiceRunning)
+		if (activityStarted &&
+		    PublicData.monitorServiceRunning &&
+		    !PublicData.emailDetails.sending)
 		{
 			// ---------------------------------------------------------------------
-			// 30/11/2014 ECU indicate that the service is not to be restarted
+			// 17/12/2019 ECU indicate that the monitor is to be serviced
 			// ---------------------------------------------------------------------
-			PublicData.storedData.monitor.enabled = false;
-			stopService (new Intent(this,MonitorService.class));		
+			MonitorHandler.PauseMonitoring ();
+			// ---------------------------------------------------------------------
 			enableMonitor = true;
 			// ---------------------------------------------------------------------
 		}
@@ -1019,14 +1130,21 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		clickCounter = 0;
 		lastPosition = StaticData.NO_RESULT;
 		// -------------------------------------------------------------------------
-		super.onPause(); 
+		// 23/06/2020 ECU Note - call the main handler
+		// -------------------------------------------------------------------------
+		super.onPause ();
+		// -------------------------------------------------------------------------
 	} 
 	// =============================================================================
 	private View.OnClickListener previousGroupButtonOnClickListener = new View.OnClickListener() 
 	{
+		// -------------------------------------------------------------------------
 		@Override
 		public void onClick(View view) 
 		{
+			// ---------------------------------------------------------------------
+			// 23/06/2020 ECU Note - check that there is a group to go to
+			// ---------------------------------------------------------------------
 			if (PublicData.storedData.groupListCurrent > 0)
 			{
 				PublicData.storedData.groupListCurrent--;				
@@ -1039,12 +1157,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				startActivityForResult (localIntent,0);
 				// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
 		}
 	};
 	/* ============================================================================ */
 	@Override 
 	protected void onResume() 
-	{ 
+	{
 		// -------------------------------------------------------------------------
 		// 21/09/2013 ECU added
 		// 17/02/2014 ECU moved the sensor stuff here - re-register the listener
@@ -1106,13 +1225,29 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// ---------------------------------------------------------------------
 			beenPaused = false;
 			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// MONITOR SERVICE interaction
+			// ===============
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 30/11/2014 ECU reenable the monitor service if it was running
 			//                when 'onPause' occurred
 			// ---------------------------------------------------------------------
 			if (enableMonitor)
 			{
+				// -----------------------------------------------------------------
+				// 06/12/2019 ECU Note - reset the 're-activation' flag
+				// -----------------------------------------------------------------
 				enableMonitor = false;
-				PublicData.storedData.monitor.enabled = true;
+				// -----------------------------------------------------------------
+				// 06/12/2019 ECU Note - re-enable the 'monitor' by setting the
+				//                       flag which will cause the service to be
+				//                       restarted when the 'next minute event'
+				//                       occurs
+				// 17/12/2019 ECU indicate that the monitor is to be serviced
+				// -----------------------------------------------------------------
+				MonitorHandler.ResumeMonitoring ();
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 		}
@@ -1145,23 +1280,31 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	public void onRestart () 
 	{
 		// -------------------------------------------------------------------------
-		super.onStop();   
+		// 23/06/2020 ECU for some reason was calling 'onStop' - changed it
+		// -------------------------------------------------------------------------
+		super.onRestart ();
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
 	public void onStart () 
 	{
 		// -------------------------------------------------------------------------
-		super.onStop();   
+		// 23/06/2020 ECU for some reason was calling 'onStop' - changed it
+		// -------------------------------------------------------------------------
+		super.onStart ();
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
     @Override
-    public void onStop() 
+    public void onStop ()
     {
     	// -------------------------------------------------------------------------
-    	super.onStop();
+    	super.onStop ();
+    	// -------------------------------------------------------------------------
     }
-	/* ============================================================================= */
+	// =============================================================================
+	// =============================================================================
 	@Override
 	public void onActivityResult (int theRequestCode, int theResultCode, Intent theIntent) 
 	{
@@ -1171,8 +1314,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		//                normally pass back a 'result' or an intent - however this
 		//                method will still be called with a 'theRequestCode' of
 		//                '0'
+		// 17/09/2020 ECU changed to use Static...REQUEST....
 		// -------------------------------------------------------------------------
-	    if (theRequestCode == FILE_REQUEST_CODE)
+	    if (theRequestCode == StaticData.REQUEST_CODE_FILE)
 	    {
 	    	// ---------------------------------------------------------------------
 	    	// 06/12/2013 ECU added
@@ -1185,11 +1329,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    		// 08/04/2014 ECU changed to use resource
 	    		// -----------------------------------------------------------------
 	    		Utilities.popToast (getString(R.string.file_name_returned) + StaticData.NEWLINE + fileName,true);
+	    		// -----------------------------------------------------------------
 	    	}
 	    	else 
 	 	    if (theResultCode == RESULT_CANCELED) 
 	 	    {
-	 	       // Handle cancel
+	 	    	// -----------------------------------------------------------------
+	 	       	// 23/06/2020 ECU Note - handle the 'cancel' result. At the moment do
+	 	       	//                       nothing
+	 	       	// -----------------------------------------------------------------
 	 	    }
 	    } 
 	    // -------------------------------------------------------------------------
@@ -1213,7 +1361,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    	// ---------------------------------------------------------------------
 	    }
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	// =============================================================================
 	@Override
 	public boolean onPrepareOptionsMenu (Menu menu) 
 	{
@@ -1233,8 +1382,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		}
 		// -------------------------------------------------------------------------	
 		return true;
+		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	// =============================================================================
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) 
 	{
@@ -1242,11 +1393,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// 28/01/2018 ECU only inflate menu if in grid mode
 		// -------------------------------------------------------------------------
 		if (!PublicData.storedData.userView)
-			getMenuInflater().inflate(R.menu.grid,menu);
+			getMenuInflater().inflate (R.menu.grid,menu);
 		// -------------------------------------------------------------------------	
 		return true;
+		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	// =============================================================================
 	public boolean onOptionsItemSelected (MenuItem item)
 	{
 		// -------------------------------------------------------------------------
@@ -1267,7 +1420,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				break;
 			// ---------------------------------------------------------------------
 			case MENU_ZOOM_RESTORE:
-				iconsPerRow = COLUMNS_DEFAULT;
+				iconsPerRow = StaticData.COLUMNS_DEFAULT;
 				break;
 			// ---------------------------------------------------------------------
 		}
@@ -1277,12 +1430,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		SetImageSizes (iconsPerRow);
 		// -------------------------------------------------------------------------
 		// 16/09/2013 ECU update some display variables before asking for a refresh
+		// 17/09/2020 ECU change to use local 'imageAdapter'
 		// -------------------------------------------------------------------------		
-		PublicData.imageAdapter.notifyDataSetChanged ();
+		imageAdapter.notifyDataSetChanged ();
 		// -------------------------------------------------------------------------
 		return true;
+		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	// =============================================================================
 	public class ImageAdapter extends BaseAdapter 
 	{
 		// -------------------------------------------------------------------------
@@ -1290,15 +1446,17 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		//                       view is being used
 		// -------------------------------------------------------------------------
 	    private Context 		localContext;
-	    private LayoutInflater 	localInflater = null;				// 01/01/2017 ECU added
-	    // -------------------------------------------------------------------------
-	    // 02/01/2017 ECU Note - keep a local copy of the image data
-	    // -------------------------------------------------------------------------
-	    public Integer[] localImages = activeImages [IMAGE_INDEX];
+		private Integer[] 		localImages;
+	    private LayoutInflater 	localInflater = null;
 		/* ========================================================================= */
-	    public ImageAdapter (Context theContext)
+	    public ImageAdapter (Context theContext,Integer [] theActiveImages)
 	    {
-	        localContext = theContext;
+	    	// ---------------------------------------------------------------------
+	    	// 17/09/2020 ECU added the 'active images' as an argument
+	    	//            ECU store the arguments locally
+	    	// ---------------------------------------------------------------------
+	        localContext 	= theContext;
+	        localImages		= theActiveImages;
 	        // ---------------------------------------------------------------------
 	        // 01/01/2017 ECU declare the inflater which will be used for the custom
 	        //                layout for each cell
@@ -1346,12 +1504,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	    	// ---------------------------------------------------------------------
 	    	ImageView imageView;
 	        TextView  textView;  
-	        // ----------------------------------------------------------------------
+	        // ---------------------------------------------------------------------
 	    }
-	    /* ------------------------------------------------------------------------- */
+	    // -------------------------------------------------------------------------
 	    @Override
 	    public View getView (int position, View convertView, ViewGroup parent) 
 	    {
+	    	// ---------------------------------------------------------------------
 	    	View 	gridCellView 	= convertView;
 	    	Holder 	localHolder 	= null;
 	    	// ---------------------------------------------------------------------
@@ -1433,8 +1592,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	        return gridCellView;
 	        // ----------------------------------------------------------------------
 	    }
-	    /* ------------------------------------------------------------------------- */
+	    // -------------------------------------------------------------------------
 	}
+	// ==============================================================================
 	// ==============================================================================
 	ArrayList<GridItem> buildGridItemsList ()
 	{
@@ -1535,6 +1695,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	void DisplayUserView (boolean theGridType)
 	{
 		// =========================================================================
+		// 04/01/2020 ECU Note - this method is called to display the selected
+		//                       interface from which the user can select the task
+		//                       that he/she wants to process.
+		// =========================================================================
 		// 28/01/2014 ECU decide which user interface is to be used
 		//                theGridType 	= false means a grid view
 		//                         		= true  means a list view
@@ -1542,7 +1706,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		//                method but was placed here so that it can be called by
 		//                other methods, like onResume, if the display type needs
 		//                to change
-		// =========================================================================				
+		// =========================================================================
+		// =========================================================================
+		// Grid View
+		// =========
+		// The user interface will be a grid of the images of each of the activities
+		// that can be selected. Clicking on an image will cause the associated
+		// activity to be processed
+		// =========================================================================
+		// =========================================================================
 		if (!theGridType)
 		{
 			// =====================================================================
@@ -1560,9 +1732,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			gridView = (GridView) findViewById (R.id.gridView1);
 			// ---------------------------------------------------------------------
 			// 02/06/2013 ECU set up an adapter to handle the grid
+			// 17/09/2020 ECU change to use local 'imageAdapter'
+			//            ECU pass through the active images as an argument
 			// ---------------------------------------------------------------------
-			PublicData.imageAdapter = new ImageAdapter (this);
-			gridView.setAdapter (PublicData.imageAdapter);			
+			imageAdapter = new ImageAdapter (this,activeImages [IMAGE_INDEX]);
+			gridView.setAdapter (imageAdapter);
 			// ---------------------------------------------------------------------
 			gridView.setOnItemClickListener (new OnItemClickListener() 
 		    {
@@ -1606,6 +1780,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		    		}
 				    // ------------------------------------------------------------                       	
 		            return true;
+		            // ------------------------------------------------------------
 		        }
 		    });
 		    // ---------------------------------------------------------------------
@@ -1642,8 +1817,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 	});   
 		    // ---------------------------------------------------------------------
 		    // 16/02/2014 ECU added the parameter for number of icons per row
+		    // 17/09/2020 ECU changed to use StaticData
 		    // ---------------------------------------------------------------------
-	        SetImageSizes (COLUMNS_DEFAULT);
+	        SetImageSizes (StaticData.COLUMNS_DEFAULT);
 	        // ---------------------------------------------------------------------
 	        // 01/10/2014 ECU tell the user that zoom-ing is available
 	        // ---------------------------------------------------------------------
@@ -1656,6 +1832,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		}
 		else
 		{
+			// =====================================================================
+			// =====================================================================
+			// List View
+			// =========
+			// The user interface will be a list of the images of each of the activities
+			// that can be selected together with legends that give the user additional
+			// information. Clicking on a row in the list will cause the associated
+			// activity to be processed
+			// =====================================================================
 			// =====================================================================
 			// 29/01/2014 ECU list view wanted
 			// 19/10/2016 ECU changed from 'activity_list'
@@ -1682,12 +1867,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			gridItems = buildGridItemsList ();
 			// ---------------------------------------------------------------------
 			// 08/02/2014 ECU create a custom adapter with the required arguments
+			// 17/09/2020 ECU change to use local 'customGridViewAdapter'
 			// ---------------------------------------------------------------------
-			PublicData.customGridViewAdapter 
+			customGridViewAdapter
 					= new CustomGridViewAdapter (this, R.layout.grid_cell,gridItems);
-					
-			listView.setAdapter (PublicData.customGridViewAdapter);
-			// ---------------------------------------------------------------------		
+			// ---------------------------------------------------------------------
+			listView.setAdapter (customGridViewAdapter);
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			listView.setOnItemClickListener (new OnItemClickListener() 
 		    {
 				@Override
@@ -1702,16 +1889,26 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				    // -------------------------------------------------------------
 					if (!ignoreUserActions)
 					{
-						SwitchOnImage (position,view); 
+						// ---------------------------------------------------------
+						// 20/07/2020 ECU check if being asked to action an activity or just
+						//                return the name of the activity that has been pressed
+						// 25/07/2020 ECU removed the check on 'actionActivity'
+						// ---------------------------------------------------------
+						// 20/07/2020 Note - want to start the task that has been clicked on
+						// ---------------------------------------------------------
+						SwitchOnImage (position,view);
+						// ---------------------------------------------------------
 					}
 		            // -------------------------------------------------------------
 		        }
 		    });
+		    // ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			// 10/09/2013 ECU create the method for handling long click events
 			// ---------------------------------------------------------------------	        
 			listView.setOnItemLongClickListener (new OnItemLongClickListener() 
 		    {
+		    	// -----------------------------------------------------------------
 		    	@Override
 		    	public boolean onItemLongClick (AdapterView<?> parent, 
 		    									View view,
@@ -1722,6 +1919,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		    		// 28/09/2014 ECU changed to use a self-contained method
 		    		// 27/11/2014 ECU added view as the argument
 		    		// 17/08/2018 ECU added the ignore check
+		    		// 20/07/2020 ECU added the check on 'actionActivity'
+		    		// 25/07/2020 ECU removed the check on 'actionActivity'
 				    // -------------------------------------------------------------
 		    		if (!ignoreUserActions)
 					{
@@ -1731,12 +1930,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		            return true;
 		            // -------------------------------------------------------------
 		        }
+		        // -----------------------------------------------------------------
 		    });
 			// ---------------------------------------------------------------------
 			// 09/11/2014 ECU put in the listener to enable swipes to be detected
 			// ---------------------------------------------------------------------
 			listView.setOnTouchListener (new OnTouchListener() 
 			{
+				// -----------------------------------------------------------------
 			    @Override
 			    public boolean onTouch (View view, MotionEvent event) 
 			    {
@@ -1762,6 +1963,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			});
 			// ---------------------------------------------------------------------
 		}
+		// -------------------------------------------------------------------------
+		// 30/03/2020 ECU handle the refresh of the 'notification button'
+		// -------------------------------------------------------------------------
+		gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_NOTIFICATION_REFRESH);
 		// -------------------------------------------------------------------------
 		// 18/10/2016 ECU get the layout of the group details
 		// 19/10/2016 ECU moved here from within the 'list' option because want
@@ -1795,9 +2000,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 					{
 						// ---------------------------------------------------------
                 		// 08/10/2016 ECU start the settings activity
+                		// 08/08/2020 ECU changed from ',0' to '....FINISH'
                 		// ---------------------------------------------------------
                 		localIntent = new Intent (context,SettingsActivity.class);
-            			startActivityForResult (localIntent,0);
+            			startActivityForResult (localIntent,StaticData.REQUEST_CODE_FINISH);
 						// ---------------------------------------------------------
 						return true;
 					}
@@ -1879,8 +2085,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// 23/09/2017 ECU check on 'sortInhibit' which, if true, will prevent the
 		//                sort
 		// 28/12/2018 ECU add the 'group..' check
+		// 25/07/2020 ECU removed check on 'groupActivities'
 		// -------------------------------------------------------------------------
-		if (PublicData.storedData.sortByUsage && !sortInhibit && !groupActivities)
+		if (PublicData.storedData.sortByUsage && !sortInhibit)
 		{
 			Arrays.sort (gridImages);	
 		}	
@@ -1925,6 +2132,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				if (gridImages [theIndex].mode == !theMode && gridImages [theIndex].Validate())
 					resultsList.add (theIndex);
+				// -----------------------------------------------------------------
 			}
 		}
 		// -------------------------------------------------------------------------
@@ -1992,56 +2200,48 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 		// 28/11/2014 ECU starts the specified intent or just returns the intent
 		//                is requested
+		// 25/07/2020 ECU remove the check on 'actionActivity'
 		// -------------------------------------------------------------------------
-		if (actionActivity)
+		// 28/11/2014 ECU start the activity
+		// 06/02/2015 ECU put in the check on NO_RESULT
+		// 05/07/2018 ECU this is the point at which some action is to be taken
+		//                so check for 'positive feedback'
+		// -------------------------------------------------------------------------
+		if (!PublicData.storedData.positiveFeedback)
 		{
-			// ---------------------------------------------------------------------
-			// 28/11/2014 ECU start the activity
-			// 06/02/2015 ECU put in the check on NO_RESULT
-			// 05/07/2018 ECU this is the point at which some action is to be taken
-			//                so check for 'positive feedback'
-			// ---------------------------------------------------------------------
-			if (!PublicData.storedData.positiveFeedback)
-			{
-				if (theResultCode == StaticData.NO_RESULT)
-					startActivity (theIntent);
-				else
-					startActivityForResult (theIntent,theResultCode);
-			}
+			if (theResultCode == StaticData.NO_RESULT)
+				startActivity (theIntent);
 			else
-			{
-				// -----------------------------------------------------------------
-				// 05/07/2018 ECU positive feedback is required
-				// -----------------------------------------------------------------
-				// 17/08/2018 ECU before starting the 'positive feedback' then indicate
-				//                that any actions are ignored
-				// -----------------------------------------------------------------
-				ignoreUserActions = true;
-				// -----------------------------------------------------------------
-				// 05/07/2018 ECU now activate the 'feedback' animation
-				// 24/01/2019 ECU pass through the 'positiveFeedback' flag
-				// -----------------------------------------------------------------
-				PositiveFeedback.UserAction (context,
-											 PublicData.storedData.positiveFeedback,
-											 switchImageView,theIntent,theResultCode);
-				// -----------------------------------------------------------------
-			}
-			// ---------------------------------------------------------------------
+				startActivityForResult (theIntent,theResultCode);
 		}
 		else
 		{
 			// ---------------------------------------------------------------------
-			// 28/11/2014 ECU just return the intent to be started
-			// 06/02/2015 ECU pass back the position that was selected
-			// 23/09/2017 ECU rather than return the position of the activity, which
-			//                could change if 'sort by usage' is in use, then return
-			//                the 'legend' instead
+			// 05/07/2018 ECU positive feedback is required
 			// ---------------------------------------------------------------------
-			theIntent.putExtra (StaticData.PARAMETER_LEGEND,gridImages [activeImagePosition].Legend());
-			setResult (RESULT_OK,theIntent);	
-			finish ();
+			// 17/08/2018 ECU before starting the 'positive feedback' then indicate
+			//                that any actions are ignored
 			// ---------------------------------------------------------------------
-		}	
+			ignoreUserActions = true;
+			// ---------------------------------------------------------------------
+			// 05/07/2018 ECU now activate the 'feedback' animation
+			// 24/01/2019 ECU pass through the 'positiveFeedback' flag
+			// ---------------------------------------------------------------------
+			PositiveFeedback.UserAction (context,
+										 PublicData.storedData.positiveFeedback,
+										 switchImageView,theIntent,theResultCode);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	void startTheSpecifiedActivity (Class theClassToStart)
+	{
+		// -------------------------------------------------------------------------
+		// 17/09/2020 ECU start the activity that is defined by the argument
+		// -------------------------------------------------------------------------
+		localIntent = new Intent (context,theClassToStart);
+		startTheActivity (localIntent,0);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -2129,8 +2329,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 //				   wants to start an activity then the click counter should
 		 //                not be taken into account
 		 // 20/03/2017 ECU put in the check on groupActivities
+		 // 25/07/2020 ECU removed the check on 'groupActivities'
 		 // ------------------------------------------------------------------------
-		 if (!groupActivities && PublicData.storedData.clickCounter > 1 && (positionToAction == StaticData.NO_RESULT))
+		 if (PublicData.storedData.clickCounter > 1 && (positionToAction == StaticData.NO_RESULT))
 		 {
 			 if ((lastPosition == StaticData.NO_RESULT) || (thePosition == lastPosition))
 			 {
@@ -2161,8 +2362,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			 // 25/01/2016 ECU decide whether the click can be processed
 			 // 19/08/2016 ECU put in check on actionActivity because when false
 			 //                then do not worry about the clickCounter
+			 // 25/07/2020 ECU remove the check on 'actionActivity'
 			 // --------------------------------------------------------------------
-			 if ((clickCounter < PublicData.storedData.clickCounter) && actionActivity) return;
+			 if ((clickCounter < PublicData.storedData.clickCounter)) return;
 			 // --------------------------------------------------------------------
 		 }
 		 // ------------------------------------------------------------------------
@@ -2208,21 +2410,39 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 activityCounter = 0;
 		 // ------------------------------------------------------------------------
 		 // 20/02/2014 ECU reset the 'back key' counter
+		 // 17/09/2020 ECU changed to use Static....
 		 // ------------------------------------------------------------------------
-		 backKeyCounter = BACK_KEY_COUNTER;
+		 backKeyCounter = StaticData.BACK_KEY_COUNTER;
 		 // ------------------------------------------------------------------------
 		 // 06/10/2016 ECU check on grouping of activities
+		 // 25/07/2020 ECU remove code on 'groupActivities
 		 // ------------------------------------------------------------------------
-		 if (groupActivities)
+		 // 25/07/2020 ECU if (groupActivities)
+		 // 25/07/2020 ECU {
+		 // 25/07/2020 ECU 	 // ----------------------------------------------------
+		 // 25/07/2020 ECU 	 // 06/10/2016 ECU grouping of activities is required
+		 // 25/07/2020 ECU 	 // ----------------------------------------------------
+		 // 25/07/2020 ECU 	 Message localMessage = GroupActivity.groupMessageHandler.obtainMessage(StaticData.MESSAGE_DATA);
+		 // 25/07/2020 ECU 	 localMessage.arg1 = activeImages [IMAGE_INDEX][thePosition];
+		 // 25/07/2020 ECU 	 GroupActivity.groupMessageHandler.sendMessage (localMessage);
+		 // 25/07/2020 ECU 	 // ----------------------------------------------------
+		 // 25/07/2020 ECU 	 // 06/10/2016 ECU just return because no action is required
+		 // 25/07/2020 ECU 	 // ----------------------------------------------------
+		 // 25/07/2020 ECU 	 return;
+		 // 25/07/2020 ECU 	 // ----------------------------------------------------
+		 // 25/07/2020 ECU }
+		 // ------------------------------------------------------------------------
+		 // 22/09/2020 ECU check whether a direct action of the 'activity' has been
+		 //                defined
+		 // ------------------------------------------------------------------------
+		 if (gridImages [thePosition].clickActivityClass != null)
 		 {
+		 	// ---------------------------------------------------------------------
+		 	// 22/09/2020 ECU start up the activity specified in the structure
+		 	// ---------------------------------------------------------------------
+			 startTheSpecifiedActivity (gridImages [thePosition].clickActivityClass);
 			 // --------------------------------------------------------------------
-			 // 06/10/2016 ECU grouping of activities is required
-			 // --------------------------------------------------------------------
-			 Message localMessage = GroupActivity.groupMessageHandler.obtainMessage(StaticData.MESSAGE_DATA);
-			 localMessage.arg1 = activeImages [IMAGE_INDEX][thePosition];
-			 GroupActivity.groupMessageHandler.sendMessage (localMessage);
-			 // --------------------------------------------------------------------
-			 // 06/10/2016 ECU just return because no action is required
+			 // 22/09/2020 ECU nothing else to do so just exit
 			 // --------------------------------------------------------------------
 			 return;
 			 // --------------------------------------------------------------------
@@ -2230,56 +2450,88 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		 // ------------------------------------------------------------------------
          // 19/01/2014 ECU change to pick up the id of the chosen image
          //                rather than the position
+         // 17/09/2020 ECU change the way an activity is started up
+         //                originally, as an example
+		 //						localIntent = new Intent (context,AppSelectorActivity.class);
+		 //						startTheActivity (localIntent,0);
+		 //                now
+		 //                 	startTheSpecifiedActivity (AppSelectorActivity.class);
          // ------------------------------------------------------------------------
 		 switch (activeImages [IMAGE_INDEX][thePosition])
-		 {	
+		 {
+		 	// =====================================================================
+			 case R.drawable.app_selector:
+				 // ----------------------------------------------------------------
+				 // 01/01/2020 ECU added - app selector - like a 'launcher'
+				 // ----------------------------------------------------------------
+				 startTheSpecifiedActivity (AppSelectorActivity.class);
+				 // ----------------------------------------------------------------
+				 break;
+			 // ====================================================================
+			 case R.drawable.arithmetic:
+				 // ----------------------------------------------------------------
+				 // 05/03/2020 ECU added - arithmetic
+				 // ----------------------------------------------------------------
+				 startTheSpecifiedActivity (ArithmeticActivity.class);
+				 // ----------------------------------------------------------------
+				 break;
 		 	// =====================================================================
    			case R.drawable.audio_analyser:
    				// -----------------------------------------------------------------
    				// 18/01/2014 ECU added - audio analyser
    				// -----------------------------------------------------------------
-   				localIntent = new Intent (context,AudioAnalyser.class);
-   	    		startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (AudioAnalyser.class);
+				// -----------------------------------------------------------------
    	    		break;
    	    	// =====================================================================
    			case R.drawable.audio_streaming:
    				// -----------------------------------------------------------------
    				// 05/08/2013 ECU added - audio streaming
    				// -----------------------------------------------------------------
-   				localIntent = new Intent (context,AudioStreamActivity.class);
-   				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (AudioStreamActivity.class);
+				// -----------------------------------------------------------------
    				break;
    			// =====================================================================
    			case R.drawable.barcode:
-   				// -----------------------------------------------------------------
-   				// 30/08/2013 ECU added - bar code handling
-   				//            ECU this will use the app developed by
-   				//                the zxing (Zebra Crossing) project
-   				// 07/02/2014 ECU change to use general bar code activity
-   				// -----------------------------------------------------------------	
-   				localIntent = new Intent (context,BarCodeActivity.class);
-   				startTheActivity (localIntent,0);
+				// -----------------------------------------------------------------
+				// 13/06/2016 ECU added here to try and start an immediate scan
+				// -----------------------------------------------------------------
+				localIntent = new Intent (context,BarCodeActivity.class);
+				localIntent.putExtra (StaticData.PARAMETER_BARCODE,true);
+				startTheActivity (localIntent,0);
+				// -----------------------------------------------------------------
    				break;
+			 // =====================================================================
+			 case R.drawable.battery:
+				 // -----------------------------------------------------------------
+				 // 27/12/2019 ECU added - activate battery saving activity
+				 // 29/01/2020 ECU originally this was activated using a long press
+				 //                'test'
+				 // -----------------------------------------------------------------
+				 startTheSpecifiedActivity (BatterySavingActivity.class);
+				 // -----------------------------------------------------------------
+				 break;
    			// =====================================================================
    			case R.drawable.blood_pressure:
    				// -----------------------------------------------------------------
    				// 26/08/2017 ECU added
    				// -----------------------------------------------------------------
-   				localIntent = new Intent (context,BloodPressureActivity.class);
-   				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (BloodPressureActivity.class);
+				// ----------------------------------------------------------------
    				break;
    			// =====================================================================
    			case R.drawable.bluetooth:
    				// -----------------------------------------------------------------
    				// 29/06/2013 ECU added
    				// -----------------------------------------------------------------
-   				localIntent = new Intent (context,BlueToothActivity.class);
-   				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (BluetoothActivity.class);
+				// -----------------------------------------------------------------
    				break;
    			// =====================================================================
       		case R.drawable.bouncing_ball:
-      			localIntent = new Intent (context,GameTwo.class);
-  				startTheActivity (localIntent,0);
+      		// ---------------------------------------------------------------------
+				startTheSpecifiedActivity (GameTwo.class);
+				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.carer:
@@ -2295,8 +2547,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
   				break;
   			// =====================================================================
       		case  R.drawable.compass_small:
-      			localIntent = new Intent (context,CompassActivity.class);
-      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+				startTheSpecifiedActivity (CompassActivity.class);
+				// ----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case  R.drawable.daily_summary:
@@ -2304,8 +2557,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 27/02/2017 ECU created to show a summary of tasks for the
       			//                selected day
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,DailySummaryActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (DailySummaryActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2340,8 +2592,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 02/04/2019 ECU added - 'devices' activity
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,DevicesActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (DevicesActivity.class);
       			// -----------------------------------------------------------------
       			break;	
       		// =====================================================================
@@ -2349,8 +2600,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 20/11/2013 ECU added - start a dialogue
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,Dialogue.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (Dialogue.class);
+				// -----------------------------------------------------------------
       			break;	
       		// =====================================================================
       		case R.drawable.disk:
@@ -2380,8 +2631,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 18/10/2016 ECU created to handle essential documents
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,DocumentsActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (DocumentsActivity.class);
   				// -----------------------------------------------------------------
       			break;
   			// =====================================================================
@@ -2389,8 +2639,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 13/01/2015 ECU created to test navigation drawer
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,NavigationDrawerActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (NavigationDrawerActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2398,13 +2647,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 21/03/2014 ECU added call to the exercise activity
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,ExerciseActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (ExerciseActivity.class);
+				// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.falling:
-      			localIntent = new Intent (context,FallsActivity.class);
-      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+				startTheSpecifiedActivity (FallsActivity.class);
+				// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.files:
@@ -2416,14 +2666,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 09/12/2013 ECU pass through any parameters
       			// 22/02/2014 ECU change to use PARAMETER_
+      			// 06/01/2020 ECU indicate that the menu options are wanted
       			// -----------------------------------------------------------------
       			localIntent.putExtra (StaticData.PARAMETER_FOLDER,PublicData.projectFolder);
+      			localIntent.putExtra (StaticData.PARAMETER_MENU,true);
       			startTheActivity (localIntent,StaticData.REQUEST_CODE_FILE);
+      			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.gameone:
-      			localIntent = new Intent (context,GameOne.class);
-  				startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+				startTheSpecifiedActivity (GameOne.class);
+				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.groups:
@@ -2432,16 +2686,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			break;
       		// =====================================================================
       		case R.drawable.internet:
-      			localIntent = new Intent (context,DisplayURL.class);
-      			startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+				startTheSpecifiedActivity (DisplayURL.class);
+				// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.liquid:
       			// -----------------------------------------------------------------
       			// 18/05/2016 ECU create to handle liquid selection
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,LiquidActivity.class);
-      	    	startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (LiquidActivity.class);
       	    	// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2449,8 +2703,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 03/01/2014 ECU added - location and tracking
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,LocationActivity.class);
-      	    	startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (LocationActivity.class);
+				// -----------------------------------------------------------------
       	    	break;
       	    // =====================================================================
       		case R.drawable.mail:
@@ -2520,6 +2774,11 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       				// -------------------------------------------------------------
       				localIntent.putExtra (StaticData.PARAMETER_SWIPE_METHOD,new MethodDefinition<MedicationInput> 
 						(MedicationInput.class,"SwipeHandler"));
+					// -------------------------------------------------------------
+					// 24/01/2020 ECU define the help method
+					// -------------------------------------------------------------
+					localIntent.putExtra (StaticData.PARAMETER_HELP_METHOD,new MethodDefinition<MedicationInput>
+							(MedicationInput.class,"HelpHandler"));
       				// -------------------------------------------------------------
       				// 13/12/2015 ECU indicate that the list is to be sorted
       				// -------------------------------------------------------------
@@ -2619,8 +2878,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// ========================
       			// 03/08/2016 ECU start the named actions activity
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,NamedActionsActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (NamedActionsActivity.class);
+				// -----------------------------------------------------------------
   				break;
       		// =====================================================================
       		case R.drawable.nfc:
@@ -2640,8 +2899,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// ====================
       			// 25/11/2015 ECU start the panic alarm activity
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,PanicAlarmActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (PanicAlarmActivity.class);
+				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case  R.drawable.photoalbum:
@@ -2650,24 +2909,23 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// ===================
       			// 25/06/2013 ECU start the photo album
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,SlideShowActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (SlideShowActivity.class);
+				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.radar:
       			// -----------------------------------------------------------------
       			// 02/12/2014 ECU created to test radar graphics
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,RadarActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (RadarActivity.class);
+				// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case R.drawable.rev_counter:
       			// -----------------------------------------------------------------
       			// 13/06/2019 ECU added - 'rev counter' activity
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,RevCounterActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (RevCounterActivity.class);
       			// -----------------------------------------------------------------
       			break;	
       		// =====================================================================
@@ -2677,8 +2935,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// ==========================
       			// 13/04/2015 ECU created to handle screen capture
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,ScreenCaptureActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (ScreenCaptureActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2691,10 +2948,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			{
       				// -------------------------------------------------------------
       				// 03/03/2016 ECU Note - in development mode so can start immediately
+      				// 09/08/2020 ECU changed the result from
+					//                 startTheActivity (localIntent,StaticData.REQUEST_CODE_SETTINGS);
+					//                because want the option to automatically restart
+					//                the app if necessary
       				// --------------------------------------------------------------
       				localIntent = new Intent (context,SettingsActivity.class);
-      				startTheActivity (localIntent,StaticData.REQUEST_CODE_SETTINGS);
       				// --------------------------------------------------------------
+					startTheActivity (localIntent,StaticData.REQUEST_CODE_FINISH);
+					// --------------------------------------------------------------
       			}
       			else
       			{
@@ -2718,9 +2980,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       		case R.drawable.shopping:
       			// -----------------------------------------------------------------
       			// 29/03/2014 ECU added - shopping
-      			// -----------------------------------------------------------------			
-      			localIntent = new Intent (context,ShoppingActivity.class);
-      	    	startTheActivity (localIntent,0);
+      			// -----------------------------------------------------------------
+				startTheSpecifiedActivity (ShoppingActivity.class);
       	    	// -----------------------------------------------------------------
       	    	break;
       	    // =====================================================================
@@ -2740,8 +3001,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 21/04/2014 ECU created to test swipe screens
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,SwipeActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (SwipeActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2749,8 +3009,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 16/06/2013 ECU added
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,SystemInfoActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (SystemInfoActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2798,7 +3057,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       				Utilities.popToast (theView,
       									getString (R.string.no_remote_controller),
       									getString (R.string.press_to_clear),
-      									60000,
+      									StaticData.MILLISECONDS_PER_MINUTE,
       									false);
       				// -------------------------------------------------------------
       			}
@@ -2809,8 +3068,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 02/08/2013 ECU added - testing android
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,TestActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (TestActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2818,8 +3076,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 06/10/2017 ECU created to handle 'theft protection'
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,TheftActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (TheftActivity.class);
       			// -----------------------------------------------------------------
       			break;
       		// =====================================================================
@@ -2842,12 +3099,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			{
       				// -------------------------------------------------------------
       				// 07/02/2015 ECU timers exist so show the list
+      				// 25/01/2020 ECU added the help method
       				// -------------------------------------------------------------
       				Intent localIntent = new Intent (context,Selector.class);
       				localIntent.putExtra (StaticData.PARAMETER_OBJECT_TYPE,StaticData.OBJECT_TIMER);
       				localIntent.putExtra (StaticData.PARAMETER_BACK_KEY,true);
-      				localIntent.putExtra (StaticData.PARAMETER_METHOD,new MethodDefinition<TimerActivity> 
-      											(TimerActivity.class,"AlarmSelect"));
+      				localIntent.putExtra (StaticData.PARAMETER_METHOD,new MethodDefinition<TimerActivity>
+												(TimerActivity.class,"AlarmSelect"));
+					localIntent.putExtra (StaticData.PARAMETER_HELP_METHOD,new MethodDefinition<TimerActivity>
+												(TimerActivity.class,"HelpMethod"));
       				startTheActivity (localIntent,0);
       				// -------------------------------------------------------------
       			}
@@ -2884,8 +3144,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 22/09/2015 ECU changed to ShowEPGActivity - TVChannelsActivity
       			//                is a shift operation
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,ShowEPGActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (ShowEPGActivity.class);
       			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
@@ -2894,8 +3153,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 08/09/2016 ECU WeMo control using CyberGarage directly - not
       			//                using Belkin's SDK
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,UPnP_Activity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (UPnP_Activity.class);
       			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
@@ -2965,8 +3223,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 16/02/2015 ECU created to play with WeMo tasks
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,WeMoActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (WeMoActivity.class);
   				// -----------------------------------------------------------------
   				break;
   			// =====================================================================
@@ -2992,6 +3249,24 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		//                which could be annoying - so just flush them out
 		// -------------------------------------------------------------------------
 		TextToSpeechService.Flush ();
+		// ------------------------------------------------------------------------
+		// 22/09/2020 ECU check whether a direct action of the 'activity' has been
+		//                defined
+		// ------------------------------------------------------------------------
+		if (gridImages [thePosition].longClickActivityClass != null)
+		{
+			// ---------------------------------------------------------------------
+			// 22/09/2020 ECU start up the activity specified in the structure
+			// ---------------------------------------------------------------------
+			startTheSpecifiedActivity (gridImages [thePosition].longClickActivityClass);
+			// --------------------------------------------------------------------
+			// 22/09/2020 ECU nothing else to do so just exit
+			// --------------------------------------------------------------------
+			return;
+			// --------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 22/09/2020 ECU Note - trigger the associated 'activity'
 		// -------------------------------------------------------------------------
 		switch (activeImages [IMAGE_INDEX][thePosition])
 		{
@@ -3068,11 +3343,13 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			// =====================================================================
 			case R.drawable.barcode:
 				// -----------------------------------------------------------------
-				// 13/06/2016 ECU added here to try and start an immediate scan
-				// -----------------------------------------------------------------	
-				localIntent = new Intent (context,BarCodeActivity.class);
-				localIntent.putExtra (StaticData.PARAMETER_BARCODE,true);
-				startTheActivity (localIntent,0);
+				// 30/08/2013 ECU added - bar code handling
+				//            ECU this will use the app developed by
+				//                the zxing (Zebra Crossing) project
+				// 07/02/2014 ECU change to use general bar code activity
+				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (BarCodeActivity.class);
+				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
 			case R.drawable.blood_pressure:
@@ -3090,17 +3367,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
   				// 02/01/2016 ECU added
   				// 28/11/2016 ECU this used to be the unshifted activation
   				// -----------------------------------------------------------------
-  				localIntent = new Intent (context,CarerSystemActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (CarerSystemActivity.class);
   				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
   			case R.drawable.database:
 				// -----------------------------------------------------------------
 				// 28/01/2016 ECU custom database activity
-				// -----------------------------------------------------------------	
-				localIntent = new Intent (context,DatabaseActivity.class);
-				startActivityForResult (localIntent,0);
+				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (DatabaseActivity.class);
+				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
       		case  R.drawable.daily_summary:
@@ -3132,9 +3408,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 			case R.drawable.system_information:
 				// -----------------------------------------------------------------
 				// 22/11/2014 ECU action the new version that is in development
-				// -----------------------------------------------------------------	
-				localIntent = new Intent (context,NewSystemInfoActivity.class);
+				// -----------------------------------------------------------------
+				localIntent = new Intent (context, SystemInfoSwipeActivity.class);
 				startActivityForResult (localIntent,0);
+				// -----------------------------------------------------------------
+				break;
+			// =====================================================================
+			case R.drawable.location:
+				// -----------------------------------------------------------------
+				// 12/10/2020 ECU added - managing location marker
+				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (LocationMarkerActivity.class);
+				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
      		case R.drawable.mail:
@@ -3181,6 +3466,17 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 				// -----------------------------------------------------------------
 				break;
 			// =====================================================================
+			case R.drawable.microphone:
+				// -----------------------------------------------------------------
+				// LOOPER MODE
+				// ===========
+				// 08/11/2019 ECU added to provide a simple looper mode
+				// -----------------------------------------------------------------
+				localIntent = new Intent (context,AudioRecorder.class);
+				localIntent.putExtra (StaticData.PARAMETER_LOOPER, true);
+				startTheActivity (localIntent,0);
+				break;
+			// =====================================================================
       		case  R.drawable.music:
       			// -----------------------------------------------------------------
       			// MUSIC PLAYER TIMER
@@ -3188,8 +3484,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 02/01/2018 ECU start the activity to set timer for the music
       			//                player
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,MusicPlayerTimerActivity.class);
-  				startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (MusicPlayerTimerActivity.class);
+				// -----------------------------------------------------------------
   				break;
 			// =====================================================================
       		case  R.drawable.panic_alarm:
@@ -3212,8 +3508,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       		// -----------------------------------------------------------------
       			// 09/02/2014 ECU added - speaking clock
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,SpeakingClockActivity.class);
-      	    	startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (SpeakingClockActivity.class);
       			// -----------------------------------------------------------------
       	    	break;
       	    // =====================================================================
@@ -3255,6 +3550,14 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			}
       			// -----------------------------------------------------------------
       			break;
+			// =====================================================================
+			case R.drawable.test:
+				// -----------------------------------------------------------------
+				// 11/02/2020 ECU cracked screen
+				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (CrackedScreenActivity.class);
+				// -----------------------------------------------------------------
+				break;
       		// =====================================================================
       		case R.drawable.theft:
       			// -----------------------------------------------------------------
@@ -3269,14 +3572,17 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// -----------------------------------------------------------------
       			// 04/02/2018 ECU created to handle 'countdown timer'
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,CountdownTimerActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (CountdownTimerActivity.class);
+				// -----------------------------------------------------------------
       			break;
       		// =====================================================================
       		case  R.drawable.tone_generator:
       			// -----------------------------------------------------------------
       			// 18/08/2015 ECU added
       			// 08/08/2019 ECU handle the 'mosquito' option
+      			// 21/06/2020 ECU Note - it is the responsibility of the activity
+      			//                       to decide whether the ordinary tone or
+      			//                       mosquito is to be started
       			// -----------------------------------------------------------------
       			localIntent = new Intent (context,ToneGeneratorActivity.class);
       			Tone [] tones 	= {
@@ -3310,16 +3616,15 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
       			// 16/09/2015 ECU display the TV channels guide
       			// 22/09/2015 ECU moved here actioned on a shift
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,TVChannelsActivity.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (TVChannelsActivity.class);
+      			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
       		case R.drawable.upnp:
       			// -----------------------------------------------------------------
       			// 16/04/2017 ECU added to process all UPnP devices
       			// -----------------------------------------------------------------
-      			localIntent = new Intent (context,UPnP_Activity_All.class);
-      			startTheActivity (localIntent,0);
+				startTheSpecifiedActivity (UPnP_Activity_All.class);
       			// -----------------------------------------------------------------
   				break;
   			// =====================================================================
@@ -3341,17 +3646,17 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
  				// 10/09/2013 ECU start voice recognition without checking for network
  				//                access - this will give access to offline voice
  				//				  recognition
- 				// -----------------------------------------------------------------	
- 				localIntent = new Intent (context,VoiceRecognition.class);
- 				startActivityForResult (localIntent,0);
+ 				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (VoiceRecognition.class);
+				// -----------------------------------------------------------------
  				break;
  			// =====================================================================
  			case R.drawable.wemo:
  				// -----------------------------------------------------------------
  				// 16/02/2015 ECU start the UPnP activity
- 				// -----------------------------------------------------------------	
- 				localIntent = new Intent (context,WeMoTimerActivity.class);
- 				startActivityForResult (localIntent,0);
+ 				// -----------------------------------------------------------------
+				startTheSpecifiedActivity (WeMoTimerActivity.class);
+				// -----------------------------------------------------------------
  				break;
  			// =====================================================================
  			default:
@@ -3360,7 +3665,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
  				// 19/01/2014 ECU changed to use activeImages
  				// -----------------------------------------------------------------
  				Utilities.gridHelp (context,activeImages[IMAGE_INDEX][thePosition]);
+ 				// -----------------------------------------------------------------
  				break;
+ 				// -----------------------------------------------------------------
 		}
 	}
 	// =============================================================================
@@ -3403,11 +3710,12 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		SetImageSizes (iconsPerRow);
 		// -------------------------------------------------------------------------
 		// 01/10/2014 ECU update some display variables before asking for a refresh
+		// 17/09/2020 ECU change to use local 'imageAdapter'
 		// -------------------------------------------------------------------------
-		PublicData.imageAdapter.notifyDataSetChanged();
+		imageAdapter.notifyDataSetChanged ();
 		// -------------------------------------------------------------------------
 	}
-	/* ----------------------------------------------------------------------------- */
+	// =============================================================================
 	void ZoomDisplay (boolean theZoomFlag)
 	{
 		// -------------------------------------------------------------------------
@@ -3445,7 +3753,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
-	
+
+	// =============================================================================
 	// =============================================================================
 	// 09/11/2014 ECU add the methods needed for handling gestures
 	// -----------------------------------------------------------------------------
@@ -3458,7 +3767,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		return false;
 		// -------------------------------------------------------------------------
 	}
-	// -----------------------------------------------------------------------------
+	// =============================================================================
 	@Override
 	public boolean onFling (MotionEvent motionEvent1,
 							MotionEvent motionEvent2, 
@@ -3467,51 +3776,63 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	{
 		// -------------------------------------------------------------------------
 		// 17/08/2018 ECU want the user action to be processed
+		// 13/12/2019 ECU put in a try/catch because on odd 'start up' conditions
+		//                was getting a NPE
 		// -------------------------------------------------------------------------
-		// 09/11/2014 ECU get the check in coordinates
-		// -------------------------------------------------------------------------	
-		float changeInX = motionEvent2.getX() - motionEvent1.getX();
-		float changeInY = motionEvent2.getY() - motionEvent1.getY();
-		// -------------------------------------------------------------------------
-		// 09/11/2014 ECU if moved more in a left/right direction rather than up/
-		//                down
-		// -------------------------------------------------------------------------
-		if (Math.abs (changeInX) > Math.abs (changeInY)) 
+		try
 		{
 			// ---------------------------------------------------------------------
-			// 09/11/2014 ECU user has swiped, apparently, so check direction
+			// 09/11/2014 ECU get the check in coordinates
 			// ---------------------------------------------------------------------
-			if (Math.abs (changeInX) > SWIPE_DISTANCE_THRESHOLD && 
-					Math.abs (velocityX) > SWIPE_VELOCITY_THRESHOLD) 
+			float changeInX = motionEvent2.getX() - motionEvent1.getX();
+			float changeInY = motionEvent2.getY() - motionEvent1.getY();
+			// ---------------------------------------------------------------------
+			// 09/11/2014 ECU if moved more in a left/right direction rather than up/
+			//                down
+			// ---------------------------------------------------------------------
+			if (Math.abs (changeInX) > Math.abs (changeInY))
 			{
-				if (changeInX > 0) 
+				// -----------------------------------------------------------------
+				// 09/11/2014 ECU user has swiped, apparently, so check direction
+				// -----------------------------------------------------------------
+				if (Math.abs (changeInX) > SWIPE_DISTANCE_THRESHOLD &&
+					Math.abs (velocityX) > SWIPE_VELOCITY_THRESHOLD)
 				{
-					// -------------------------------------------------------------
-					// 10/11/2014 ECU swipe right has been detected
-					// -------------------------------------------------------------
-					localIntent = new Intent (context,SwipeActivity.class);
-					startActivityForResult (localIntent,0);
-					// -------------------------------------------------------------
-				} 
-				else 
-				{
-					// -------------------------------------------------------------
-					// 10/11/2014 ECU swipe left has been detected
-					// -------------------------------------------------------------
-					localIntent = new Intent (context,SwipeActivity.class);
-					startActivityForResult (localIntent,0);
-					// -------------------------------------------------------------
+					if (changeInX > 0)
+					{
+						// ---------------------------------------------------------
+						// 10/11/2014 ECU swipe right has been detected
+						// ---------------------------------------------------------
+						localIntent = new Intent (context,SwipeActivity.class);
+						startActivityForResult (localIntent,0);
+						// ---------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 10/11/2014 ECU swipe left has been detected
+						// ---------------------------------------------------------
+						localIntent = new Intent (context,SwipeActivity.class);
+						startActivityForResult (localIntent,0);
+						// ---------------------------------------------------------
+					}
 				}
+				// -----------------------------------------------------------------
 			}
+		}
+		catch (NullPointerException theException)
+		{
 			// ---------------------------------------------------------------------
-		} 
+			// 13/12/2019 ECU exception occurred - but do nothing
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 		// 09/11/2014 ECU always indicate that the event has been handled
 		// -------------------------------------------------------------------------
 		return true;
 		// -------------------------------------------------------------------------
 	}
-	// -----------------------------------------------------------------------------
+	// =============================================================================
 	@Override
 	public void onLongPress (MotionEvent motionEvent) 
 	{
@@ -3528,7 +3849,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 	{
 		super.onSaveInstanceState (savedInstanceState);
 	}
-	// -----------------------------------------------------------------------------
+	// ============================================================================
 	@Override
 	public boolean onScroll (MotionEvent motionEvent1, 
 							 MotionEvent motionEvent2, 
@@ -3543,7 +3864,7 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		return false;
 		// -------------------------------------------------------------------------
 	}
-	// -----------------------------------------------------------------------------
+	// =============================================================================
 	@Override
 	public void onShowPress (MotionEvent motionEvent)
 	{
@@ -3558,10 +3879,10 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		return false;
 		// -------------------------------------------------------------------------
 	}
-	// -----------------------------------------------------------------------------
+	// =============================================================================
 	
 	// =============================================================================
-	@SuppressLint("HandlerLeak")
+	@SuppressLint ("HandlerLeak")
 	class GridRefreshHandler extends Handler
     {
 		// -------------------------------------------------------------------------
@@ -3576,7 +3897,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		// -------------------------------------------------------------------------
         @Override
         public void handleMessage (Message theMessage) 
-        {   
+        {
+        	// ---------------------------------------------------------------------
+			Message localMessage;
         	// ---------------------------------------------------------------------
         	// 05/05/2015 ECU change to switch on the type of message received
         	//                which is in '.what'
@@ -3593,16 +3916,18 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
             		{
             			// ---------------------------------------------------------
                 		// 13/04/2015 ECU 'grid' user view
+						// 17/09/2020 ECU change to use local 'imageAdapter'
                 		// ---------------------------------------------------------
-            			PublicData.imageAdapter.notifyDataSetChanged ();
+            			imageAdapter.notifyDataSetChanged ();
             			// ---------------------------------------------------------
             		}
             		else
             		{
             			// ---------------------------------------------------------
                 		// 13/04/2015 ECU 'list' user view
+						// 17/09/2020 ECU change to use local 'customGridViewAdapter'
                 		// ---------------------------------------------------------
-            			PublicData.customGridViewAdapter.notifyDataSetChanged ();
+            			customGridViewAdapter.notifyDataSetChanged ();
             			// ---------------------------------------------------------
             		}		
                     // -------------------------------------------------------------
@@ -3620,6 +3945,21 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			}
         			// ------------------------------------------------------------
         			break;
+        		// -----------------------------------------------------------------
+				case StaticData.MESSAGE_NOTIFICATION_REFRESH:
+					// -------------------------------------------------------------
+					// 30/03/2020 ECU created to handle a refresh of the notification
+					//                button
+					// -------------------------------------------------------------
+					if (PublicData.storedData.sortByUsage)
+					{
+						// ---------------------------------------------------------
+						localMessage = obtainMessage (StaticData.MESSAGE_NOTIFICATION_START,false);
+						sendMessage (localMessage);
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					break;
         		// -----------------------------------------------------------------
         		case StaticData.MESSAGE_NOTIFICATION_START:
         			// -------------------------------------------------------------
@@ -3673,6 +4013,16 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			// -------------------------------------------------------------
         			Utilities.setTheScreenState ((Boolean) theMessage.obj);	
         			break;
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_SCREEN_BRIGHTNESS:
+					// -------------------------------------------------------------
+					// 22/12/2019 ECU added to set the screen to the brightness
+					//                that is passed as the object
+					// 23/12/2019 ECU 'arg1' contains the brightness from 0 to 100
+					// -------------------------------------------------------------
+					Utilities.setScreenBrightness (GridActivity.activity,((float) theMessage.arg1) / 100.0f);
+					// -------------------------------------------------------------
+					break;
         		// -----------------------------------------------------------------
         		case StaticData.MESSAGE_SLEEP:
         			// -------------------------------------------------------------
@@ -3680,6 +4030,29 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			//                here
         			// -------------------------------------------------------------
         			break;
+        		// -----------------------------------------------------------------
+				case StaticData.MESSAGE_START_ACTIVITY:
+					// -------------------------------------------------------------
+					// 24/06/2020 ECU called when a specified activity is to be started
+					// -------------------------------------------------------------
+					if (theMessage.arg1 < StaticData.ACTIVITY_LONG_OFFSET)
+					{
+						// -------------------------------------------------------------
+						// 07/02/2018 ECU treat as if the item just clicked
+						// -------------------------------------------------------------
+						SwitchOnImage (theMessage.arg1,null);
+						// -------------------------------------------------------------
+					}
+					else
+					{
+						// -------------------------------------------------------------
+						// 07/02/2018 ECU treat as if the 'long press' is to be actioned
+						// -------------------------------------------------------------
+						SwitchOnImageLong (theMessage.arg1 - StaticData.ACTIVITY_LONG_OFFSET,null);
+						// -------------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					break;
         		// -----------------------------------------------------------------
         		case StaticData.MESSAGE_USER_ACTIONS:
         			// -------------------------------------------------------------
@@ -3691,6 +4064,9 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
         			// -------------------------------------------------------------
         			break;
         		// -----------------------------------------------------------------
+				default:
+					break;
+				// -----------------------------------------------------------------
         	}
         	// ---------------------------------------------------------------------
         }
@@ -3738,5 +4114,8 @@ public class GridActivity extends Activity implements SensorEventListener,OnGest
 		}
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+
+	// =============================================================================
 	// =============================================================================
 }

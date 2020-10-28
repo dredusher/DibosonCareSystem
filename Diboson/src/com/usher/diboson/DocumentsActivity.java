@@ -1,8 +1,5 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +7,9 @@ import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class DocumentsActivity extends DibosonActivity 
 {
@@ -60,7 +60,7 @@ public class DocumentsActivity extends DibosonActivity
 			if (PublicData.storedData.documents.size() > 0)
 			{
 				// -----------------------------------------------------------------
-				// 13/04/2018 ECU initialist the display - changed to use ListViewSelector
+				// 13/04/2018 ECU initialise the display - changed to use ListViewSelector
 				// -----------------------------------------------------------------
 				initialiseDisplay (this);
 				// -----------------------------------------------------------------
@@ -146,9 +146,10 @@ public class DocumentsActivity extends DibosonActivity
 				{
 					// -------------------------------------------------------------
 					// 18/10/2016 ECU browse for the required file
+					// 16/07/2020 ECU change to start in the 'Documents' directory
 					// -------------------------------------------------------------
 					Utilities.PickAFile (activity,
-							 			 PublicData.projectFolder,
+							 			 PublicData.projectFolder + getString (R.string.documents_directory),
 							 			 StaticData.EXTENSION_DOCUMENT,
 							 			 true);
 					// -------------------------------------------------------------
@@ -182,6 +183,7 @@ public class DocumentsActivity extends DibosonActivity
 						// 13/04/2018 ECU because the layout has been changed within
 						//                this activity then need to do a complete
 						//                rebuild of the display
+						// ---------------------------------------------------------
 						initialiseDisplay (activity);
 						// ---------------------------------------------------------
 					}
@@ -221,17 +223,31 @@ public class DocumentsActivity extends DibosonActivity
 		}
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+	public void HelpMethod (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 25/01/2020 ECU created to action the help button
+		//            ECU at this case just display the associated document
+		// -------------------------------------------------------------------------
+		SelectAction (thePosition);
+		// -------------------------------------------------------------------------
+	}
 	// ============================================================================= 
     public void SelectAction (int thePosition)
     {
     	// -------------------------------------------------------------------------
     	// 18/10/2016 ECU called to display the selected file
+    	// 15/07/2020 ECU changed from '.path' to '.Path ()' because need to
+    	//                pass the absolute file path
     	// -------------------------------------------------------------------------
-    	Utilities.displayDocument (context,PublicData.storedData.documents.get(thePosition).path);
+    	Utilities.displayDocument (context,PublicData.storedData.documents.get (thePosition).Path ());
     	// -------------------------------------------------------------------------
     	// 18/10/2016 ECU just finish this activity
+    	// 16/07/2020 ECU remove the finish just in case the user wants to look at
+    	//                more than one document
     	// -------------------------------------------------------------------------
-    	finish ();
+    	// 16/07/2020 ECU removed finish ();
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
@@ -304,6 +320,7 @@ public class DocumentsActivity extends DibosonActivity
 	{
 		// -------------------------------------------------------------------------
 		// 13/04/2018 ECU created to generate the display of stored documents
+		// 25/01/2020 ECU included the 'help method'
 		// -------------------------------------------------------------------------
 		listViewSelector = new ListViewSelector (theActivity,
 				   								 R.layout.document_row,
@@ -314,7 +331,7 @@ public class DocumentsActivity extends DibosonActivity
 				   								 Utilities.createAMethod (DocumentsActivity.class,"EditDocument",0),
 				   								 getString (R.string.add),
 				   								 Utilities.createAMethod (DocumentsActivity.class,"AddDocument",0),
-				   								 StaticData.NO_HANDLING_METHOD,
+												 Utilities.createAMethod (DocumentsActivity.class,"HelpMethod",0),
 				   								 Utilities.createAMethod (DocumentsActivity.class,"SwipeAction",0)
 				   								);
 		// -------------------------------------------------------------------------

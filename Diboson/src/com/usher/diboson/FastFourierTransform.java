@@ -7,13 +7,15 @@ public class FastFourierTransform
 	/* ============================================================================= */
 	
 	// =============================================================================
-
+	private static double TWO_PI	=  (2 * Math.PI);
 	// =============================================================================
 	
 	/* ============================================================================= */
-	public FastFourierTransform () 
+	public FastFourierTransform ()
 	{
-		
+		// -------------------------------------------------------------------------
+		// 17/10/2013 ECU public constructor
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public Complex [] fft (Complex [] theComplexNumbers) 
@@ -32,7 +34,7 @@ public class FastFourierTransform
 		// -------------------------------------------------------------------------
 		// 18/10/2013 ECU check for radix-2 Cooley-Tukey algorithm
 		// -------------------------------------------------------------------------
-		if ((localNumberOfPoints % 2) != 0) 
+		if ((localNumberOfPoints % 2) != 0)
 		{ 
 			// ---------------------------------------------------------------------
 			// 18/10/2013 ECU cannot use the algorithm
@@ -41,58 +43,54 @@ public class FastFourierTransform
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
+		// 26/06/2020 ECU set up half of the number - used quite often.
+		//                Changed where needed in the following code
+		// -------------------------------------------------------------------------
+		int localHalfOfNumberOfPoints = localNumberOfPoints / 2;
+		// -------------------------------------------------------------------------
 		// 18/10/2013 ECU do the transformation of the even terms
 		// -------------------------------------------------------------------------
-		Complex [] evenTerms = new Complex [localNumberOfPoints/2];
-		
-		for (int k = 0; k < localNumberOfPoints/2; k++) 
+		Complex [] evenTerms = new Complex [localHalfOfNumberOfPoints];
+		Complex [] oddTerms  = new Complex [localHalfOfNumberOfPoints];
+		// -------------------------------------------------------------------------
+		for (int k = 0; k < localHalfOfNumberOfPoints; k++)
 		{
-			evenTerms[k] = theComplexNumbers [2*k];
+			evenTerms [k] = theComplexNumbers [(2 * k)];
+			oddTerms  [k] = theComplexNumbers [(2 * k) + 1];
 		}
 		// -------------------------------------------------------------------------
 		// 18/10/2013 ECU now do the actual transformation
 		// -------------------------------------------------------------------------
 		Complex [] evenTransformation = fft (evenTerms);
-		// -------------------------------------------------------------------------
-		// 18/10/2013 ECU do the transformation of the odd terms
-		// -------------------------------------------------------------------------
-		Complex [] oddTerms  = evenTerms;  // reuse the array
-		
-		for (int k = 0; k < localNumberOfPoints/2; k++) 
-		{
-			oddTerms[k] = theComplexNumbers [2*k + 1];
-		}
-		// -------------------------------------------------------------------------
-		// 18/10/2013 ECU now do the actual transformation
-		// -------------------------------------------------------------------------
-		Complex[] oddTransformation = fft (oddTerms);
+		Complex [] oddTransformation  = fft (oddTerms);
 		// -------------------------------------------------------------------------
       	// 18/10/2013 ECU now combine the odd and even terms
 		// -------------------------------------------------------------------------
-		Complex[] totalTransformation = new Complex [localNumberOfPoints];
+		Complex [] totalTransformation = new Complex [localNumberOfPoints];
 		double kth;
 		Complex wk;
-		
-     	for (int k = 0; k < localNumberOfPoints/2; k++) 
+		double  twoPiFactor = -TWO_PI / localNumberOfPoints;
+		// -------------------------------------------------------------------------
+     	for (int k = 0; k < localHalfOfNumberOfPoints; k++)
      	{
      		// ---------------------------------------------------------------------
      		// 18/10/2013 ECU get the power of the 'twiddle factor'
+     		// 26/06/2020 ECU changed to use the 'twoPiFactor' rather than doing it
+     		//                each iteration
      		// ---------------------------------------------------------------------
-     		kth = -2 * k * Math.PI / localNumberOfPoints;
+     		kth = twoPiFactor * k;
           
-     		wk = new Complex (Math.cos(kth), Math.sin(kth));
+     		wk = new Complex (Math.cos (kth), Math.sin (kth));
           
-     		totalTransformation [k]         		   		= evenTransformation[k].plus(wk.times(oddTransformation[k]));
-     		totalTransformation [k + localNumberOfPoints/2] = evenTransformation[k].minus(wk.times(oddTransformation[k]));
+     		totalTransformation [k]         		   			= evenTransformation [k].plus  (wk.times (oddTransformation [k]));
+     		totalTransformation [k + localHalfOfNumberOfPoints] = evenTransformation [k].minus (wk.times (oddTransformation [k]));
+     		// ---------------------------------------------------------------------
      	}
      	// -------------------------------------------------------------------------
      	// 20/10/2013 ECU return the final transformation
      	// -------------------------------------------------------------------------
      	return totalTransformation;
+     	// -------------------------------------------------------------------------
 	}
 	/* ============================================================================== */
 }
-
- 
-
-

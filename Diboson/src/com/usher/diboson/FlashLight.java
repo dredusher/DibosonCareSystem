@@ -1,12 +1,11 @@
 package com.usher.diboson;
 
-import java.util.List;
-
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.Parameters;
 import android.os.Message;
 import android.widget.ImageView;
+import java.util.List;
 
 public class FlashLight 
 {
@@ -30,8 +29,8 @@ public class FlashLight
 	// =============================================================================
 	// 29/12/2016 ECU declare any variables needed within the class
 	// -----------------------------------------------------------------------------
-	private static Camera 		backCamera  = null;		// 29/12/2016 ECU changed name
-	private static Context		context;
+	private static 	Camera 		backCamera  = null;		// 29/12/2016 ECU changed name
+	private static 	Context		context;
 	// =============================================================================
 	
 	// =============================================================================
@@ -131,6 +130,7 @@ public class FlashLight
 	        		supportedFlashModes.isEmpty() || 
 	        		(supportedFlashModes.size() == 1 && supportedFlashModes.get(0).equals(Camera.Parameters.FLASH_MODE_OFF))) 
 	        			return false;
+	        	// -----------------------------------------------------------------
 	        }
 	        // ---------------------------------------------------------------------
 	        // 14/06/2019 ECU release the camera if required
@@ -197,13 +197,20 @@ public class FlashLight
 				//                camera is in preview mode. Then start the capture
 				// -----------------------------------------------------------------
 				Parameters parameters = backCamera.getParameters ();
-				parameters.setFlashMode (Parameters.FLASH_MODE_TORCH);
+				// -----------------------------------------------------------------
+				// 25/01/2020 ECU on the 'Samsung 2019' - setting flash mode causes
+				//                an exception that the parameter is wrong - put in
+				//                the check on 'flash mode'
+				// -----------------------------------------------------------------
+				if (parameters.getFlashMode() != null)
+					parameters.setFlashMode (Parameters.FLASH_MODE_TORCH);
+				// -----------------------------------------------------------------
 				backCamera.setParameters (parameters);
 				backCamera.startPreview ();
 				// -----------------------------------------------------------------
 				// 29/12/2016 ECU make sure the 'torch icon' is updated
 				// -----------------------------------------------------------------
-				GridActivity.gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER); 
+				GridActivity.gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER);
 				// -----------------------------------------------------------------
 			}
 			else
@@ -217,7 +224,7 @@ public class FlashLight
 		} 
 		catch (Exception theException) 
 		{
-			theException.printStackTrace();
+			// ---------------------------------------------------------------------
 		}
 	}
 	/* ============================================================================= */
@@ -243,7 +250,7 @@ public class FlashLight
 				// -----------------------------------------------------------------
 				// 29/12/2016 ECU make sure the 'torch icon' is updated
 				// -----------------------------------------------------------------
-				GridActivity.gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER); 
+				GridActivity.gridRefreshHandler.sendEmptyMessage (StaticData.MESSAGE_ADAPTER);
 				// -----------------------------------------------------------------
 			}
 			else
@@ -273,6 +280,7 @@ public class FlashLight
 			flashLightOn (theContext);
 		else
 			flashLightOff (theContext);
+		// --------------------------------------------------------------------------
 	}
 	// ==============================================================================
 	public static void flashLightUpdateImageView (ImageView theImageView)

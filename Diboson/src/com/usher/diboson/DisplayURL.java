@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 
 public class DisplayURL extends DibosonActivity 
 {
@@ -16,6 +17,7 @@ public class DisplayURL extends DibosonActivity
 	private String 		url;					// 06/02/2014 ECU changed name from
 												//                theURL
 	private WebView 	webview;
+	private boolean		webviewClient	= false;
 	/* ======================================================================= */
 	@SuppressLint ("SetJavaScriptEnabled")
 	@Override
@@ -41,7 +43,12 @@ public class DisplayURL extends DibosonActivity
 				// 05/11/2013 ECU get the URL from the intent
 				// 19/12/2016 ECU changed to use _URL
 				// -----------------------------------------------------------------
- 	   			url = getIntent().getStringExtra (StaticData.PARAMETER_URL); 	
+ 	   			url = getIntent().getStringExtra (StaticData.PARAMETER_URL);
+ 	   			// -----------------------------------------------------------------
+ 	   			// 18/01/2020 ECU check if the web client is to be included
+ 	   			// -----------------------------------------------------------------
+ 	   			webviewClient = localExtras.getBoolean (StaticData.PARAMETER_WEBVIEW_CLIENT,false);
+ 	   			// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -49,6 +56,7 @@ public class DisplayURL extends DibosonActivity
 				// 05/11/2013 ECU is no URl was pass through then display the default
 				// -----------------------------------------------------------------
 				url = getResources().getString (R.string.URL_To_Display);
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 05/11/2013 ECU display the appropriate layout
@@ -60,6 +68,20 @@ public class DisplayURL extends DibosonActivity
 			webview = (WebView) findViewById (R.id.webView1);
 			webview.getSettings ().setJavaScriptEnabled (true);
 			webview.loadUrl (url);
+			// ---------------------------------------------------------------------
+			if (webviewClient)
+			{
+				webview.setWebViewClient (new WebViewClient()
+				{
+					@Override
+					public boolean shouldOverrideUrlLoading (WebView view, String url)
+					{
+						view.loadUrl (url);
+						return true;
+					}
+					// -------------------------------------------------------------
+				});
+			}
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -94,15 +116,16 @@ public class DisplayURL extends DibosonActivity
 		//                key is pressed from the blank screen that comes up after
 		//                leaving the browser
 		// -------------------------------------------------------------------------
-	    if (webview.canGoBack ()) 
+	    if (webview.canGoBack ())
 	    {
+	    	// ---------------------------------------------------------------------
 	        webview.goBack ();
 	        return;
+	        // ---------------------------------------------------------------------
 	    }
 	    // ------------------------------------------------------------------------
 	    super.onBackPressed ();   
 	    // ------------------------------------------------------------------------
 	}
 	// ============================================================================
-	   
 }

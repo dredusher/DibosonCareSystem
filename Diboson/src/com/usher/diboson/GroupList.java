@@ -1,10 +1,10 @@
 package com.usher.diboson;
 
-import java.io.Serializable;
-import java.util.List;
-
 import android.content.Context;
-import android.widget.Toast;
+
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
 // =================================================================================
 public class GroupList implements Serializable
@@ -26,52 +26,43 @@ public class GroupList implements Serializable
 	List<Integer> 		activities;					// 19/10/2016 ECU changed from <GridImages>
 	String  			groupListName;
 	// -----------------------------------------------------------------------------
-	
+
 	// =============================================================================
-	public static void Add (Context theContext,int theGroup,int theActivityImage)
+	public GroupList (String theGroupName)
+	{
+		// -------------------------------------------------------------------------
+		// 28/07/2020 ECU created to set a default group name
+		// -------------------------------------------------------------------------
+		groupListName	= theGroupName;
+		// -------------------------------------------------------------------------
+		// 28/07/2020 ECU preset the 'activities' to an empty list
+		// -------------------------------------------------------------------------
+		activities		= new ArrayList<Integer> ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void AddActivity (int theActivityIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 07/10/2016 ECU created to add a new entry into a group list
 		// 08/10/2016 ECU added the group
 		// 18/04/2017 ECU added the context as an argument
-		// -------------------------------------------------------------------------
-		// 19/10 2016 ECU get the index corresponding to the image
-		// -------------------------------------------------------------------------
-		int localIndex = getIndex (theActivityImage);
-		// -------------------------------------------------------------------------
-		// 19/10/2016 ECU if not found then just exit
-		// -------------------------------------------------------------------------
-		if (localIndex == StaticData.NO_RESULT)
-			return;
-		// -------------------------------------------------------------------------
-		// 07/10/2016 ECU check if the current id is already in the list
-		// -------------------------------------------------------------------------
-		for (int theIndex = 0; theIndex < PublicData.storedData.groupLists.get(theGroup).activities.size(); theIndex++)
-		{
-			if (PublicData.storedData.groupLists.get(theGroup).activities.get (theIndex) == localIndex)
-			{
-				// -----------------------------------------------------------------
-				// 07/10/2016 ECU indicate that image already added
-				// 01/04/2017 ECU changed to use new Legend method
-				// -----------------------------------------------------------------
-				Utilities.popToast ("'" + getGridImage (localIndex).Legend (theContext) + 
-												"'\nhas already been added to the group",true,Toast.LENGTH_SHORT);
-				// -----------------------------------------------------------------
-				return;
-			}
-		}
+		// 25/07/2020 ECU changed the logic to store index directly
+		// 28/07/2020 ECU changed from 'static'
 		// -------------------------------------------------------------------------
 		// 07/10/2016 ECU now add the entry into the group list
 		// -------------------------------------------------------------------------
-		PublicData.storedData.groupLists.get(theGroup).activities.add (localIndex);
-		// -----------------------------------------------------------------
-		// 07/10/2016 ECU indicate that the image has been added
-		// 01/04/2017 ECU changed to use new Legend method
-		// 18/04/2017 ECU added the context as an argument
-		// -----------------------------------------------------------------
-		Utilities.popToast ("'" + getGridImage (localIndex).Legend (theContext) + 
-										"'\nhas been added to the group",true,Toast.LENGTH_SHORT);
-		// ------------------------------------------------------------------
+		activities.add (theActivityIndex);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void ClearActivities ()
+	{
+		// -------------------------------------------------------------------------
+		// 28/07/2020 ECU clear the list of stored activities
+		// -------------------------------------------------------------------------
+		activities =  new ArrayList<Integer> ();
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String [] getActivityTitles (Context theContext,int theGroup)
@@ -104,33 +95,6 @@ public class GroupList implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static int getIndex (int theResourceId)
-	{
-		// -------------------------------------------------------------------------
-		// 19/10/2016 ECU created to find the entry in 'original...' which has the
-		//                specified resource ID. Returns the array index or NO_RESULT
-		//                if no entry found
-		// -------------------------------------------------------------------------
-		for (int index = 0; index < GridActivity.originalGridImages.length; index++)
-		{
-			// ---------------------------------------------------------------------
-			// 19/10/2016 ECU check for the specified resource
-			// ---------------------------------------------------------------------
-			if (theResourceId == GridActivity.originalGridImages [index].imageId)
-			{
-				// -----------------------------------------------------------------
-				// 19/10/2016 ECU have found the index in the array so return it
-				// -----------------------------------------------------------------
-				return index;
-			}
-		}
-		// -------------------------------------------------------------------------
-		// 19/10/2016 ECU get here if no match found so indicate that fact
-		// -------------------------------------------------------------------------
-		return StaticData.NO_RESULT;
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
 	public static String [] getTitles ()
 	{
 		// -------------------------------------------------------------------------
@@ -140,21 +104,26 @@ public class GroupList implements Serializable
 			PublicData.storedData.groupLists.size () > 0)
 		{
 			String [] localNames = new String [PublicData.storedData.groupLists.size ()];
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 08/10/2016 ECU copy the information across
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			for (int index = 0; index < localNames.length; index++)
 			{
 				localNames [index] = PublicData.storedData.groupLists.get(index).groupListName;
 			}
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			// 08/10/2016 ECU now copy across the generated array
-			// -------------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			return localNames;
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
+			// ---------------------------------------------------------------------
+			// 08/10/2016 ECU nothing has been defined so indicate that fact
+			// ---------------------------------------------------------------------
 			return null;
+			// ---------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
@@ -205,7 +174,7 @@ public class GroupList implements Serializable
 				// -----------------------------------------------------------------
 				// 05/11/2016 ECU log the error and then report problem back to caller
 				// -----------------------------------------------------------------
-				Utilities.LogToProjectFile(TAG,"Exception : " + theException);
+				Utilities.LogToProjectFile (TAG,"Exception : " + theException);
 				// -----------------------------------------------------------------
 				return null;
 				// -----------------------------------------------------------------

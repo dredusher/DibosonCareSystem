@@ -1,16 +1,16 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Locale;
-
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.speech.RecognizerIntent;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.TextToSpeech.OnInitListener;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Locale;
 
 public class Dialogue extends DibosonActivity implements OnInitListener
 {
@@ -186,7 +186,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 	/* ============================================================================= */
 	int					action 				= ACTION_NONE;					// 24/11/2013 ECU added 
 	String  			adjective 			= StaticData.BLANK_STRING;
-	BlueToothServiceUtilities	
+	BluetoothServiceUtilities
 						blueToothServiceUtilities;
 																			// 14/10/2015 ECU added
 	String				currentPhrase 		= StaticData.BLANK_STRING;		// 23/11/2013 ECU added
@@ -351,6 +351,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 					// ------------------------------------------------------------
 					if (!terminating)
 						Utilities.GetAPhrase (activity,textToSpeech);
+					// ------------------------------------------------------------
 				}
 			}
 			
@@ -387,6 +388,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		return theAnswer;
 	}
 	// =============================================================================
+	@SuppressWarnings("Annotator")
 	String ParseTheFile (String theFileName)
 	{
 		// -------------------------------------------------------------------------
@@ -603,6 +605,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 		return new String (stringRead);
 	}
 	/* ============================================================================= */
+	@SuppressWarnings("Annotator")
 	String ReadAFile (String theFileName, DialogueParameter [] theDialogueParameters)
 	{
 		// -------------------------------------------------------------------------
@@ -972,7 +975,7 @@ public class Dialogue extends DibosonActivity implements OnInitListener
 				// 01/03/2014 ECU initialise link to the bluetooth service
 				// 14/10/2015 ECU changed to use ....Utilities
 				// -----------------------------------------------------------------
-				blueToothServiceUtilities = new BlueToothServiceUtilities (getBaseContext());
+				blueToothServiceUtilities = new BluetoothServiceUtilities(getBaseContext());
 				// -----------------------------------------------------------------		
 				Utilities.SpeakAPhrase (getBaseContext(),PHRASE_TELEVISION_ON,textToSpeech);
 				// -----------------------------------------------------------------

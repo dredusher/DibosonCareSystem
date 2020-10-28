@@ -325,7 +325,13 @@ public class DiscoverNetwork extends DibosonActivity
 			// ---------------------------------------------------------------------
 			localDevice.compatible = Devices.returnCompatibility (localDevice.patientName);
 			// ---------------------------------------------------------------------
+			// 16/11/2019 ECU check if the name has been redefined
+			// ---------------------------------------------------------------------
+			localDevice.name = DeviceName.getName( localDevice.name,localDevice.serialNumber);
+			// ---------------------------------------------------------------------
 		}
+		// -------------------------------------------------------------------------
+		//
 		// -------------------------------------------------------------------------
 		// 22/03/2015 ECU add the new device into the list
 		// -------------------------------------------------------------------------

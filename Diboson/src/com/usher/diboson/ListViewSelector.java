@@ -1,14 +1,14 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Collections;
 import android.app.Activity;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ListView;
 import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemLongClickListener;
+import android.widget.ListView;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 
 // =================================================================================
 public class ListViewSelector 
@@ -17,6 +17,7 @@ public class ListViewSelector
 	Activity				activity;
 	CustomListViewAdapter 	customListViewAdapter;
 	ArrayList<ListItem> 	listItems				= new ArrayList<ListItem>();
+	ListView                listView;					// 18/07/2020 ECU added here
 	Method 					populateMethod;
 	boolean					sortFlag;
 	// =============================================================================
@@ -44,8 +45,10 @@ public class ListViewSelector
 		// 07/04/2018 ECU set up the display with a list view
 		// -------------------------------------------------------------------------
 		theActivity.setContentView (R.layout.activity_list);
-		
-		ListView listView = (ListView) theActivity.findViewById (R.id.grid_list_view);
+		// -------------------------------------------------------------------------
+		// 18/07/2020 ECU removed the declaration of 'listView' from here
+		// -------------------------------------------------------------------------
+		listView = (ListView) theActivity.findViewById (R.id.grid_list_view);
 		// -------------------------------------------------------------------------
 		// 07/04/2018 ECU build up the initial list of items to display
 		// -------------------------------------------------------------------------
@@ -64,7 +67,7 @@ public class ListViewSelector
 			// 07/04/2017 ECU  set up the adapter that will handle the list
 			// ---------------------------------------------------------------------
 			customListViewAdapter = new CustomListViewAdapter (theActivity,theLayoutID,listItems); 
-		
+			// ----------------------------------------------------------------------
 			listView.setAdapter (customListViewAdapter);
 			// ---------------------------------------------------------------------
 			customListViewAdapter.ChangeDefaults (theActivity,
@@ -122,14 +125,30 @@ public class ListViewSelector
 																				listView,
 																				new SwipeDismissListViewTouchListener.OnDismissCallback () 
 				{
+					// -------------------------------------------------------------
 					@Override
 					public void onDismiss (ListView listView,int [] reverseSortedPositions) 
 					{
+						// ---------------------------------------------------------
+						// 16/05/2020 ECU Note - invoke the method that will ask the
+						//                       user if the item is to be deleted
+						// ---------------------------------------------------------
 						invokeMethod (activity,theSwipeMethod,listItems.get (reverseSortedPositions [0]).index);
+						// ---------------------------------------------------------
 					}
+					// -------------------------------------------------------------
 				});
 				// -----------------------------------------------------------------
-				listView.setOnTouchListener (touchListener);
+				// 16/05/2020 ECU Note - Interface definition for a callback to be
+				// 				         invoked when a touch event is dispatched to
+				// 				         this view. The callback will be invoked
+				// 				         before the touch event is given to the view.
+				// -----------------------------------------------------------------
+				listView.setOnTouchListener  (touchListener);
+				// -----------------------------------------------------------------
+				// 16/05/2020 ECU Note - set the listener that will receive
+				// 						 notifications every time the list scrolls.
+				// -----------------------------------------------------------------
 				listView.setOnScrollListener (touchListener.makeScrollListener());
 				// -----------------------------------------------------------------
 			}
@@ -258,9 +277,20 @@ public class ListViewSelector
 			catch (Exception theException) 
 			{
 				// -----------------------------------------------------------------
+				// 15/07/2020 ECU unable to perform the action
+				// -----------------------------------------------------------------
 				// -----------------------------------------------------------------
 			}
 		}
+	}
+	// =============================================================================
+	public void positionTo (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 18/07/2020 ECU created to position the listview to the specified position
+		// -------------------------------------------------------------------------
+		listView.setSelection (thePosition);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public void refresh ()

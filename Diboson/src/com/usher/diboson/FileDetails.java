@@ -18,9 +18,15 @@ public class FileDetails implements Serializable
 	/* ========================================================================== */
 	public FileDetails (String theProjectFolder,File theFile)
 	{
-		fileName		=   theFile.getPath().replaceAll (theProjectFolder,StaticData.BLANK_STRING);
+		// ----------------------------------------------------------------------
+		// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+		//                the former requires a REGEX so not sure why it ever
+		//				  worked
+		// ----------------------------------------------------------------------
+		fileName		=   theFile.getPath().replace (theProjectFolder,StaticData.BLANK_STRING);
 		fileSize		=   theFile.length();			// 07/04/2014 ECU added
 		lastModified 	= 	theFile.lastModified();
+		// ----------------------------------------------------------------------
 	}
 	/* ========================================================================== */
 	public String GetFileName ()
@@ -30,6 +36,7 @@ public class FileDetails implements Serializable
 		//                the project folder
 		// ----------------------------------------------------------------------
 		return PublicData.projectFolder + fileName;
+		// ----------------------------------------------------------------------
 	}
 	/* ========================================================================== */
 	public String Print ()

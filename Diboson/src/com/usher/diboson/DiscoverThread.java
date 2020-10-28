@@ -1,9 +1,10 @@
 package com.usher.diboson;
 
-import java.net.InetAddress;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Message;
+
+import java.net.InetAddress;
 
 public class DiscoverThread extends DibosonActivity implements Runnable
 {
@@ -30,12 +31,17 @@ public class DiscoverThread extends DibosonActivity implements Runnable
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
+		// -------------------------------------------------------------------------
+		// 02/07/2020 ECU added the 'super' call
+		// -------------------------------------------------------------------------
+		super.onCreate (savedInstanceState);
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public void run() 
 	{
 		// -------------------------------------------------------------------------
-
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public Runnable DiscoveryThread ()
@@ -90,7 +96,8 @@ public class DiscoverThread extends DibosonActivity implements Runnable
 		    }
 		 };
 		 // ------------------------------------------------------------------------
-		 return thread;      
+		 return thread;
+		 // ------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 }

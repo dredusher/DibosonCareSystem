@@ -38,8 +38,10 @@ public class DateTime
 	{
 		// -------------------------------------------------------------------------
 		// 07/03/2015 ECU return the time as a string of the correct format
+		// 03/12/2019 ECU changed to use TIME....
 		// -------------------------------------------------------------------------
-		return String.format ("%02d:%02d",theHour,theMinute);
+		return String.format (StaticData.TIME_FORMAT,theHour,theMinute);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

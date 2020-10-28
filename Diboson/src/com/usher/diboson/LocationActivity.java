@@ -1,10 +1,9 @@
 package com.usher.diboson;
 
-import java.io.File;
-import java.text.SimpleDateFormat;
-import java.util.List;
-import java.util.Locale;
-
+import android.app.Activity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -12,18 +11,21 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.provider.Settings;
-import android.app.Activity;
-import android.content.Context;
-import android.content.Intent;
+import android.text.method.ScrollingMovementMethod;
 import android.view.GestureDetector;
+import android.view.GestureDetector.OnGestureListener;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
-import android.view.GestureDetector.OnGestureListener;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.List;
+import java.util.Locale;
 
 public class LocationActivity extends DibosonActivity implements OnGestureListener
 {
@@ -47,6 +49,10 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	// 20/02/2017 ECU added the use of the TrackingDetails class to store data
 	//                that has previously been written to disk
 	// 23/11/2017 ECU include a button to switch trcking on/off
+	// 19/10/2020 ECU use the stored value for getting the minimum distance and time
+	//                time for location updates
+	// 26/10/2020 ECU reset the 'triggers' of the markers each time this app is
+	//                started
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -55,8 +61,10 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	/* ============================================================================= */
 	private static final int 			MENU_ALWAYS_PLAY    = 0;
 	private static final int			MENU_LOG			= 1;	// 09/02/2016 ECU added
-	private static final int			MENU_MAP			= 2;	// 23/10/2014 ECU added
-	private static final int 			MENU_TRACK_MODE	    = 3;
+	private static final int			MENU_DISTANCES		= 2;	// 09/02/2016 ECU added
+	private static final int			MENU_MARKER			= 3;	// 12/10/2020 ECU added
+	private static final int			MENU_MAP			= 4;	// 23/10/2014 ECU added
+	private static final int 			MENU_TRACK_MODE	    = 5;
 	// =============================================================================
 	private static final String			KML_HEADER			= "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
 															  "<kml xmlns=\"http://www.opengis.net/kml/2.2\" xmlns:gx=\"http://www.google.com/kml/ext/2.2\">\n" +
@@ -78,11 +86,6 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 															  "</kml>\n";
 	private static final double		    MILES_PER_KILOMETRE	= 0.621371;
 																	// 23/02/2016 ECU miles per kilometre
-	private static final int			MINIMUM_DISTANCE	= 5;	// 19/01/2014 ECU minimum distance in
-																	//                metres between updates
-																	// 12/02/2016 ECU changed to 5 from 1
-	private static final int		    MINIMUM_TIME		= 10000;// 19/01/2014 ECU minimum time in milliseconds
-																	//                between updates
 	private static final String			TIMESTAMP			="yyyy-MM-dd'T'HH:mm:ss'Z'";
 																	// 09/02/2016 ECU added
 	/* ============================================================================= */
@@ -100,6 +103,8 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	public static   String				lastNoteActioned	= StaticData.BLANK_STRING;	
 																	// 20/02/2017 ECU added
 	// -----------------------------------------------------------------------------
+					float				minimumDistance		= 5;
+					long				minimumTime			= 5000;
 	public static	double         		previousLongitude 	= 0;
 	public static 	double          	previousLatitude 	= 0;
 	public static 	double          	previousAltitude 	= 0;
@@ -110,6 +115,8 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		   static	long				adjustedTime;				// 21/10/2014 ECU added
 		   static 	Context				context;					// 09/02/2016 ECU added
 		   static   double				distance;					// 11/02/2016 ECU added
+					boolean             distancesDisplay = false;	// 16/10/2020 ECU added
+		   static	TextView            distancesView;				// 16/10/2020 ECU added
 		   static   boolean				finishFlag = false;			// 10/02/2016 ECU added
 					GestureDetector		gestureScanner = null;		// 21/10/2014 ECU preset to null
 		   static	boolean             keepTimerHandlerRunning = true;
@@ -118,17 +125,23 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		   															// 11/02/2016 ECU added
 		   static   double				lastTrackLongitude	= StaticData.NO_RESULT;
 		   															// 11/02/2016 ECU added
+		   			Location			locationData;				// 20/10/2020 ECU added
 		   static	TextView   			locationDetails;			// 02/01/2014 ECU added
 					LocationListener 	locationListener;			// 23/08/2013 ECU added - was declared locally
 					LocationManager  	locationManager = null;		// 23/08/2013 ECU added - was declared locally
+					Message				locationMessage;			// 20/10/2020 ECU added
 					ImageView		  	locationImage;				// 02/01/2014 ECU added
 		   static 	boolean				logToFileTime = false;		// 09/02/2016 ECU added
+					Button				markButton;					// 12/10/2020 ECU added
+		   			boolean				markLocation = false;		// 12/10/2020 ECU added
 		         	boolean				remoteMode = false;			// 21/10/2014 ECU added
 		   static   String				senderDeviceDetails;		// 20/10/2014 ECU added
 		   static	SimpleDateFormat	timestampFormat;			// 09/02/2016 ECU added
 		   			Button				trackingButton;				// 23/11/2017 ECU added
 		   static   TextView        	updatedCoordinate;
 	/* ============================================================================= */
+					LocationHandler     locationHandler = new LocationHandler ();
+																	// 20/10/2020 ECU added
 		   static   TimerHandler 		timerHandler	= new TimerHandler();
 	/* ============================================================================= */
 	@Override
@@ -174,11 +187,34 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		   		@Override
 		   		public void onClick (View view) 
 		   		{	
-		   			// -----------------------------------------------------------------
+		   			// -------------------------------------------------------------
 		   			// 23/11/2017 ECU called to toggle tracking
-		   			// -----------------------------------------------------------------
+		   			// -------------------------------------------------------------
 		   			toggleTrackingMode ();
-		   			// -----------------------------------------------------------------
+		   			// -------------------------------------------------------------
+				}
+			});
+			// ---------------------------------------------------------------------
+			// 12/10/2020 ECU handle the 'marking'of alocation
+			// ---------------------------------------------------------------------
+			markButton = (Button) findViewById (R.id.mark_location);
+			// ---------------------------------------------------------------------
+			markButton.setOnClickListener (new View.OnClickListener ()
+			{
+				// -----------------------------------------------------------------
+				@Override
+				public void onClick (View view)
+				{
+					// -------------------------------------------------------------
+					// 23/11/2017 ECU called to toggle tracking
+					// -------------------------------------------------------------
+					DialogueUtilities.textInput (context,
+							context.getString (R.string.location_marker_title),
+							context.getString (R.string.location_marker_summary),
+							StaticData.HINT + context.getString (R.string.location_marker_hint),
+							Utilities.createAMethod (LocationActivity.class,"MarkerMethod",StaticData.BLANK_STRING),
+							null);
+					// -------------------------------------------------------------
 				}
 			});
 			// ---------------------------------------------------------------------
@@ -196,6 +232,16 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 					// -------------------------------------------------------------
 				}
 			});
+		 	// ---------------------------------------------------------------------
+		 	// 16/10/2020 ECU set up the display of calculated distances
+		 	// 20/10/2020 ECU make scrollable
+		 	// ---------------------------------------------------------------------
+		 	distancesView = (TextView) findViewById (R.id.distances_view);
+			distancesView.setMovementMethod(new ScrollingMovementMethod());
+			// ---------------------------------------------------------------------
+			// 26/10/2020 ECU reset any triggers in the stored markers
+			// ---------------------------------------------------------------------
+			LocationActions.ResetAllTriggers ();
 			// ---------------------------------------------------------------------
 			// 26/02/2016 ECU check whether tracking was already running when this
 			//                activity was started which could happen if the start
@@ -356,7 +402,9 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// 26/02/2016 ECU changed to use the stored value
 			// ---------------------------------------------------------------------
 			if (PublicData.storedData.trackingDetails.enabled)
+			{
 				DisableLogToFile (true);
+			}
 			else
 			{
 				// -----------------------------------------------------------------
@@ -388,11 +436,14 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		// Inflate the menu; this adds items to the action bar if it is present.
 		// 09/02/2016 ECU added the MENU_LOG option
 		// 26/02/2016 ECU changed to use the stored value
+		// 16/10/2020 ECU added MENU_DISTANCES
 		// -------------------------------------------------------------------------
 		menu.add (0,MENU_ALWAYS_PLAY,0,R.string.menu_always_play);
 		menu.add (0,MENU_TRACK_MODE,0,PublicData.trackingMode ? R.string.tracking_mode_off : R.string.tracking_mode_on);
 		menu.add (0,MENU_MAP,0,"Display Map");
 		menu.add (0,MENU_LOG,0,PublicData.storedData.trackingDetails.enabled ? R.string.track_log_off : R.string.track_log_on);
+		menu.add (0,MENU_MARKER,0,markLocation ? R.string.location_marker_off : R.string.location_marker_on);
+		menu.add (0,MENU_DISTANCES,0,distancesDisplay ? R.string.location_distances_off : R.string.location_distances_on);
 		// -------------------------------------------------------------------------
 		return true;
 	}
@@ -434,9 +485,27 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		switch (item.getItemId())
 		{
 			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
 			case MENU_ALWAYS_PLAY:
 				LocationActivity.alwaysPlay = ! LocationActivity.alwaysPlay;
 				return true;
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			case MENU_DISTANCES:
+				// -----------------------------------------------------------------
+				// 16/10/2020 ECU toggle whether the distances diaplsy is to be shown
+				// -----------------------------------------------------------------
+				distancesDisplay = !distancesDisplay;
+				// -----------------------------------------------------------------
+				// 16/10/2020 ECU decide whether to hide the display of
+				//                distances - the 'show' will occur when data is
+				//                received
+				// -----------------------------------------------------------------
+				if (!distancesDisplay)
+					distancesView.setVisibility (View.INVISIBLE);
+				// -----------------------------------------------------------------
+				return true;
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			case MENU_LOG:
 				// -----------------------------------------------------------------
@@ -477,6 +546,19 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// ---------------------------------------------------------------------
 			case MENU_MAP:
 				Utilities.displayMap (getBaseContext(), currentLatitude, currentLongitude);
+				return true;
+			// ---------------------------------------------------------------------
+			case MENU_MARKER:
+				// -----------------------------------------------------------------
+				// 12/10/2020 ECU toggle the marker flag
+				// -----------------------------------------------------------------
+				markLocation = !markLocation;
+				// ------------------------------------------------------------------
+				// 12/10/2020 ECU change the visibility of the 'mark button'
+				//                accordingly
+				// -----------------------------------------------------------------
+				markButton.setVisibility (markLocation ? View.VISIBLE : View.INVISIBLE);
+				// -----------------------------------------------------------------
 				return true;
 			// ---------------------------------------------------------------------
 			case MENU_TRACK_MODE:
@@ -654,7 +736,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static double DistanceUsingHaversine (double theFirstLatitude,
+	public static double DistanceUsingHaversine (double theFirstLatitude,
 								   		  double theFirstLongitude,
 								   		  double theSecondLatitude,
 								   		  double theSecondLongitude)
@@ -662,7 +744,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		// -------------------------------------------------------------------------
 		// 11/02/2016 ECU created to calculate the distance between two coordinates
 		//                using the Haversine method which is not really needed here
-		//                but just wanted to have a play
+		//                but just wanted to have a play. The answer is given in Km
 		//
 		//				  The haversine formula is an equation important in navigation, 
 		//                giving great-circle distances between two points on a sphere 
@@ -675,23 +757,26 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		//            ECU the arguments are given in degrees so first job is to
 		//                convert to radians (remember 360 degrees = 2 (PI) radians
 		// 12/02/2016 ECU changed to convert using the library method
+		// 12/10/2020 ECU changed to public
 		// -------------------------------------------------------------------------
 		theFirstLatitude   = Math.toRadians (theFirstLatitude);
 		theFirstLongitude  = Math.toRadians (theFirstLongitude);
 		theSecondLatitude  = Math.toRadians (theSecondLatitude);
 		theSecondLongitude = Math.toRadians (theSecondLongitude);
 		// ------------------------------------------------------------------------
-		Double latitudeDistance  = (theSecondLatitude - theFirstLatitude);
-		Double longitudeDistance = (theSecondLongitude - theFirstLongitude);
+		// 05/07/2020 ECU changed 'Double' to 'double'
+		// ------------------------------------------------------------------------
+		double latitudeDistance  = (theSecondLatitude - theFirstLatitude);
+		double longitudeDistance = (theSecondLongitude - theFirstLongitude);
 		// ------------------------------------------------------------------------
 		// 11/02/2016 ECU now do the actual haversine calculation (see Wiki for an
-		//                explanation if interested
+		//                explanation if interested)
 		// ------------------------------------------------------------------------
-		Double a = (Math.sin (latitudeDistance / 2) * Math.sin (latitudeDistance / 2)) + 
+		double a = (Math.sin (latitudeDistance / 2) * Math.sin (latitudeDistance / 2)) +
 	               (Math.cos (theFirstLatitude) * Math.cos (theSecondLatitude) * 
 	                   Math.sin (longitudeDistance / 2) * Math.sin (longitudeDistance / 2));
 		
-	    Double c = 2 * Math.atan2 (Math.sqrt(a), Math.sqrt(1-a));
+	    double c = 2 * Math.atan2 (Math.sqrt(a), Math.sqrt(1-a));
 	    // ------------------------------------------------------------------------
 	    // 11/02/2016 ECU in the following line 6371 is the radius of the earth in
 	    //                Kilometers
@@ -718,8 +803,8 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		// 18/10/2014 ECU check if location services are running
 		//            ECU changed to boolean
 		// 20/10/2014 ECU include the parameter to handle when monitoring remote
-		//                devices. If the flag is false then do not bother to check
-		//                if the location services are running
+		//                devices. If the 'check' flag is false then do not bother
+		//                to check if the location services are running
 		// -------------------------------------------------------------------------
 		if (Utilities.checkForLocationServices (this) || !theCheckFlag)
 		{
@@ -745,20 +830,50 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// 19/01/2014 ECU changed to use MINIMUM_ vales instead of 0
 			// ---------------------------------------------------------------------
 			locationListener = new localLocationListener();
-				
-			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
-					MINIMUM_TIME, MINIMUM_DISTANCE, locationListener);
-			locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
-					MINIMUM_TIME, MINIMUM_DISTANCE, locationListener);
 			// ---------------------------------------------------------------------
-			
+			// 19/10/2020 ECU get the minimum distance and time from the stored
+			//                settings - the stored values are in metres and seconds
+			// ---------------------------------------------------------------------
+			minimumDistance = (float) PublicData.storedData.locationManagerMinDistance;
+			minimumTime     = PublicData.storedData.locationManagerMinTime * StaticData.MILLISECONDS_PER_SECOND;
+			// ---------------------------------------------------------------------
+			// 19/10/2020 ECU display the minimums used for location updates
+			// ---------------------------------------------------------------------
+			distancesView.setText (String.format (getString (R.string.location_manager_minimum_Format),
+															 minimumDistance,
+					                                         minimumTime,
+															 PublicData.storedData.trackingAccuracy,
+															 PublicData.storedData.trackingOutOfRange));
+			// ---------------------------------------------------------------------
+			// 19/10/2020 ECU leave the message on display for 10 seconds
+			// ---------------------------------------------------------------------
+			timerHandler.sendEmptyMessageDelayed (StaticData.MESSAGE_DURATION,10 * StaticData.MILLISECONDS_PER_SECOND);
+			// ---------------------------------------------------------------------
+			locationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,
+					minimumTime, minimumDistance, locationListener);
+			// ---------------------------------------------------------------------
+			// 28/10/2020 ECU check if the device has GPS capability before
+			//                requesting updates
+			// ---------------------------------------------------------------------
+			if (getPackageManager ().hasSystemFeature (PackageManager.FEATURE_LOCATION_GPS))
+			{
+				// -----------------------------------------------------------------
+				// 28/10/2020 ECU there is a GPS on this device so can request
+				//                updates
+				// -----------------------------------------------------------------
+				locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,
+						minimumTime, minimumDistance, locationListener);
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
 			return true;
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
 			return false;
 		}
-		
+		// ------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public class localLocationListener implements LocationListener  
@@ -772,10 +887,14 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// ---------------------------------------------------------------------
 			// 12/06/2013 ECU process the new location
 			// ---------------------------------------------------------------------
-			MakeUseOfNewLocation (location);
+			// 20/10/2020 ECU move the processing into the handler
+			//                    MakeUseOfNewLocation (location);
+			// ---------------------------------------------------------------------
+			locationMessage = locationHandler.obtainMessage (StaticData.MESSAGE_PROCESS,location);
+			locationHandler.sendMessage (locationMessage);
 			// ---------------------------------------------------------------------
 			// 28/11/2015 ECU check whether the tracking information is to be
-			//                send as part of the panic alarm process
+			//                sent as part of the panic alarm process
 			// 04/03/2018 ECU only do if the panic alarm is enabled
 			// ---------------------------------------------------------------------
 			if ((PublicData.storedData.panicAlarm != null) && 
@@ -807,7 +926,42 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 	    { 	
     	} 
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	class LocationHandler extends Handler
+	{
+		// -------------------------------------------------------------------------
+		// 20/10/2020 ECU created to handle 'location updates'
+		// -------------------------------------------------------------------------
+		@Override
+		public void handleMessage (Message theMessage)
+		{
+			// ---------------------------------------------------------------------
+			// 20/10/2020 ECU decide what has to be done
+			// ---------------------------------------------------------------------
+			switch (theMessage.what)
+			{
+
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_PROCESS:
+					// -------------------------------------------------------------
+					// 20/10/2020 ECU the latest 'location update' is held in the
+					//                object
+					// -------------------------------------------------------------
+					MakeUseOfNewLocation ((Location) theMessage.obj);
+					// -------------------------------------------------------------
+					// 20/10/2020 ECU delete any queued messages of this type
+					// -------------------------------------------------------------
+					removeMessages (StaticData.MESSAGE_PROCESS);
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+			}
+		}
+		// -------------------------------------------------------------------------
+	};
+	// =============================================================================
 	private void MakeUseOfNewLocation (Location location) 
 	{
 		// -------------------------------------------------------------------------	
@@ -826,9 +980,10 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// 02/01/2014 ECU altitude is irrelevant from the router
 			// ---------------------------------------------------------------------
 			currentAltitude = StaticData.NO_RESULT;
+			// ---------------------------------------------------------------------
 		}
 		else
-		if (currentProvider.equalsIgnoreCase(getString(R.string.gps)))
+		if (currentProvider.equalsIgnoreCase (getString(R.string.gps)))
 		{
 			// ---------------------------------------------------------------------
 			// 02/01/2014 ECU the gps is the source of the location
@@ -838,6 +993,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 			// 02/01/2014 ECU get the altitude in metres above sea level
 			// ---------------------------------------------------------------------
 			currentAltitude  = (double) location.getAltitude();
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// get the current coordinates */
@@ -900,7 +1056,39 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 				// 19/10/2014 ECU check for a match
 				// -----------------------------------------------------------------
 				Utilities.scanForAMatch (this,currentLatitude,currentLongitude);
+				// -----------------------------------------------------------------
 			}
+		}
+		// -------------------------------------------------------------------------
+		// 12/10/2020 ECU check on 'location updates'
+		// 13/10/2020 ECU only no if 'not marking'
+		// -------------------------------------------------------------------------
+		if (!markLocation)
+		{
+			String resultsString = LocationMarkerActivity.CheckNewLocation (this,
+																			currentLatitude,
+																			currentLongitude,
+																			(double)PublicData.storedData.trackingAccuracy,
+																			(double) PublicData.storedData.trackingOutOfRange);
+			// ---------------------------------------------------------------------
+			// 15/10/2020 ECU display the information returned
+			// 16/10/2020 ECU change to use the textview
+			// ---------------------------------------------------------------------
+			if (distancesDisplay)
+			{
+				// -----------------------------------------------------------------
+				if (resultsString != null)
+				{
+					distancesView.setVisibility (View.VISIBLE);
+					distancesView.setText  (resultsString);
+				}
+				else
+				{
+					distancesView.setVisibility (View.INVISIBLE);
+				}
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// save these coordinates as the previous coordinates 
@@ -908,6 +1096,15 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		previousLatitude  = currentLatitude;
 		previousLongitude = currentLongitude;
 		previousAltitude  = currentAltitude;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void MarkerMethod (String theMarker)
+	{
+		// -------------------------------------------------------------------------
+		// 12/10/2020 ECU create a marker at the current location
+		// -------------------------------------------------------------------------
+		LocationActions.newLocation (currentLatitude,currentLongitude,theMarker);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -1029,7 +1226,7 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 		public void handleMessage(Message theMessage) 
 		{   
 			// ---------------------------------------------------------------------
-			// 09/02/1026 ECU changed to switch on the message type
+			// 09/02/2016 ECU changed to switch on the message type
 			// ---------------------------------------------------------------------
 			switch (theMessage.what)
 			{
@@ -1116,6 +1313,18 @@ public class LocationActivity extends DibosonActivity implements OnGestureListen
 					logToFileTime = true;
 					// -------------------------------------------------------------
 					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_DURATION:
+					// -------------------------------------------------------------
+					// 19/10/2020 ECU just remove the distances view which at this
+					//                stage is being used to show the minimum
+					//                settings for location updates
+					// -------------------------------------------------------------
+					distancesView.setVisibility (View.INVISIBLE);
+					// -------------------------------------------------------------
+				    break;
+				// -----------------------------------------------------------------
 				// -----------------------------------------------------------------
 			}
 		}

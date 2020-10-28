@@ -11,11 +11,13 @@ public class InfraredCodes
 	/* ============================================================================= */
 	public InfraredCodes (int theType,IRCode [] theCodes,String theDescription)
 	{
+		// -------------------------------------------------------------------------
 		// 21/12/2013 ECU added description
-		
+		// -------------------------------------------------------------------------
 		codes		 = theCodes;
 		description  = theDescription;
 		type 		 = theType;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public long ReturnTheCode (int theFunction,boolean theDisplayFlag)
@@ -71,7 +73,10 @@ public class InfraredCodes
 	{
 		for (int theIndex = 0; theIndex < codes.length; theIndex++)
 		{
-			String localString = String.format("%d %x", codes[theIndex].function,codes[theIndex].code);
+			// ---------------------------------------------------------------------
+			// 05/07/2020 ECU changed first parameter to be '.function'
+			// ---------------------------------------------------------------------
+			String localString = String.format("%d %x", codes[theIndex].function.function,codes[theIndex].code);
 			// ---------------------------------------------------------------------
 			// 18/03/2017 ECU changed for the log entry
 			// ---------------------------------------------------------------------

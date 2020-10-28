@@ -8,11 +8,22 @@ public class EmailDetails implements Serializable
 {
 	/* ============================================================================= */
 	// 04/01/2014 ECU created
+	// 04/12/2019 ECU added 'sending' - normally emails are very short and are
+	//                transmitted quickly so that there is unlikely to be a clash
+	//                when two emails are to be sent at the same time. However if
+	//                there are large attachments, for example the sound files sent
+	//                when 'monitoring' is in progress then a clash could happen. This
+	//                flag is set to 'true' when an email is being sent and is then
+	//                set to 'false' at the end of transmission. If an attempt is made
+	//                to send a new email whilst the flag is 'true' then it will be
+	//                queued in PublicData.emailMessages and then sent at the end
+	//                of the current transmission.
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
 	public boolean	enabled;			// whether email is being used
 	public String 	recipients;			// who will receive emails
+	public boolean  sending;			// 04/12/2019 ECU added - see notes above
 	public String	SMTPPort;			// port used for SMTP communication
 	public String	SMTPServer;			// name of SMTP server
 	public String	SMTPUserName;		// user name used for logging in
@@ -41,12 +52,19 @@ public class EmailDetails implements Serializable
 		SMTPPort		= 	thePort;
 		SMTPServer		=	theServer;
 		SMTPUserName	=	theUserName;
-		SMTPPassword	= 	thePassword;	
+		SMTPPassword	= 	thePassword;
+		// -------------------------------------------------------------------------
+		// 04/12/2019 ECU reset the 'sending' flag
+		// -------------------------------------------------------------------------
+		sending			= 	false;
+		// -------------------------------------------------------------------------
 	}
 	/* ----------------------------------------------------------------------------- */
 	public EmailDetails ()
 	{
+		// -------------------------------------------------------------------------
 		// 03/02/2014 ECU dummy constructor for use by later methods
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	 public boolean CheckForChanges (EmailDetails theEmailDetails)
@@ -93,6 +111,7 @@ public class EmailDetails implements Serializable
 		emailDetails.SMTPUserName 	= SMTPUserName;
 		
 		return emailDetails;
+		// ----------------------------------------------------------------------
 	}
 	// ==========================================================================
 	public String Signature (Context theContext)

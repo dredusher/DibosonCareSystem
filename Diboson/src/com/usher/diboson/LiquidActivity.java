@@ -1,6 +1,5 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -13,6 +12,8 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import java.util.ArrayList;
 
 public class LiquidActivity extends DibosonActivity 
 {
@@ -179,7 +180,7 @@ public class LiquidActivity extends DibosonActivity
 				case R.id.liquid_actions_button:
 					DialogueUtilitiesNonStatic.multilineTextInput (context,
 														  		   activity,
-														  		   getString (R.string.panic_alarm_actions_title),
+														  		   getString (R.string.liquid_selection_actions_title),
 														  		   getString (R.string.action_command_summary),
 														  		   5,
 														  		   StaticData.BLANK_STRING,
@@ -405,8 +406,8 @@ public class LiquidActivity extends DibosonActivity
     public void LiquidActions (String theActions)
     {
     	// -------------------------------------------------------------------------
-    	// 27/11/2015 ECU created to store commands that are required for the panic
-    	//                alarm
+    	// 27/11/2015 ECU created to store commands that are required for the selected
+    	//                selection
     	// -------------------------------------------------------------------------
     	liquidActions.setText (theActions);
     	// -------------------------------------------------------------------------
@@ -431,6 +432,9 @@ public class LiquidActivity extends DibosonActivity
 			//            ECU add the image path
 			// 10/04/2018 ECU check if there is a path to a photgraph - if not then
 			//                display the icon
+			// 29/01/2020 ECU changed to use local ...
+			// ---------------------------------------------------------------------
+			ListItem localListItem;
 			// ---------------------------------------------------------------------
 			if (PublicData.storedData.liquids.get(theIndex).photographPath == null)
 			{
@@ -438,12 +442,12 @@ public class LiquidActivity extends DibosonActivity
 				// 10/04/2018 ECU no photograph has been specified so use the liquid
 				//                icon
 				// -----------------------------------------------------------------
-				listItems.add (new ListItem  (R.drawable.liquid,
+				localListItem = new ListItem  (R.drawable.liquid,
 										      PublicData.storedData.liquids.get(theIndex).name,
 										      PublicData.storedData.liquids.get(theIndex).actions,
 										      String.format (getString (R.string.liquid_scaled_light_level_format),
 										    		  PublicData.storedData.liquids.get(theIndex).ambientLightLevelScaled),
-											  theIndex));
+											  theIndex);
 				// -----------------------------------------------------------------
 			}
 			else
@@ -452,14 +456,18 @@ public class LiquidActivity extends DibosonActivity
 				// 10/04/2018 ECU a photograph has been specified so pass this through
 				//                to the display adapter
 				// -----------------------------------------------------------------
-				listItems.add (new ListItem  (PublicData.storedData.liquids.get(theIndex).photographPath,
+				localListItem = new ListItem  (PublicData.storedData.liquids.get(theIndex).photographPath,
 						 					  PublicData.storedData.liquids.get(theIndex).name,
 						 					  PublicData.storedData.liquids.get(theIndex).actions,
 						 					  String.format (getString (R.string.liquid_scaled_light_level_format),
 						 							  PublicData.storedData.liquids.get(theIndex).ambientLightLevelScaled),
-						 					  theIndex));
+						 					  theIndex);
 				// -----------------------------------------------------------------
 			}
+			// ---------------------------------------------------------------------
+			// 29/01/2020 ECU add the item into the list
+			// ---------------------------------------------------------------------
+			listItems.add (localListItem);
 			// ---------------------------------------------------------------------
 		}
 		return listItems;

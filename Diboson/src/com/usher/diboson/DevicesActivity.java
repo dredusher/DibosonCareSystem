@@ -1,17 +1,25 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-
-import com.belkin.wemo.localsdk.WeMoDevice;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 
+import com.belkin.wemo.localsdk.WeMoDevice;
+
+import java.util.ArrayList;
+
 public class DevicesActivity extends DibosonActivity 
 {
+	// =============================================================================
+	// DevicesActivity
+	// ===============
+	// 02/04/2019 ECU created to display details of all devices on the network
+	// 25/12/2019 ECU added 'SelectLongAction'
+	// =============================================================================
+
 	// =============================================================================
 	// 10/05/2019 ECU declare the types of item
 	// -----------------------------------------------------------------------------
@@ -51,7 +59,7 @@ public class DevicesActivity extends DibosonActivity
 						 		  					 "PopulateTheList",
 						 		  					 false,
 						 		  					 "SelectAction",
-						 		  					 null,
+						 		  					 "SelectLongAction",
 						 		  					 null,
 						 		  					 null,
 						 		  					 "SelectButton",
@@ -132,13 +140,15 @@ public class DevicesActivity extends DibosonActivity
 		listItems = new ArrayList<ListItem> ();
 		// -------------------------------------------------------------------------
 		// 02/04/2019 ECU build up the list of devices
+		// 18/11/2019 ECU added the 'equalsIg....' test
 		// -------------------------------------------------------------------------
 		for (int theDevice = 0; theDevice < PublicData.deviceDetails.size(); theDevice++)
 		{
 			localDevice = PublicData.deviceDetails.get (theDevice);
 			localListItem = new ListItem (R.drawable.devices,
 											((localDevice.name != null) ? (localDevice.name + 
-													((localDevice.nameOriginal == null) ? StaticData.BLANK_STRING
+													(((localDevice.nameOriginal == null) || localDevice.name.equalsIgnoreCase (localDevice.nameOriginal))
+																						? StaticData.BLANK_STRING
 															                            : (" (" + localDevice.nameOriginal + ")")))
 															             : StaticData.BLANK_STRING),
 											 localDevice.patientName,
@@ -149,12 +159,25 @@ public class DevicesActivity extends DibosonActivity
 			// -------------------------------------------------------------
 			localListItem.itemType = ITEM_TYPE_NORMAL;
 			// -------------------------------------------------------------
+			// 29/01/2020 ECU default to not show the custom button
+			// -------------------------------------------------------------
+			localListItem.visibilityCustom = false;
+			// -------------------------------------------------------------
 			// 02/04/2019 ECU change the colour depending on the device's
 			//                compatibility
 			// -------------------------------------------------------------
 			if (localDevice.compatible)
 			{
 				localListItem.colour 			= R.color.green_background;
+				// ---------------------------------------------------------
+				// 25/12/2019 ECU if not 'this device' then display web
+				//                access message
+				// ---------------------------------------------------------
+				if (!localDevice.IPAddress.equalsIgnoreCase(PublicData.ipAddress))
+				{
+					localListItem.extras			+= getString (R.string.long_press_for_web_access);
+				}
+				// ---------------------------------------------------------
 			}
 			else
 			{
@@ -196,18 +219,19 @@ public class DevicesActivity extends DibosonActivity
 						// 09/05/2019 ECU set up the button that allows switching
 						// 10/05/2019 ECU use itemState to remember the state of the
 						//                switch
+						// 29/01/2020 ECU changeed to use SetCustomLegend
 						// ---------------------------------------------------------
 						if (localRelayState == SmartDevices.RELAY_STATE_OFF)
 						{
 							localListItem.colour 		= R.color.red;
-							localListItem.customLegend 	= getString (R.string.On);
+							localListItem.SetCustomLegend (getString (R.string.On));
 							localListItem.itemState 	= false;
 						}
 						else
 						if (localRelayState == SmartDevices.RELAY_STATE_ON)
 						{
 							localListItem.colour 		= R.color.light_green;
-							localListItem.customLegend 	= getString (R.string.Off);
+							localListItem.SetCustomLegend (getString (R.string.Off));
 							localListItem.itemState 	= true;
 						}
 						// ---------------------------------------------------------
@@ -274,17 +298,18 @@ public class DevicesActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 27/04/2019 ECU make it a different colour
 					// 10/05/2019 ECU remember the state of the switch
+					// 29/01/2020 ECU changed to use SetCustomLegend
 					// -------------------------------------------------------------
 					if (wemoDevice.getState().equals (WeMoDevice.WEMO_DEVICE_ON))
 					{
 						localListItem.colour 		= R.color.light_green;
-						localListItem.customLegend 	= getString (R.string.Off);
+						localListItem.SetCustomLegend (getString (R.string.Off));
 						localListItem.itemState 	= true;
 					}
 					else
 					{
 						localListItem.colour 		= R.color.red;
-						localListItem.customLegend 	= getString (R.string.On);
+						localListItem.SetCustomLegend (getString (R.string.On));
 						localListItem.itemState 	= false;
 					}
 					// -------------------------------------------------------------
@@ -307,8 +332,10 @@ public class DevicesActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		@Override
 	    public void handleMessage (Message theMessage) 
-	    {   
+	    {
+	    	// ---------------------------------------------------------------------
 			listViewSelector.refresh ();
+			// ---------------------------------------------------------------------
 	    }
 		// -------------------------------------------------------------------------
 	};
@@ -441,7 +468,39 @@ public class DevicesActivity extends DibosonActivity
 		// 10/05/2019 ECU force an immediate refresh
 		// -------------------------------------------------------------------------
 		refreshHandler.removeMessages  (StaticData.MESSAGE_REFRESH);
-		refreshHandler.sendEmptyMessage(StaticData.MESSAGE_REFRESH);
+		refreshHandler.sendEmptyMessage (StaticData.MESSAGE_REFRESH);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void SelectLongAction (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 25/12/2019 ECU decide if there are any actions to take
+		//            ECU only interest in a compatible device
+		//			  ECU add check on IP address
+		// -------------------------------------------------------------------------
+		if (PublicData.deviceDetails.get (thePosition).compatible &&
+					!PublicData.deviceDetails.get (thePosition).IPAddress.equalsIgnoreCase(PublicData.ipAddress))
+		{
+			// ---------------------------------------------------------------------
+			// 25/12/2019 ECU want to connect via the web browser
+			// ---------------------------------------------------------------------
+			Intent localIntent = new Intent (getBaseContext(),DisplayURL.class);
+			// ---------------------------------------------------------------------
+			// 25/12/2019 ECU pass through the URL that is to be displayed
+			// ---------------------------------------------------------------------
+			localIntent.putExtra (StaticData.PARAMETER_URL,
+									String.format ("%s%s:%d%s",
+										StaticData.URL_INTRO,
+										PublicData.deviceDetails.get (thePosition).IPAddress,
+										PublicData.socketNumberForWeb,
+										getString (R.string.home_page)));
+			// ---------------------------------------------------------------------
+			// 25/12/2019 ECU now start up the activity
+			// ---------------------------------------------------------------------
+			startActivity (localIntent);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 

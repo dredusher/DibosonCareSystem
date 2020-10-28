@@ -1,9 +1,9 @@
 package com.usher.diboson;
 
-import java.io.Serializable;
-
 import android.content.Context;
 import android.os.Build;
+
+import java.io.Serializable;
 
 public class Devices implements Serializable
 {
@@ -69,12 +69,13 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 		// 20/03/2015 ECU created to initialise the class using local information
 		// 28/03/2019 ECU initialise 'nameOriginal'
+		// 16/11/2019 ECU change nameOriginal initialisation from 'null'
 		// -------------------------------------------------------------------------
 		compatible			= 	true;
 		IPAddress			= 	Utilities.getIPAddress (theContext);
 		macAddress			=   Utilities.getMACAddress (theContext);
 		name				= 	android.os.Build.MODEL;
-		nameOriginal		=   null;
+		nameOriginal		=   name;
 		phone				=	(Utilities.getPhoneNumber (theContext) != null);
 		response			=   "initialisation";
 		serialNumber		=	android.os.Build.SERIAL;
@@ -126,6 +127,8 @@ public class Devices implements Serializable
 			// ---------------------------------------------------------------------
 			// 29/03/2019 ECU check if the supplied name matches the 'original name'
 			//                of this device
+			// 18/11/2019 ECU Note - the check on 'null' is now not relevant but
+			//                       leave in just in case an old device is in use
 			// ---------------------------------------------------------------------
 			if (theName.equals ((nameOriginal == null) ? name : nameOriginal))
 			{
@@ -158,9 +161,11 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 		// 28/03/2019 ECU check if the name has been changed - if so then display
 		//                the original name
+		// 18/11/2019 ECU added the 'equalI...' check
 		// -------------------------------------------------------------------------
-								 ((nameOriginal == null) ? StaticData.BLANK_STRING 
-										                 : "  (Originally : " + nameOriginal + ")") +
+								 (((nameOriginal == null) || name.equalsIgnoreCase(nameOriginal))
+								 						? StaticData.BLANK_STRING
+										                : "  (Originally : " + nameOriginal + ")") +
 		// -------------------------------------------------------------------------
 								 "\nPatient\'s Name = " + patientName + // 06/09/2017 ECU added
 								 "\nSerial Number = " + serialNumber +	// 20/03/2015 ECU added
@@ -273,8 +278,13 @@ public class Devices implements Serializable
 	public static String returnIPAddress (String theFormattedAddress)
 	{
 		String [] theParts = theFormattedAddress.split("[(]");
-		
-		return theParts [1].replace (")",StaticData.BLANK_STRING).replaceAll(" ",StaticData.BLANK_STRING);
+		// -------------------------------------------------------------------------
+		// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+		//                the former requires a REGEX so not sure why it ever
+		//				  worked
+		// -------------------------------------------------------------------------
+		return theParts [1].replace (")",StaticData.BLANK_STRING).replace (StaticData.SPACE_STRING,StaticData.BLANK_STRING);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String returnMACAddress (String theIPAddress)
@@ -310,18 +320,30 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static void sendHelloMessage ()
+	public static void sendHelloMessage (int theDelay)
 	{
 		// -------------------------------------------------------------------------
 		// 20/03/2015 ECU broadcast the 'hello' message to get all devices to request
 		//                this device's details
 		// 09/04/2016 ECU changed name from 'multicastMessage'
+		// 25/05/2020 ECU changed to use new method for initiating the transmission
+		//                of a broadcast message
+		//            ECU added the delay argument
 		// -------------------------------------------------------------------------
-		PublicData.broadcastMessage = StaticData.BROADCAST_MESSAGE_HELLO;
+		BroadcastUtilities.sendBroadcastMessage (StaticData.BROADCAST_MESSAGE_HELLO,theDelay);
 		// -------------------------------------------------------------------------
 		// 22/03/2015 ECU put entry into project log to indicate the fact
 		// -------------------------------------------------------------------------
 		Utilities.LogToProjectFile ("Devices","send the hello message");
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void sendHelloMessage ()
+	{
+		// -------------------------------------------------------------------------
+		// 25/05/2020 ECU send the 'hello' message immediately
+		// -------------------------------------------------------------------------
+		sendHelloMessage (0);
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -330,6 +352,8 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 		// 28/03/2019 ECU created to change the name and, if not already set, then
 		//                to remember the 'original name'
+		// 18/11/2019 ECU Note - the null check should not occur now but just leave
+		//                       for the time being
 		// -------------------------------------------------------------------------
 		if (nameOriginal == null)
 		{
@@ -354,6 +378,7 @@ public class Devices implements Serializable
 		// -------------------------------------------------------------------------
 		AsyncUtilities.writeObjectToDisk (PublicData.projectFolder + theContext.getString (R.string.devices_file),
 														PublicData.deviceDetails);
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

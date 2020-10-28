@@ -97,6 +97,7 @@ public class DibosonView extends View implements OnGestureListener
 
 	}
 	// =============================================================================
+	@SuppressWarnings("SuspiciousNameCombination")
 	@Override
 	protected void onDraw (Canvas theCanvas) 
 	{		
@@ -116,14 +117,16 @@ public class DibosonView extends View implements OnGestureListener
 		// 22/11/2016 ECU Note - the onDraw seems to take ~ 20 mS to perform - it
 		//                       is somewhat dependent on the length of data lines
 		//                       being drawn
+		// 05/07/2020 ECU change 'theCanvas.getWidth / theCanvas.getHeight ()' to
+		//                just 'getWidth / get Height ()'
 		// -------------------------------------------------------------------------
-		rectangleWidth		= (theCanvas.getHeight() * 2) /3;
+		rectangleWidth		= (getHeight () * 2) /3;
 		// -------------------------------------------------------------------------
 		// 21/11/2016 ECU check if this exceeds the width
 		// -------------------------------------------------------------------------
-		if (rectangleWidth > theCanvas.getWidth())
+		if (rectangleWidth > getWidth())
 		{
-			rectangleWidth = theCanvas.getWidth();
+			rectangleWidth = getWidth();
 		}
 		// -------------------------------------------------------------------------
 		// 21/11/2016 ECU now adjust the width to have a border
@@ -136,7 +139,7 @@ public class DibosonView extends View implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 21/11/2016 ECU Note - set up the origin of the 'square'
 		// -------------------------------------------------------------------------
-		rectangleXOrigin 	= (theCanvas.getWidth() - rectangleWidth) / 2;						
+		rectangleXOrigin 	= (getWidth() - rectangleWidth) / 2;
 		rectangleYOrigin 	= RECTANGLE_BORDER/2; 
 		// -------------------------------------------------------------------------
 		// 18/11/2016 ECU draw a basic frame within which the data will be shown
@@ -164,9 +167,10 @@ public class DibosonView extends View implements OnGestureListener
 		// -------------------------------------------------------------------------
 		// 26/10/2013 ECU handle the motion event within this class
 		// -------------------------------------------------------------------------
-	    gestureDetector.onTouchEvent(event);
+	    gestureDetector.onTouchEvent (event);
 	     // ------------------------------------------------------------------------
 	    return true;
+	    // -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) 
@@ -177,10 +181,12 @@ public class DibosonView extends View implements OnGestureListener
 	@Override
     public void onSizeChanged (int w, int h, int oldw, int oldh)
 	{
+		// -------------------------------------------------------------------------
         super.onSizeChanged (w, h, oldw, oldh);
-        
+        // -------------------------------------------------------------------------
         windowWidth = w;
         windowHeight = h;
+        // -------------------------------------------------------------------------
     }
 	// =============================================================================
 	@Override
@@ -212,6 +218,7 @@ public class DibosonView extends View implements OnGestureListener
 		invalidate ();
 		// -------------------------------------------------------------------------
 		return false;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override
@@ -234,10 +241,12 @@ public class DibosonView extends View implements OnGestureListener
 	// =============================================================================
 	@Override
 	public boolean onSingleTapUp (MotionEvent e) 
-	{	
+	{
+		// -------------------------------------------------------------------------
 		AudioAnalyser.resetScale = !AudioAnalyser.resetScale;
 		Utilities.popToast ("Scale " + (AudioAnalyser.resetScale ? StaticData.BLANK_STRING : "not ") + "being reset");
 		return false;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	void drawTheData (Canvas theCanvas)
@@ -279,8 +288,8 @@ public class DibosonView extends View implements OnGestureListener
 			// ---------------------------------------------------------------------
 			// 18/01/2014 ECU added the use of start... and end....
 			// ---------------------------------------------------------------------
-			startIndex = (int)((float)AudioAnalyser.frequencyStart / AudioAnalyser.resolution);
-			endIndex   = (int)((float)AudioAnalyser.frequencyEnd / AudioAnalyser.resolution);
+			startIndex = (int)((float) AudioAnalyser.frequencyStart / AudioAnalyser.resolution);
+			endIndex   = (int)((float) AudioAnalyser.frequencyEnd / AudioAnalyser.resolution);
 					
 			for (int theEntry = startIndex; theEntry < endIndex; theEntry++)
 			{
@@ -420,8 +429,8 @@ public class DibosonView extends View implements OnGestureListener
 			// 18/01/2014 ECU after all this flapping around draw the text
 			// ---------------------------------------------------------------------
 			theCanvas.drawText (kHzString,
-							xPosition - adjustment,
-							rectangleYOrigin + rectangleHeight + (textSize + EDGE), paintMarks); 
+								xPosition - adjustment,
+								rectangleYOrigin + rectangleHeight + (textSize + EDGE), paintMarks);
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
