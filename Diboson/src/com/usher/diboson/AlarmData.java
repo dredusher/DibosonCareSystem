@@ -1,16 +1,16 @@
 package com.usher.diboson;
 
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.os.Bundle;
+
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
-
-import android.app.PendingIntent;
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
 
 public class AlarmData implements Serializable,Cloneable
 {
@@ -19,6 +19,8 @@ public class AlarmData implements Serializable,Cloneable
 	//                being used then the arguments will be set to StaticData.NO_RESULT
 	// 26/11/2017 ECU changed to 'Cloneable' and added 'clone' and 'Clone' methods
 	//                - see the reason in raw/documentation_notes
+	// 08/10/2020 ECU remove object and have the specific objects for each type of
+	//                alarm.
 	// -----------------------------------------------------------------------------
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -26,25 +28,31 @@ public class AlarmData implements Serializable,Cloneable
 	public      String			actions;			// 30/04/2017 ECU added
 	public 		int				associatedData;		// 06/02/2015 ECU added any required associated data
 	public  	Calendar		calendar;			// when the alarm is to be action
+	public      DoseTime		doseTime;			// 08/10/2020 ECU added
+	public      EmailMessage	emailMessage;		// 08/10/2020 ECU added
+	public      EPGAlarm		epgAlarm;			// 08/10/2020 ECU added
 	public 		long     		id;                 // the unique id
 	public      String			message;			// 09/02/2015 ECU added
-	public      Object          object;				// 29/09/2015 ECU added
+	public      String			phoneNumber;		// 08/10/2020 ECU added
 	public		int				repeatInterval;		// 18/05/2017 ECU added - in minutes
 	public      int				repeatNumber;		// 18/05/2017 ECU added 
 	public 		int 			requestCode;		// unique request code sent in the pending intent to
 													// the alarm manager - documentation says that it is
 	                       							// not used
 	/* ============================================================================= */
-	public AlarmData (int 		theAction, 
-					  Calendar 	theCalendar, 
-					  long 		theID, 
-					  int 		theRequestCode,
-					  int 		theAssociatedData,
-					  String 	theMessage,
-					  String    theActions,
-					  Object 	theObject,
-					  int		theRepeatInterval,
-					  int		theRepeatNumber)
+	public AlarmData (int 			theAction,
+					  Calendar 		theCalendar,
+					  long 			theID,
+					  int 			theRequestCode,
+					  int 			theAssociatedData,
+					  String 		theMessage,
+					  String    	theActions,
+					  String    	thePhoneNumber,
+					  DoseTime		theDoseTime,
+					  EPGAlarm		theEPGAlarm,
+					  EmailMessage	theEmailMessage,
+					  int			theRepeatInterval,
+					  int			theRepeatNumber)
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2017 ECU Note - the 'repeat' arguments were added - making this the
@@ -71,7 +79,10 @@ public class AlarmData implements Serializable,Cloneable
 		// 09/03/2016 ECU changed to use the object rather than specifically
 		//                the email message
 		// -------------------------------------------------------------------------
-		object			= theObject;
+		phoneNumber		= thePhoneNumber;
+		doseTime		= theDoseTime;
+		emailMessage	= theEmailMessage;
+		epgAlarm		= theEPGAlarm;
 		// -------------------------------------------------------------------------
 		// 30/04/2017 ECU added for the 'actions' type of alarm
 		// -------------------------------------------------------------------------
@@ -84,20 +95,25 @@ public class AlarmData implements Serializable,Cloneable
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
-	public AlarmData (int 		theAction, 
-					  Calendar 	theCalendar, 
-					  long 		theID, 
-					  int 		theRequestCode,
-					  int 		theAssociatedData,
-					  String 	theMessage,
-					  String    theActions,
-					  Object 	theObject)
+	public AlarmData (int 			theAction,
+					  Calendar 		theCalendar,
+					  long 			theID,
+					  int 			theRequestCode,
+					  int 			theAssociatedData,
+					  String 		theMessage,
+					  String    	theActions,
+					  String    	thePhoneNumber,
+					  DoseTime		theDoseTime,
+					  EPGAlarm		theEPGAlarm,
+					  EmailMessage	theEmailMessage)
 	{
 		// -------------------------------------------------------------------------
 		// 18/05/2017 ECU Note - this used to be the main constructor before the
 		//                       'repeat' arguments were added
+		// 08/10/2020 ECU changed to reflect change in main constructor
 		// -------------------------------------------------------------------------
-		this (theAction,theCalendar,theID,theRequestCode,theAssociatedData,theMessage,theActions,theObject,StaticData.NO_RESULT,StaticData.NO_RESULT);
+		this (theAction,theCalendar,theID,theRequestCode,theAssociatedData,
+			theMessage,theActions,thePhoneNumber,theDoseTime,theEPGAlarm,theEmailMessage,StaticData.NO_RESULT,StaticData.NO_RESULT);
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
@@ -112,8 +128,9 @@ public class AlarmData implements Serializable,Cloneable
 		// 14/07/2015 ECU created - was the old master method until the emailMessage
 		//                was added
 		// 30/04/2017 ECU added additional 'null' with the addition of 'actions'
+		// 08/10/2020 ECU changed to reflect changes in main constructor
 		// -------------------------------------------------------------------------
-		this (theAction,theCalendar,theID,theRequestCode,StaticData.NO_RESULT,null,null,null);
+		this (theAction,theCalendar,theID,theRequestCode,StaticData.NO_RESULT,null,null,null,null,null,null);
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
@@ -123,6 +140,7 @@ public class AlarmData implements Serializable,Cloneable
 		// 06/02/2015 ECU call the construct which nows has Intent as an argument
 		// -------------------------------------------------------------------------
 		this (theAction,theCalendar,theID,theRequestCode,StaticData.NO_RESULT,null);
+		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
 	public AlarmData ()
@@ -135,14 +153,14 @@ public class AlarmData implements Serializable,Cloneable
 		// -------------------------------------------------------------------------
 	}
 	// -----------------------------------------------------------------------------
-	public AlarmData (int theAction,Calendar theCalendar,long theId,int theRequestCode,Object theObject)
+	public AlarmData (int theAction,Calendar theCalendar,long theId,int theRequestCode,EPGAlarm theEPGAlarm)
 	{
 		// -------------------------------------------------------------------------
 		// 29/09/2015 ECU created to set specific EPG alarm
 		// -------------------------------------------------------------------------
 		this (theAction,theCalendar,theId,theRequestCode);
 		// -------------------------------------------------------------------------
-		this.object = theObject;
+		this.epgAlarm = theEPGAlarm;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -166,31 +184,58 @@ public class AlarmData implements Serializable,Cloneable
 		// -------------------------------------------------------------------------
 		if (PublicData.alarmData.size() > 0)
 		{
-			for (int theIndex = 0; theIndex < PublicData.alarmData.size(); theIndex++)
+			// ---------------------------------------------------------------------
+			// 06/10/2020 ECU changed from a 'for int theIndex...'
+			// ---------------------------------------------------------------------
+			int alarmIndex = 0;
+			for (AlarmData alarmData : PublicData.alarmData)
 			{
-				listItems.add (new ListItem (PublicData.alarmDateFormat.format (PublicData.alarmData.get(theIndex).calendar.getTime()),
-						PublicData.alarmTimeFormat.format (PublicData.alarmData.get(theIndex).calendar.getTime()),
-						"action : " + Utilities.AlarmActionsAsString (MainActivity.activity,PublicData.alarmData.get(theIndex).action) + 
-						((PublicData.alarmData.get(theIndex).associatedData == StaticData.NO_RESULT) ? StaticData.BLANK_STRING 
-								                                                                     : (StaticData.NEWLINE + "    associated data : " + PublicData.alarmData.get(theIndex).associatedData)) + 
-						((PublicData.alarmData.get(theIndex).message == null) ? StaticData.BLANK_STRING 
-								                                              : (StaticData.NEWLINE + "    message : " + PublicData.alarmData.get(theIndex).message)) +
-						// ---------------------------------------------------------
-					    // 28/11/2017 ECU print out the object
-					    // ---------------------------------------------------------
-						PublicData.alarmData.get(theIndex).printObject (StaticData.NEWLINE) + 		                                              
-						// ---------------------------------------------------------		                                              
-						((PublicData.alarmData.get(theIndex).actions == null) ? StaticData.BLANK_STRING 
-								                                              : (StaticData.NEWLINE + "    actions : " + PublicData.alarmData.get(theIndex).actions)) +
-			            ((PublicData.alarmData.get(theIndex).repeatInterval == StaticData.NO_RESULT) ? StaticData.BLANK_STRING
-			            		                                              : (StaticData.NEWLINE + "    repeat : every " + PublicData.alarmData.get(theIndex).repeatInterval 
-			            		                                            		                            + " min. (" + PublicData.alarmData.get(theIndex).repeatNumber + " times)")),
-			            		                                              theIndex));
-						// ---------------------------------------------------------
+				listItems.add (new ListItem (
+								// -------------------------------------------------
+								// 06/10/2020 ECU Note - display the date and time
+								//                       of the alarm
+								// -------------------------------------------------
+								PublicData.alarmDateFormat.format (alarmData.calendar.getTime()),
+											 PublicData.alarmTimeFormat.format (alarmData.calendar.getTime()),
+								// -------------------------------------------------
+								// 06/10/2020 ECU Note - add the action of the
+								//                       alarm
+								// -------------------------------------------------
+								"action : " + Utilities.AlarmActionsAsString (MainActivity.activity,alarmData.action) +
+								// -------------------------------------------------
+								// 06/10/2020 ECU Note - add any associated data
+								// -------------------------------------------------
+								((alarmData.associatedData == StaticData.NO_RESULT) ? StaticData.BLANK_STRING
+																					: (StaticData.NEWLINE + "    associated data : " + alarmData.associatedData)) +
+								// -------------------------------------------------
+								// 06/10/2020 ECU Note - add any 'message'
+								// -------------------------------------------------
+								((alarmData.message == null) ? StaticData.BLANK_STRING
+															 : (StaticData.NEWLINE + "    message : " + alarmData.message)) +
+								// -------------------------------------------------
+								// 28/11/2017 ECU add details of any associated
+								//                'object'
+								// -------------------------------------------------
+								alarmData.printObjects (StaticData.NEWLINE) +
+								// -------------------------------------------------
+								// 06/10/2020 ECU set up associated actions
+								// -------------------------------------------------
+								((alarmData.actions == null) ? StaticData.BLANK_STRING
+										                     : (StaticData.NEWLINE + "    actions : " + alarmData.actions)) +
+								// -------------------------------------------------
+								// 06/10/2020 ECU display the repeat information
+								// -------------------------------------------------
+								alarmData.RepeatInformation (),
+								// -------------------------------------------------
+								// 06/10/2020 ECU increment the alarm index
+								// -------------------------------------------------
+								alarmIndex++));
+				// -----------------------------------------------------------------
 			}
 		}
 		// -------------------------------------------------------------------------
 		return listItems;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public void cancelAlarm (Context theContext)
@@ -305,7 +350,7 @@ public class AlarmData implements Serializable,Cloneable
 		// -------------------------------------------------------------------------
 	    // 28/11/2017 ECU print out the object
 	    // -------------------------------------------------------------------------
-		theString += printObject (StaticData.NEWLINE); 		                                              
+		theString += printObjects (StaticData.NEWLINE);
 		// -------------------------------------------------------------------------
 		// 30/04/2017 ECU add in the 'actions' if set
 		// -------------------------------------------------------------------------
@@ -353,7 +398,7 @@ public class AlarmData implements Serializable,Cloneable
 		// -------------------------------------------------------------------------
 	    // 28/11/2017 ECU print out the object
 	    // -------------------------------------------------------------------------
-		theString += printObject (StaticData.NEWLINE); 		
+		theString += printObjects (StaticData.NEWLINE);
 		// -------------------------------------------------------------------------
 		// 30/04/2017 ECU add in the 'actions' if set
 		// 19/05/2017 ECU corrected an error - was showing 'message'
@@ -413,37 +458,42 @@ public class AlarmData implements Serializable,Cloneable
 		}
 	}
 	// =============================================================================
-	String printObject (String theHeader)
+	String printObjects (String theHeader)
 	{
+		String localObjects = theHeader;
 		// -------------------------------------------------------------------------
 		// 28/11/2017 ECU print out the appropriate 'contents' depending on what
 		//                the object is being used to store
 		// 29/11/2017 ECU add BLANK_STRING to indicate that the dose information is
 		//                not to be indented.
+		// 06/10/2020 ECU added the 'string instance' for the phone number
 		// -------------------------------------------------------------------------
-		if (object != null)
+		if (doseTime != null)
 		{
-			// ---------------------------------------------------------------------
-			if (object instanceof DoseTime)
-			{
-				return theHeader + "Medication : " + PublicData.medicationDetails.get(associatedData).name + StaticData.NEWLINE + 
-							((DoseTime) object).PrintDoseTime (StaticData.BLANK_STRING);
-			}
-			else
-			if (object instanceof EmailMessage)
-			{
-				return theHeader + ((EmailMessage) object).Print ();
-			}
-			else
-			{
-				return StaticData.BLANK_STRING;
-			}
-			// ---------------------------------------------------------------------
+			localObjects += "Medication : " + PublicData.medicationDetails.get(associatedData).name + StaticData.NEWLINE +
+									doseTime.PrintDoseTime (StaticData.BLANK_STRING) +
+									StaticData.NEWLINE;
 		}
+		// -------------------------------------------------------------------------
+		if (emailMessage != null)
+		{
+			localObjects += emailMessage.Print () +
+								StaticData.NEWLINE;
+		}
+		// -------------------------------------------------------------------------
+		if (phoneNumber != null)
+		{
+			localObjects += "Phone Number : " + phoneNumber +
+								StaticData.NEWLINE;
+		}
+		// -------------------------------------------------------------------------
+		// 08/10/2020 ECU return the resultant string without the trailing new line
+		// -------------------------------------------------------------------------
+		if (localObjects.length () > 1)
+			return localObjects.substring (0,(localObjects.length () - 1));
 		else
-		{
-			return StaticData.BLANK_STRING;
-		}
+			return localObjects;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static String printSelected (Context theContext,List<AlarmData> theAlarms)
@@ -473,6 +523,33 @@ public class AlarmData implements Serializable,Cloneable
 		// 01/03/2017 ECU return the generated summary string
 		// -------------------------------------------------------------------------
 		return summaryString;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public String RepeatInformation ()
+	{
+		// -------------------------------------------------------------------------
+		// 06/10/2020 ECU created to return repeat information about this alarm
+		// -------------------------------------------------------------------------
+		if (repeatInterval != StaticData.NOT_SET)
+		{
+			// ---------------------------------------------------------------------
+			// 06/10/2020 ECU this is a repeat alarm so produce a summary of the
+			//                details
+			// ---------------------------------------------------------------------
+			return StaticData.NEWLINE +
+						"    repeat interval : every " + repeatInterval + " min." + StaticData.NEWLINE +
+						"    number of repeats remaining : " + repeatNumber + StaticData.NEWLINE;
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 06/10/2020 ECU there are no repeats for this alarm
+			// ---------------------------------------------------------------------
+			return StaticData.BLANK_STRING;
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -509,8 +586,11 @@ public class AlarmData implements Serializable,Cloneable
 		// 08/02/2015 ECU having set the intent then return the associated pending
 		//                intent
 		// 14/03/2017 ECU added PendingIntent.FLAG_UPDATE_CURRENT
+		// 09/05/2020 ECU changed to use 'ALARM....FLAGS'
 		// -------------------------------------------------------------------------
-		return (PendingIntent.getBroadcast (theContext,(int)id,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT));
+		return (PendingIntent.getBroadcast (theContext,
+											(int)id,alarmIntent,
+											StaticData.ALARM_PENDING_INTENT_FLAGS));
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -588,6 +668,7 @@ public class AlarmData implements Serializable,Cloneable
 		// 26/11/2017 ECU created with the implementation of cloneable in this class
 		// -------------------------------------------------------------------------
 		return super.clone ();
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	

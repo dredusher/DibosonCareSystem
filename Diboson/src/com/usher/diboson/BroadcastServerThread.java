@@ -1,32 +1,37 @@
 package com.usher.diboson;
 
-import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.wifi.WifiManager;
 import android.net.wifi.WifiManager.MulticastLock;
 import android.os.Handler;
 import android.os.Message;
+import java.io.IOException;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.net.InetAddress;
 
-
+// =================================================================================
 public class BroadcastServerThread implements Runnable
 {
-	/* ========================================================================= */
+	/* ============================================================================= */
 	// 26/08/2013 ECU this thread created to handle incoming broadcast messages
 	// 09/04/2016 ECU previously the comments related to 'multicast' which is not
 	//                what is being used here. So have changed everything to be
 	//                about 'broadcast' messages which are being used.
-	/* ========================================================================= */
+	// 25/05/2020 ECU rewrote the transmission side so as to use a handler rather
+	//                than looping and checking is 'PublicData.broadcastMessage'
+	//                is not null which indicates that a message was to be sent
+	/* ============================================================================= */
 	private final String TAG = "BroadcastServerThread";
-	/* ========================================================================= */
+	/* ============================================================================= */
 					InetAddress		broadcastAddress = null;		// 27/08/2013 ECU added
 	private static	int				broadcastCounter = 0;			// 23/03/2015 ECU counter included
 																	//                in each message
-	BroadcastRefreshHandler 		broadcastRefreshHandler;
-	public 			boolean			keepRunning = true;				// 22/08/2013 ECU change to public
+	public  static  BroadcastRefreshHandler
+									broadcastRefreshHandler;		// 25/05/2020 ECU make public
+					String			broadcastMessage;				// 25/05/2020 ECU added
+					boolean			keepRunning = true;				// 22/08/2013 ECU change to public
 	private static 	Context			context;
 					String 			incomingAddress = null;			// 20/03/2015 ECU added
 					String 			incomingMessage = null;
@@ -48,7 +53,7 @@ public class BroadcastServerThread implements Runnable
 		// -------------------------------------------------------------------------
 		APIIssues.NetworkOnMainUIThread (android.os.Build.VERSION.SDK_INT);
 		// -------------------------------------------------------------------------
-		wifiManager = (WifiManager)context.getSystemService (Context.WIFI_SERVICE);
+		wifiManager = (WifiManager) context.getSystemService (Context.WIFI_SERVICE);
 		// -------------------------------------------------------------------------
 		// 12/09/2013 ECU include debug mode check
 		// 10/03/2015 ECU changed to use 'debugMode in 'storedData'
@@ -62,7 +67,10 @@ public class BroadcastServerThread implements Runnable
 			Utilities.popToast (context.getString (R.string.broadcast_thread_created));
 			// ---------------------------------------------------------------------
 		}
-		
+		// -------------------------------------------------------------------------
+		// 25/05/2020 ECU Note - get the socket that will be used for 'broadcast'
+		//                       messages
+		// -------------------------------------------------------------------------
 		try
 		{
 			// ---------------------------------------------------------------------
@@ -90,7 +98,10 @@ public class BroadcastServerThread implements Runnable
 			//                transmit any message that is waiting
 			// ---------------------------------------------------------------------
 		    broadcastRefreshHandler = new BroadcastRefreshHandler ();
-		    broadcastRefreshHandler.sleep (10000);			// 25/07/2013 ECU initial wait is 10 seconds
+		    // ---------------------------------------------------------------------
+		    // 25/05/2020 ECU announce this device to the world - after a delay
+		    // ---------------------------------------------------------------------
+		    Devices.sendHelloMessage (10 * StaticData.ONE_SECOND);
 		    // ---------------------------------------------------------------------
 		    // 08/04/2016 ECU allow the thread to receive broadcast messages
 		    // ---------------------------------------------------------------------
@@ -115,8 +126,12 @@ public class BroadcastServerThread implements Runnable
 		}	
 	}
 	/* ============================================================================= */
-	public void run() 
+	// 25/05/2020 ECU Note - set up the bit of the thread that is responsible for
+	//                ====   receiving incoming broadcast messages
+	// -----------------------------------------------------------------------------
+	public void run ()
 	{
+		// -------------------------------------------------------------------------
 		try
 		{  
 			// ---------------------------------------------------------------------
@@ -144,7 +159,7 @@ public class BroadcastServerThread implements Runnable
 					//                       'keepRunning' is set to false before
 					//                       the socket is actually closed. Could
 					//                       probably set a 'time out' but not a
-					//                       majore issue
+					//                       major issue
 					// -------------------------------------------------------------
 					PublicData.datagramSocket.receive (packet);
 					// -------------------------------------------------------------
@@ -175,7 +190,7 @@ public class BroadcastServerThread implements Runnable
 					// 01/07/2013 ECU start up the thread to handle the incoming message
 					// -------------------------------------------------------------
 					receiverThread.start ();  	   
-					// -------------------------------------------------------------				
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 				// 08/04/2016 ECU Note - the loop within the thread has finished
@@ -217,30 +232,25 @@ public class BroadcastServerThread implements Runnable
 	@SuppressLint("HandlerLeak")
 	class BroadcastRefreshHandler extends Handler
 	{
+		// -------------------------------------------------------------------------
+		// 25/05/2020 ECU tided up so that rather than looping for a message to be
+		//                sent then the 'sender' sends a message directly for
+		//                processing
+		// -------------------------------------------------------------------------
 		@Override
 	    public void handleMessage (Message theMessage) 
-	    {   			
-			// ---------------------------------------------------------------------
-			// 11/04/2015 ECU put in the check on 'null' - just in case
-			// ---------------------------------------------------------------------
-			if (PublicData.datagramSocket != null)
+	    {
+	    	// ---------------------------------------------------------------------
+	    	// 25/05/2020 ECU changed to check on the message type rather than just
+	    	//                looping
+	    	// ---------------------------------------------------------------------
+	    	switch (theMessage.what)
 			{
-				if (keepRunning)
-				{
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_FINISH:
 					// -------------------------------------------------------------
-					// 27/08/2013 ECU check for an incoming message
-					// -------------------------------------------------------------
-					checkIfMessageToSend ();
-					// -------------------------------------------------------------
-					// 09/04/2016 ECU Note - wait a short period before checking 
-					//                       again for a message to send
-					// 29/04/2019 ECU changed from 200 to 1000
-					// -------------------------------------------------------------
-					sleep (1000);
-					// -------------------------------------------------------------
-				}
-				else
-				{
+					// 25/05/2020 ECU called when processing is to be finished
 					// -------------------------------------------------------------
 					// 27/08/2013 ECU perform 'closing down' tasks
 					// -------------------------------------------------------------
@@ -250,66 +260,29 @@ public class BroadcastServerThread implements Runnable
 					// -------------------------------------------------------------
 					PublicData.datagramSocket = null;
 					// -------------------------------------------------------------
-				}
+					// 25/05/2020 ECU and indicate that the main thread is to stop
+					// -------------------------------------------------------------
+					keepRunning = false;
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_SEND:
+					// -------------------------------------------------------------
+					// 25/05/2020 ECU called when there is a message to send
+					// -------------------------------------------------------------
+					sendTheMessage ((String)theMessage.obj);
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				default:
+					break;
+				// -----------------------------------------------------------------
 			}
+			//----------------------------------------------------------------------
 	    }
-	    /* ------------------------------------------------------------------------- */
-	    public void sleep (long delayMillis)
-	    {		
-	        this.removeMessages (0);
-	        sendMessageDelayed (obtainMessage(0),delayMillis);
-	    }
+	    // -------------------------------------------------------------------------
 	};
-	/* ============================================================================= */	
-	void checkIfMessageToSend ()
-	{
-		// -------------------------------------------------------------------------
-		// 09/04/2016 ECU changed name from muticastMessage which was misleading as
-		//                using broadcast
-		// -------------------------------------------------------------------------
-		try
-		{
-			if (PublicData.broadcastMessage != null)
-			{  
-				// -----------------------------------------------------------------
-				// 23/03/2015 ECU add in the counter to the message and then increment
-				//                the counter
-				// -----------------------------------------------------------------
-				PublicData.broadcastMessage += " " + broadcastCounter++;
-				// -----------------------------------------------------------------
-				// 22/03/2015 ECU log the fact that message has been sent
-				// -----------------------------------------------------------------
-				Utilities.LogToProjectFile (TAG,"sent broadcast packet " + PublicData.broadcastMessage);
-				// -----------------------------------------------------------------
-				// 27/08/2013 ECU there is a message to be sent
-				// 09/04/2016 ECU Note - create a packet and store the data to be
-				//                       broadcast.
-				// -----------------------------------------------------------------
-				DatagramPacket packet = new DatagramPacket (PublicData.broadcastMessage.getBytes(), 
-															PublicData.broadcastMessage.length(),
-															broadcastAddress,
-															port);
-				PublicData.datagramSocket.send (packet);
-				// -----------------------------------------------------------------
-				// 27/08/2013 ECU indicate that the message has been sent
-				// -----------------------------------------------------------------
-				PublicData.broadcastMessage = null;
-				// -----------------------------------------------------------------
-			}
-		}
-		catch (IOException theException)
-		{
-			// ---------------------------------------------------------------------
-			// 24/03/2015 ECU log the fact that exception has occurred
-			// ---------------------------------------------------------------------
-			Utilities.LogToProjectFile (TAG,"checkIfMessageToSend exception" + theException);
-			// ---------------------------------------------------------------------
-			// 24/03/2015 ECU reset the message so that do not try again
-			// ---------------------------------------------------------------------
-			PublicData.broadcastMessage = null;
-			// ---------------------------------------------------------------------
-		}
-	}
 	// =============================================================================
 	void processIncomingMessage (String theIncomingAddress,String theIncomingMessage)
 	{
@@ -365,4 +338,47 @@ public class BroadcastServerThread implements Runnable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	void sendTheMessage (String theMessage)
+	{
+		// -------------------------------------------------------------------------
+		// 25/05/2020 ECU create to send theMessage as a broadcast message
+		// -------------------------------------------------------------------------
+		try
+		{
+			// ---------------------------------------------------------------------
+			// 23/03/2015 ECU add in the counter to the message and then increment
+			//                the counter
+			// ---------------------------------------------------------------------
+			broadcastMessage = theMessage + StaticData.SPACE_STRING + broadcastCounter++;
+			// ---------------------------------------------------------------------
+			// 22/03/2015 ECU log the fact that message has been sent
+			// ---------------------------------------------------------------------
+			Utilities.LogToProjectFile (TAG,"sent broadcast packet " + broadcastMessage);
+			// ---------------------------------------------------------------------
+			// 27/08/2013 ECU there is a message to be sent
+			// 09/04/2016 ECU Note - create a packet and store the data to be
+			//                       broadcast.
+			// ---------------------------------------------------------------------
+			DatagramPacket packet = new DatagramPacket (broadcastMessage.getBytes(),
+														broadcastMessage.length(),
+														broadcastAddress,
+														port);
+			PublicData.datagramSocket.send (packet);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 14/09/2020 ECU changed fro IOException to Exception because in an
+		//                abnormal start up then it is possible that '..datagramSocket'
+		//                is null
+		// -------------------------------------------------------------------------
+		catch (Exception theException)
+		{
+			// ---------------------------------------------------------------------
+			// 25/05/2020 ECU log the fact that exception has occurred
+			// ---------------------------------------------------------------------
+			Utilities.LogToProjectFile (TAG,"sendTheMessage exception" + theException);
+			// ---------------------------------------------------------------------
+		}
+		// =========================================================================
+	}
 }

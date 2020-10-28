@@ -1,10 +1,10 @@
 package com.usher.diboson;
 
-import java.util.Calendar;
-
-import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+
+import java.util.Calendar;
 
 public class AlarmActions extends DibosonActivity 
 {
@@ -17,6 +17,8 @@ public class AlarmActions extends DibosonActivity
 	// 04/03/2017 ECU remove the check on whether the app is running because this is
 	//                done by AlarmReceiver which will not start this activity if the
 	//                app is not running
+	// 05/10/2020 ECU change to use 'Utilities.startASpecifiedActivity' rather than
+	//                starting up 'GridActivity.class'
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -70,8 +72,10 @@ public class AlarmActions extends DibosonActivity
 					// -------------------------------------------------------------
 					// 18/06/2013 ECU change from literal to stored value
 					// 04/12/2013 ECU try and make a phone call
+					// 06/10/2020 ECU changed to use the supplied data
+					// 08/10/2020 ECU changed to use 'phoneNumber'
 					// -------------------------------------------------------------
-					Utilities.makePhoneCall (this,getString (R.string.phone_number_ed));
+					Utilities.makePhoneCall (this,alarmData.phoneNumber);
 					// -------------------------------------------------------------
 				}
 				if ((alarmData.action & StaticData.ALARM_ACTION_TABLET_REMINDER) == StaticData.ALARM_ACTION_TABLET_REMINDER)
@@ -92,6 +96,7 @@ public class AlarmActions extends DibosonActivity
 						// 28/11/2014 ECU just tidy up the logic so that medication
 						//                details always displayed
 						// 09/03/2016 ECU changed to pass through the object
+						// 08/10/2020 ECU changed to use 'doseTime'
 						// ---------------------------------------------------------
 						if (PublicData.medicationDetails.get (alarmData.associatedData).dailyDoseTimes != null)
 						{	
@@ -99,7 +104,7 @@ public class AlarmActions extends DibosonActivity
 														 calendar.get(Calendar.HOUR_OF_DAY),
 														 calendar.get(Calendar.MINUTE),
 														 alarmData.associatedData,
-														 (DoseTime) alarmData.object);
+														 alarmData.doseTime);
 						}
 					}
 					// -------------------------------------------------------------	
@@ -112,6 +117,7 @@ public class AlarmActions extends DibosonActivity
 					// -------------------------------------------------------------
 					Intent myIntent = new Intent (getBaseContext(),SlideShowActivity.class);
 					startActivity (myIntent);
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 				// 28/11/2014 ECU add in the'activity' option
@@ -135,8 +141,12 @@ public class AlarmActions extends DibosonActivity
 							//                activity to be started - do it this way
 							//                to adjust for when the 'sort by usage'
 							//                is being used
-							// -----------------------------------------------------
-							Intent localIntent = new Intent (getBaseContext(),GridActivity.class);
+							// 05/10/2020 ECU changed so that the activity class is not
+							//                activated - changed from:-
+							//       			Intent localIntent = new Intent (getBaseContext(),GridActivity.class);
+							//					localIntent.putExtra (StaticData.PARAMETER_POSITION,activityPosition);
+							// 					localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
+							// 					startActivity (localIntent);
 							// -----------------------------------------------------
 							// 23/09/2017 ECU get the position of the activity in
 							//                the current array based on the legend
@@ -146,12 +156,12 @@ public class AlarmActions extends DibosonActivity
 																				PublicData.alarmData.get(alarmIndex).message);
 							// -----------------------------------------------------
 							// 23/09/2017 ECU now activate the specified activity
+							// 05/10/2020 ECU changed to use new method
 							// -----------------------------------------------------
-							localIntent.putExtra (StaticData.PARAMETER_POSITION,activityPosition);
-							localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-							startActivity (localIntent);
+							Utilities.startASpecficActivity (activityPosition);
 							// -----------------------------------------------------
 							break;
+							// -----------------------------------------------------
 						}
 					}	 
 					// -------------------------------------------------------------
@@ -177,8 +187,9 @@ public class AlarmActions extends DibosonActivity
 					// -------------------------------------------------------------
 					// 14/07/2015 ECU action the stored email address
 					// 09/03/2016 ECU changed to use the object
+					// 08/10/2020 ECU changed to use 'emailMessage'
 					// -------------------------------------------------------------
-					((EmailMessage) alarmData.object).Send (this);
+					alarmData.emailMessage.Send (this);
 					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
@@ -189,9 +200,10 @@ public class AlarmActions extends DibosonActivity
 					// 29/09/2015 ECU action the EPG alarm
 					// 30/09/2015 ECU change the cast to EPGAlarm
 					// 03/04/2016 ECU put in the check on a 'null' object
+					// 08/10/2020 ECU changed to use 'epgAlarm'
 					// -------------------------------------------------------------
-					if (alarmData.object != null)
-						ShowEPGActivity.EPGActionAlarm (this,(EPGAlarm)alarmData.object);
+					if (alarmData.epgAlarm != null)
+						ShowEPGActivity.EPGActionAlarm (this,alarmData.epgAlarm);
 					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
@@ -202,9 +214,10 @@ public class AlarmActions extends DibosonActivity
 					// 15/10/2015 ECU the alarm that gives an advance warning of 
 					//                an impending EPG alarm
 					// 03/04/2016 ECU put in the check on a 'null' object
+					// 08/10/2020 ECU changed to use 'epgAlarm'
 					// -------------------------------------------------------------
-					if (alarmData.object != null)
-						ShowEPGActivity.EPGAdvanceWarning (this,(EPGAlarm)alarmData.object);
+					if (alarmData.epgAlarm != null)
+						ShowEPGActivity.EPGAdvanceWarning (this,alarmData.epgAlarm);
 					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------

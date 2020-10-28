@@ -6,9 +6,8 @@ import android.media.MediaRecorder;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class AudioAnalyser extends DibosonActivity
@@ -52,6 +51,17 @@ public class AudioAnalyser extends DibosonActivity
 	// 22/11/2016 ECU Note - some timings seem to show that acquiring
 	//                       and processing data takes ~ 500 mS so
 	//                       that get 2 processing cycles per second.
+	// 24/06/2020 ECU IMPORTANT - on the Samsung Galaxy (2019) tablet then following
+	//                            the 'audioRecord.read' the 'input buffer' contained
+	//                            '0' rather than the data. This seemed to be associated
+	//                            with having the 'audioRecord.stop' so changed the
+	//                            logic but just for API >= PIE
+	//            ECU Not happy with checking on the API so changed the processing
+	//                to use 'PROCESS_ACTION' message and to not stop/start the
+	//                recording
+	// 27/06/2020 ECU added buttons to manipulate the frequencies rather than use
+	//                menu options.
+	//            ECU tidy up the display
 	/* ============================================================================= */
 	//final static String 	TAG = "AudioAnalyser";
 	/* ============================================================================= */
@@ -72,15 +82,20 @@ public class AudioAnalyser extends DibosonActivity
 	public static int		frequencyEnd 	= SAMPLING_RATE / 2;// 18/01/2014 ECU added
 	public static int		frequencyStart	= 0;				// 18/01/2014 ECU added
 	public static double []	magnitudes 		= null;
+	public static ProcessHandler
+							processHandler;
 	public static RefreshHandler 	
 							refreshHandler;
 	public static boolean   resetScale 		= false;
 	public static float     resolution;	
 	public static double	yMaximum 		= 0;
 	/* ============================================================================= */
-	static 	AudioRecord		audioRecord 	= null;
+	static AudioRecord		audioRecord 	= null;
+		   Button			buttonDecrementFrequency;
+		   Button			buttonIncrementFrequency;
+		   Button			buttonResetFrequency;
 	static View  			dibosonView;
-	static FastFourierTransform	
+	static FastFourierTransform
 							fastFourierTransform;				// 18/11/2016 ECU added
 	static TextView			frequencyField;						// 20/11/2016 ECU added
 	static Complex [] 		sourceData;
@@ -99,8 +114,9 @@ public class AudioAnalyser extends DibosonActivity
 			// 21/10/2015 ECU the activity has been created anew
 			// ---------------------------------------------------------------------
 			// 28/11/2016 ECU call method to set the screen up
+			// 27/06/2020 ECU changed to remove the title
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity (this,true,true,false);
+			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
 			// ---------------------------------------------------------------------
 			// 20/11/2016 ECU changed from 'diboson_view' now that frequency and
 			//                volume are being set here rather than in DibosonView
@@ -110,6 +126,16 @@ public class AudioAnalyser extends DibosonActivity
 			dibosonView = findViewById (R.id.DibosonViewMain);
 		
 			dibosonView.setOnClickListener (viewClickListener);
+			// ---------------------------------------------------------------------
+			// 27/06/2020 ECU set up the buttons and associated listeners
+			// ---------------------------------------------------------------------
+			buttonDecrementFrequency 	= (Button) findViewById (R.id.decrement_end_frequency);
+			buttonIncrementFrequency 	= (Button) findViewById (R.id.increment_start_frequency);
+			buttonResetFrequency 		= (Button) findViewById (R.id.reset_frequency_range);
+			// ---------------------------------------------------------------------
+			buttonDecrementFrequency.setOnClickListener (buttonListener);
+			buttonIncrementFrequency.setOnClickListener (buttonListener);
+			buttonResetFrequency.setOnClickListener (buttonListener);
 			// ---------------------------------------------------------------------
 			//20/11/2016 ECU set up the text fields that will be updated
 			// ---------------------------------------------------------------------
@@ -130,9 +156,19 @@ public class AudioAnalyser extends DibosonActivity
 			// ---------------------------------------------------------------------
 			refreshHandler = new RefreshHandler ();
 			// ---------------------------------------------------------------------
+			// 24/06/2020 ECU declare the handler for processing the data
+			// ---------------------------------------------------------------------
+			processHandler = new ProcessHandler ();
+			// ---------------------------------------------------------------------
 			// 20/11/2016 ECU now start up the processing
 			// ---------------------------------------------------------------------
 			refreshHandler.sendEmptyMessage (StaticData.MESSAGE_PROCESS);
+			// ---------------------------------------------------------------------
+			// 24/06/2020 ECU because of the issues with Samsung Galaxy (2019)
+			//                then start up the recorder here
+			//            ECU always start up the recording
+			// ---------------------------------------------------------------------
+			audioRecord.startRecording();
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -171,14 +207,6 @@ public class AudioAnalyser extends DibosonActivity
 			resetScale = !resetScale;
 		}
 	};
-	// ===========================================================================	
-	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
-	{
-		getMenuInflater().inflate (R.menu.audio_analyser, menu);
-		
-		return true;
-	}
 	/* ============================================================================= */
 	@Override
     public void onDestroy()
@@ -194,42 +222,48 @@ public class AudioAnalyser extends DibosonActivity
 		// -------------------------------------------------------------------------
     }
 	// =============================================================================
-	public boolean onOptionsItemSelected (MenuItem item)
+	private static View.OnClickListener buttonListener = new View.OnClickListener()
 	{
 		// -------------------------------------------------------------------------
-		// 18/01/2014 ECU take the actions depending on which menu is selected
-		// -------------------------------------------------------------------------
-		switch (item.getItemId())
+		@Override
+		public void onClick (View theView)
 		{
 			// ---------------------------------------------------------------------
-			case R.id.frequency_increment_start:
+
+			switch (theView.getId())
+			{
 				// -----------------------------------------------------------------
-				// 18/01/2014 ECU added
 				// -----------------------------------------------------------------
-				IncrementFrequency ();
+				case R.id.decrement_end_frequency:
+					// -------------------------------------------------------------
+					// 18/01/2014 ECU added
+					// -------------------------------------------------------------
+					DecrementFrequency ();
+					// -------------------------------------------------------------
+					break;
 				// -----------------------------------------------------------------
-				break;
-			// ---------------------------------------------------------------------
-			case R.id.frequency_decrement_end:
 				// -----------------------------------------------------------------
-				// 18/01/2014 ECU added	
+				case R.id.increment_start_frequency:
+					// -------------------------------------------------------------
+					// 18/01/2014 ECU added
+					// -------------------------------------------------------------
+					IncrementFrequency ();
+					// -------------------------------------------------------------
+					break;
 				// -----------------------------------------------------------------
-				DecrementFrequency ();
 				// -----------------------------------------------------------------
-				break;
-			// ---------------------------------------------------------------------	
-			case R.id.frequency_reset:
+				case R.id.reset_frequency_range:
+					// -------------------------------------------------------------
+					// 18/01/2014 ECU added
+					// -------------------------------------------------------------
+					frequencyStart = 0;
+					frequencyEnd   = SAMPLING_RATE / 2;
+					break;
 				// -----------------------------------------------------------------
-				// 18/01/2014 ECU added
 				// -----------------------------------------------------------------
-				frequencyStart = 0;
-				frequencyEnd   = SAMPLING_RATE / 2;
-				break;
-			// ---------------------------------------------------------------------			
+			}
 		}
-		// -------------------------------------------------------------------------
-		return true;
-	}
+	};
 	// =============================================================================
 	public static void DecrementFrequency ()
 	{
@@ -279,8 +313,9 @@ public class AudioAnalyser extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 24/10/2013 ECU find the next even number that is a power of 2
 			// ---------------------------------------------------------------------
-			while (!Utilities.isNumberAPowerOfTwo(bufferSize))
+			while (!Utilities.isNumberAPowerOfTwo (bufferSize))
 				bufferSize += 2;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 		// 19/10/2013 ECU set the buffer that will receive the audio data
@@ -300,51 +335,102 @@ public class AudioAnalyser extends DibosonActivity
 	static void ProcessAudioBuffer (short [] theBuffer, int theNumberToProcess)
 	{
 		// -------------------------------------------------------------------------
-		// 18/11/2016 ECU set the frequency resolution based on what was read
+		// 25/06/2020 ECU add the try/catch just in case any of the arguments
+		//                cause an issue - would happen if AudioAnalyser is
+		//                stopped abnormally
 		// -------------------------------------------------------------------------
-		resolution = ((float) SAMPLING_RATE)  / (float) theNumberToProcess;
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU create complex input from the source data
-		// -------------------------------------------------------------------------		
-		sourceData = new Complex [theNumberToProcess];
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU declare array for the transformed data
-		// -------------------------------------------------------------------------
-		transformedData  = new Complex [theNumberToProcess];
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU build the input array for the fft
-		// -------------------------------------------------------------------------
-		for (int index = 0; index < theNumberToProcess; index++)
+		try
 		{
 			// ---------------------------------------------------------------------
-			// 20/10/2013 ECU real part adjust for size of short, and no imaginary part
+			// 18/11/2016 ECU set the frequency resolution based on what was read
 			// ---------------------------------------------------------------------
-			sourceData [index] = new Complex ((double) theBuffer[index] / MAX_VALUE,0); 
+			resolution = ((float) SAMPLING_RATE)  / (float) theNumberToProcess;
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU create complex input from the source data
+			// ---------------------------------------------------------------------
+			sourceData = new Complex [theNumberToProcess];
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU declare array for the transformed data
+			// ---------------------------------------------------------------------
+			transformedData  = new Complex [theNumberToProcess];
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU build the input array for the fft
+			// ---------------------------------------------------------------------
+			for (int index = 0; index < theNumberToProcess; index++)
+			{
+			    // -----------------------------------------------------------------
+				// 20/10/2013 ECU 'real part' adjust for size of short, and no
+				// 				  'imaginary part'
+				// -----------------------------------------------------------------
+				sourceData [index] = new Complex ((double) theBuffer [index] / MAX_VALUE,0);
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU perform the fast Fourier transform of the input data
+			// 18/11/2016 ECU changed to use local object rather than statically
+			// ---------------------------------------------------------------------
+			transformedData = fastFourierTransform.fft (sourceData);
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU build a magnitudes array from the fft output
+			// ---------------------------------------------------------------------
+			magnitudes = new double [theNumberToProcess/2];
+			// ---------------------------------------------------------------------
+			for (int index = 0; index < theNumberToProcess/2; index++)
+			{
+				magnitudes [index] = transformedData [index].abs ();
+			}
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU want to invalidate the view so that data is redrawn
+			//                but to get access to view then need to get to User
+			//                Interface
+			// ---------------------------------------------------------------------
+			// 20/10/2013 ECU cause an onDraw to be actioned so that the displayed
+			//                data is refreshed
+			// ---------------------------------------------------------------------
+			dibosonView.invalidate ();
+			// ---------------------------------------------------------------------
 		}
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU perform the fast Fourier transform of the input data
-		// 18/11/2016 ECU changed to use local object rather than statically
-		// -------------------------------------------------------------------------
-		transformedData = fastFourierTransform.fft (sourceData);
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU build a magnitudes array from the fft output
-		// -------------------------------------------------------------------------
-		magnitudes = new double [theNumberToProcess/2];
-		
-		for (int index = 0; index < theNumberToProcess/2; index++) 
+		catch (Exception theException)
 		{
-			magnitudes[index] = transformedData[index].abs();
+			// ---------------------------------------------------------------------
+			// 25/06/2020 ECU don't need to do anything - normally happens if the
+			//                AudioAnalyser is terminated abnormally
+			// ---------------------------------------------------------------------
 		}
-		// -------------------------------------------------------------------------				
-		// 20/10/2013 ECU want to invalidate the view so that data is redrawn
-		//                but to get access to view then need to get to User
-		//                Interface
-		// -------------------------------------------------------------------------
-		// 20/10/2013 ECU cause an onDraw to be actioned
-		// -------------------------------------------------------------------------
-		dibosonView.invalidate ();
 		// -------------------------------------------------------------------------
 	}
+	// =============================================================================
+	static class ProcessHandler extends Handler
+	{
+		// -------------------------------------------------------------------------
+		// 24/06/2020 ECU declare the data used within this class
+		// -------------------------------------------------------------------------
+
+		// -------------------------------------------------------------------------
+		@Override
+		public void handleMessage (final Message theMessage)
+		{
+			switch (theMessage.what)
+			{
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				case StaticData.MESSAGE_PROCESS_ACTION:
+					// -------------------------------------------------------------
+					// 24/06/2020 ECU process the data passed through in the message
+					// -------------------------------------------------------------
+					ProcessAudioBuffer ((short []) theMessage.obj,theMessage.arg1);
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				default:
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+			}
+		}
+		// -------------------------------------------------------------------------
+	};
 	// =============================================================================
 	static class RefreshHandler extends Handler
     {
@@ -354,9 +440,10 @@ public class AudioAnalyser extends DibosonActivity
 		short []   	inputBuffer = new short [bufferSize];
 		int       	numberOfShortsRead;
 		boolean		process		= true;
+		Message		processMessage;							// 24/06/2020 ECU added
 		// -------------------------------------------------------------------------
         @Override
-        public void handleMessage (Message theMessage) 
+        public void handleMessage (Message theMessage)
         {   
         	switch (theMessage.what)
         	{
@@ -401,9 +488,13 @@ public class AudioAnalyser extends DibosonActivity
         			volumeField.setText    (String.format ("%.3f",((Double) theMessage.obj)));
         			// -------------------------------------------------------------
         			// 20/11/2016 ECU just drop through - do NOT add a break
+        			// 24/06/2020 ECU did not like above edit so do the proper way
         			// -------------------------------------------------------------
+        			sendEmptyMessage (StaticData.MESSAGE_PROCESS);
+        			// -------------------------------------------------------------
+        			break;
         		// -----------------------------------------------------------------
-        		case StaticData.MESSAGE_PROCESS:
+				case StaticData.MESSAGE_PROCESS:
         			// -------------------------------------------------------------
         			// 20/11/2016 ECU called to read a buffer and get it processed
         			//            ECU do a check to ensure that processing has not
@@ -411,10 +502,6 @@ public class AudioAnalyser extends DibosonActivity
         			// -------------------------------------------------------------
         			if (process)
         			{
-        				// ---------------------------------------------------------
-        				// 19/10/2013 ECU now start recording
-        				// ---------------------------------------------------------
-        				audioRecord.startRecording ();
         				// ---------------------------------------------------------
         				// 19/10/2013 ECU read in a block of data (see the comment 
         				//				  at head of task about number returned)
@@ -435,14 +522,8 @@ public class AudioAnalyser extends DibosonActivity
         					// -----------------------------------------------------
         					while (!Utilities.isNumberAPowerOfTwo (numberOfShortsRead))
         						numberOfShortsRead -= 2;
+        					// -----------------------------------------------------
         				}
-        				// ---------------------------------------------------------
-        				// 24/10/2013 ECU stop recording so that there is no 'buffer 
-        				//				  overflow' - bit of a lazy way but as the
-        				//                data is only being monitored then serves 
-        				//				  its purpose
-        				// ---------------------------------------------------------
-        				audioRecord.stop ();
         				// ---------------------------------------------------------
         				// 20/10/2013 ECU now process the received buffer
         				// 20/11/2016 ECU was passing through 
@@ -450,14 +531,36 @@ public class AudioAnalyser extends DibosonActivity
         				//                but changed to just pass through the inputBuffer
         				// 22/11/2016 ECU Note - the processing seems to take 
         				//                       ~ 60 mS
+        				// 24/06/2020 ECU rather than processing the data here, which
+        				//                takes some time, then send a message to
+        				//                do the processing
         				// ---------------------------------------------------------
-        				ProcessAudioBuffer (inputBuffer,numberOfShortsRead);
+        				// 24/06/2020 ECU remove any queued messages - the loss of
+        				//                data is not important
+        				// ---------------------------------------------------------
+        				processHandler.removeMessages (StaticData.MESSAGE_PROCESS_ACTION);
+        				// ---------------------------------------------------------
+        				// 24/06/2020 ECU set up the data in the message and send
+        				//                this across
+        				// ---------------------------------------------------------
+        				processMessage = processHandler.obtainMessage (StaticData.MESSAGE_PROCESS_ACTION);
+        				processMessage.arg1 = numberOfShortsRead;
+        				processMessage.obj  = inputBuffer;
+        				processHandler.sendMessage (processMessage);
         				// ---------------------------------------------------------
         			}
 					// -------------------------------------------------------------
-        			break;
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
+				default:
+					break;
+				// -----------------------------------------------------------------
+				// -----------------------------------------------------------------
         	}	
         }
         // -------------------------------------------------------------------------
     };
+    // =============================================================================
 }

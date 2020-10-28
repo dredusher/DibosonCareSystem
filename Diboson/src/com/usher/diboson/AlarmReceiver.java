@@ -9,8 +9,15 @@ import android.os.Bundle;
 // 04/03/2017 ECU name changed from AlarmService because class is of a receiver
 //                     rather than a Service
 // =================================================================================
+
+// =================================================================================
 public class AlarmReceiver extends BroadcastReceiver
 {
+
+	// =============================================================================
+	private static final String TAG = "AlarmReceiver";
+	// =============================================================================
+
 	/* ============================================================================= */
 	@Override
 	public void onReceive (Context context, Intent intent) 
@@ -50,8 +57,9 @@ public class AlarmReceiver extends BroadcastReceiver
 	    }
 	   	// -------------------------------------------------------------------------
 	   	// 04/03/2017 ECU check whether the app is running correctly
+	   	// 08/05/2020 ECU changed to use 'Check....'
 	   	// -------------------------------------------------------------------------
-		if ((PublicData.storedData != null) && PublicData.storedData.initialised)
+		if (StoredData.CheckIfInitialised ())
 		{
 			// ---------------------------------------------------------------------
 			// 04/03/2017 ECU the app is running so can process the alarm normally
@@ -79,8 +87,10 @@ public class AlarmReceiver extends BroadcastReceiver
 			// ---------------------------------------------------------------------
 			// 04/03/2017 ECU restart the app and use 'true' to indicate no user
 			//                input
+			// 13/05/2020 ECU added the TAG to identify which receiver restarted the
+			//                app
 			// ---------------------------------------------------------------------
-			MainActivity.restartThisApp (context,true);
+			MainActivity.restartThisApp (context,true,TAG);
 			// ---------------------------------------------------------------------
 		}
 	} 

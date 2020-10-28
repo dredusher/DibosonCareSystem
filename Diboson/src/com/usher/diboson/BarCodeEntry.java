@@ -262,7 +262,8 @@ public class BarCodeEntry extends DibosonActivity
 			// 19/12/2016 ECU changed to use _URL
 			// ---------------------------------------------------------------------
 			localIntent.putExtra (StaticData.PARAMETER_URL,getBaseContext().getString (R.string.google_product_search) + "\"" + barCode + "\"");
-			startActivity (localIntent);		
+			startActivity (localIntent);
+			// -----------------------------------------------------------------------
 		}
 	};
 	/* =============================================================================== */

@@ -70,20 +70,25 @@ public class CarePlan implements Serializable
 		return localMessage;
 	}
 	/* ============================================================================= */
-	public static CarePlanVisit getPlan ()
+	public static List <CarePlanVisit> getPlan ()
 	{
 		// -------------------------------------------------------------------------
 		// 02/10/2016 ECU called to check if there is a visit planned for 'now'
 		//                need to get today's day and the time
+		// 30/04/2020 ECU changed to return an array because there may be more than
+		//                one carer visiting at the same time
+		// -------------------------------------------------------------------------
+		List <CarePlanVisit> visits = new ArrayList<CarePlanVisit> ();
 		// -------------------------------------------------------------------------
 		int localDay = Utilities.DayOfWeek ();
 		Calendar localCalendar = Calendar.getInstance ();
-		long localTime = Utilities.ConvertTime (localCalendar.get(Calendar.HOUR_OF_DAY),localCalendar.get(Calendar.MINUTE));
+		long localTime = Utilities.ConvertTime (localCalendar.get(Calendar.HOUR_OF_DAY),localCalendar.get (Calendar.MINUTE));
 		// -------------------------------------------------------------------------
 		// 02/10/2016 ECU now scan through the schedules looking for a match
 		// -------------------------------------------------------------------------
 		List <CarePlanVisit> localVisits = PublicData.carePlan.visits [localDay];
-		if (localVisits.size() > 0)
+		// -------------------------------------------------------------------------
+		if (localVisits.size () > 0)
 		{
 			for (int index = 0; index < localVisits.size(); index++)
 			{
@@ -95,16 +100,18 @@ public class CarePlan implements Serializable
 				{
 					// -------------------------------------------------------------
 					// 02/10/2016 ECU the time is within a scheduled visit
+					// 30/04/2020 ECU store this plan into the list
 					// -------------------------------------------------------------
-					return localVisits.get (index);
+					visits.add (localVisits.get (index));
 					// -------------------------------------------------------------
 				}
 			}
 		}
 		// -------------------------------------------------------------------------
 		// 02/10/2016 ECU nothing matched so indicate that fact
+		// 30/04/2020 ECU return the retrieved visits
 		// -------------------------------------------------------------------------
-		return null;
+		return visits;
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

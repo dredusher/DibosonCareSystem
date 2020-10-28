@@ -1,10 +1,11 @@
 package com.usher.diboson;
 
+import android.content.Context;
+import android.content.Intent;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import android.content.Context;
-import android.content.Intent;
 
 public class CarePlanActivity extends DibosonActivity 
 {
@@ -256,6 +257,18 @@ public class CarePlanActivity extends DibosonActivity
 	    		   Utilities.createAMethod (CarePlanActivity.class,"NoMethod",(Object) null)); 
 		// -------------------------------------------------------------------------  
     }
+    // =============================================================================
+	public static void UpdateCarePlanOnDisk (Context theContext)
+	{
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU create to update the data on disk without sending an
+		//                email or doing any other checks
+
+		// -------------------------------------------------------------------------
+		AsyncUtilities.writeObjectToDisk (PublicData.projectFolder +
+					theContext.getString (R.string.care_plan_file),PublicData.carePlan);
+		// -------------------------------------------------------------------------
+	}
     // =============================================================================
     public static void WriteCarePlanToDisk (Context theContext)
     {

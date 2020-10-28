@@ -1,7 +1,5 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Build;
@@ -16,6 +14,9 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+
 public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 {
 	// ===============================================================================
@@ -24,6 +25,10 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 	// 08/04/2018 ECU changed so that the calling activity is remembered and can be
 	//                passed to the 'invokeMethod' method so that calls to non-static
 	//                methods does not force a creation of a new instance.
+	// 03/11/2019 ECU issues when setting the background colour - see the notes
+	//                against the edit
+	// 01/01/2020 ECU handle the provision of an image as a drawable
+	// 10/10/2020 ECU add the rule to 'center vertical' the image view
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -57,6 +62,11 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		// -------------------------------------------------------------------------
 		layoutParams 	= new RelativeLayout.LayoutParams (PublicData.screenWidth/4,PublicData.screenWidth/4);
 		// -------------------------------------------------------------------------
+		// 10/10/2020 ECU make sure that the image is centred vertically within the
+		//                row
+		// -------------------------------------------------------------------------
+		layoutParams.addRule (RelativeLayout.CENTER_VERTICAL);
+		// -------------------------------------------------------------------------
 		// 07/02/2014 ECU set up some defaults
 		// -------------------------------------------------------------------------
 		defaultImageID 	= R.drawable.no_photo;	
@@ -65,7 +75,7 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		methodButton	= null;						// 08/02/2014 ECU added
 		
 		methodCustom	= null;						// 24/03/2014 ECU added
-		
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public void ChangeDefaults (Activity 	theActivity,
@@ -134,11 +144,15 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 			LayoutInflater inflater = ((Activity) context).getLayoutInflater();
 			listCellView = inflater.inflate (layoutResourceId, theParent, false);
 			// ---------------------------------------------------------------------
+			// 07/07/2020 ECU added the bottom legend
+			// ---------------------------------------------------------------------
 			itemHolder = new ItemHolder ();
 			itemHolder.listLegend 	= (TextView)  listCellView.findViewById (R.id.list_button_entry_textview);
 			itemHolder.listImage 	= (ImageView) listCellView.findViewById (R.id.list_button_entry_imageview);
 			itemHolder.listSummary 	= (TextView)  listCellView.findViewById (R.id.list_button_entry_textview2);
 			itemHolder.listExtras 	= (TextView)  listCellView.findViewById (R.id.list_button_entry_textview3);
+			itemHolder.listBottomLegend
+								 	= (TextView)  listCellView.findViewById (R.id.list_button_entry_textview4);
 			itemHolder.buttonPhone 	= (Button)    listCellView.findViewById (R.id.list_button_phone);
 			itemHolder.buttonText 	= (Button)    listCellView.findViewById (R.id.list_button_text);
 			itemHolder.buttonCustom = (Button)    listCellView.findViewById (R.id.list_button_custom);	
@@ -199,6 +213,18 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		itemHolder.listSummary.setText (listItem.GetSummary ());
 		itemHolder.listExtras.setText  (listItem.GetExtras ());
 		// -------------------------------------------------------------------------
+		// 07/07/2020 ECU decide whether the 'bottom legend' has to be processed
+		// -------------------------------------------------------------------------
+		if ((itemHolder.listBottomLegend != null) && (listItem.GetBottomLegend()) != null)
+		{
+			// ---------------------------------------------------------------------
+			// 07/07/2020 ECU set the legend in the specified textview which is at
+			//                bootom of the item
+			// ---------------------------------------------------------------------
+			itemHolder.listBottomLegend.setText  (listItem.GetBottomLegend());
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 		// 04/10/2016 ECU add the setting of the associated colour
 		// -------------------------------------------------------------------------
 		if (listItem.GetColour () != StaticData.NO_RESULT)
@@ -206,8 +232,28 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 			// ---------------------------------------------------------------------
 			// 04/10/2016 ECU the colour has been specified so change the background
 			//                colour
+			// 03/11/2019 ECU had a situation when the following generated an
+			//                exception because the 'resource' could not be found -
+			//                not sure why but may be because the notification data
+			//                has been corrupted. I think that this is because the 
+			//                colour stored in the listItem is the 'resourceId' of
+			//                the required colour - after a rebuild the resource ID
+			//                could have changed so that the stored value is invalid
 			// ---------------------------------------------------------------------
-			listCellView.setBackgroundResource (listItem.GetColour());
+			try
+			{
+				listCellView.setBackgroundResource (listItem.GetColour());
+			}
+			catch (android.content.res.Resources.NotFoundException theException)
+			{
+				// -----------------------------------------------------------------
+				// 03/11/2019 ECU don't need to do anything as the default colour
+				//                will be used
+				// 11/11/2019 ECU set to a default colour otherwise get weird effects
+				// -----------------------------------------------------------------
+				listCellView.setBackgroundResource (R.color.default_background);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
@@ -238,6 +284,18 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 			}
 		}
 		// -------------------------------------------------------------------------
+		// 24/01/2020 ECU check whether to make the help icon visible or not
+		// -------------------------------------------------------------------------
+		if (methodHelp == null)
+		{
+			// ---------------------------------------------------------------------
+			// 24/01/2020 ECU make sure that the icon exists
+			// ---------------------------------------------------------------------
+			if (itemHolder.helpIcon != null)
+			{
+				itemHolder.helpIcon.setVisibility (View.INVISIBLE);
+			}
+		}
 		// -------------------------------------------------------------------------
 		// 31/03/2014 ECU sort out the initial images
 		// -------------------------------------------------------------------------
@@ -256,15 +314,34 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 			//                default image is displayed
 			// 01/09/2015 ECU changed to use StaticData
 			// 06/05/2017 ECU added the handling of imageURL
+			// 01/01/2020 ECU added the handling of imageDrawable
 			// ---------------------------------------------------------------------
 			if (listItem.imagePath != null)
 				Utilities.displayAnImage (itemHolder.listImage,listItem.imagePath,StaticData.IMAGE_SAMPLE_SIZE,defaultImageID);
 			else
+			// ---------------------------------------------------------------------
+			// 01/01/2020 ECU Note - check if the image is being provided by a URL
+			// ---------------------------------------------------------------------
 			if (listItem.imageURL != null)
 			{
 				new AsyncUtilities.ImageLoadTask (listItem.imageURL,itemHolder.listImage).execute();
 			}
+			// ---------------------------------------------------------------------
 			else
+			// ---------------------------------------------------------------------
+			// 01/01/2020 ECU check if an image has been provided as a drawable
+			// ---------------------------------------------------------------------
+			if (listItem.imageDrawable != null)
+			{
+				itemHolder.listImage.setImageDrawable (listItem.imageDrawable);
+			}
+			// ---------------------------------------------------------------------
+			else
+			// ---------------------------------------------------------------------
+			// 01/01/2020 ECU Note - if neither of the above then check if a resource
+			//                       ID is being provide - if so then use that image
+			//                       otherwise use the default resource ID
+			// ---------------------------------------------------------------------
 			{
 				// -----------------------------------------------------------------
 				// 19/12/2015 ECU check if a resource ID has been specified
@@ -285,6 +362,7 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		// -------------------------------------------------------------------------	
 		if (itemHolder.buttonPhone != null)
 		{
+			// ---------------------------------------------------------------------
 			itemHolder.buttonPhone.setOnClickListener(new OnClickListener() 
 			{
 				@Override
@@ -328,6 +406,15 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		// -------------------------------------------------------------------------
 		if (itemHolder.buttonCustom != null)
 		{
+			// ---------------------------------------------------------------------
+			// 25/01/2020 ECU check if the button is to be visible or not
+			// 29/01/2020 ECU put in the check on the method
+			// ---------------------------------------------------------------------
+			if (methodCustom != null)
+			{
+				itemHolder.buttonCustom.setVisibility (listItem.visibilityCustom ? View.VISIBLE : View.GONE);
+			}
+			// ---------------------------------------------------------------------
 			itemHolder.buttonCustom.setOnClickListener(new OnClickListener() 
 			{
 				@Override
@@ -381,6 +468,15 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 		// -------------------------------------------------------------------------
 		if (itemHolder.helpIcon != null)
 		{
+			// ---------------------------------------------------------------------
+			// 25/01/2020 ECU check if the button is to be visible or not
+			// 29/01/2020 ECU put in the check on the method
+			// ---------------------------------------------------------------------
+			if (methodHelp != null)
+			{
+				itemHolder.helpIcon.setVisibility (listItem.visibilityHelp ? View.VISIBLE : View.INVISIBLE);
+			}
+			// ---------------------------------------------------------------------
 			itemHolder.helpIcon.setOnClickListener(new OnClickListener() 
 			{
 				@Override
@@ -452,25 +548,31 @@ public class CustomListViewAdapter extends ArrayAdapter<ListItem>
 	/* ============================================================================ */
 	static class ItemHolder 
 	{
+		// ------------------------------------------------------------------------
+		// 07/07/2020 ECU added 'bottom legend'
+		// ------------------------------------------------------------------------
+		TextView  	listBottomLegend;
 		TextView  	listLegend;
 		TextView 	listSummary;
 		TextView 	listExtras;
 		ImageView 	listImage;
-		
+		// -------------------------------------------------------------------------
 		Button 		buttonPhone;;
 		Button 		buttonText;
 		Button		buttonCustom;				// 24/03/2014 ECU added
-		
+		// -------------------------------------------------------------------------
 		ImageView   helpIcon;					// 06/02/2014 ECU added
 		ImageView   imageIcon;					// 30/03/2014 ECU added
-		
+		// -------------------------------------------------------------------------
 		int         imageID;
-
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================ */
 	public void UpdateData (ArrayList<ListItem> theData)
 	{
+		// ------------------------------------------------------------------------
 		data = theData;
+		// ------------------------------------------------------------------------
 	}
 	/* ============================================================================ */
 	void RebuildList (ArrayList<ListItem> theListItems)

@@ -1,10 +1,10 @@
 package com.usher.diboson;
 
-import java.io.Serializable;
-
 import android.content.Context;
 import android.hardware.Camera.CameraInfo;
 import android.media.CamcorderProfile;
+
+import java.io.Serializable;
 
 public class CameraSettings implements Serializable
 {
@@ -49,7 +49,16 @@ public class CameraSettings implements Serializable
 	boolean hideView		= false;
 	int		quality			= 0;
 	// =============================================================================
-	
+
+	// =============================================================================
+	public String CameraLegend ()
+	{
+		// -------------------------------------------------------------------------
+		// 31/08/2020 ECU return the legend for the currently selected camera
+		// -------------------------------------------------------------------------
+		return CAMERA_POSITION [camera];
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 	public long FileSize (boolean theWarningFlag)
 	{

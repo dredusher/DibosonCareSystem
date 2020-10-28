@@ -411,10 +411,12 @@ public class CountdownTimerActivity extends DibosonActivity
 				//                while the app was 'down' - let the user know
 				//                about this
 				// 25/11/2018 ECU added the message colour
+				// 15/07/2020 ECU added the title
 				// -----------------------------------------------------------------
-				NotificationMessage.Add (String.format (theContext.getString (R.string.countdown_timer_expired_format),
-						PublicData.dateFormatterCurrent.format (PublicData.storedData.countdownTimerData.timeExpiration)),
-						StaticData.NOTIFICATION_COLOUR_ERROR);
+				NotificationMessage.Add (theContext.getString (R.string.countdown_timer),
+									     String.format (theContext.getString (R.string.countdown_timer_expired_format),
+									     PublicData.dateFormatterCurrent.format (PublicData.storedData.countdownTimerData.timeExpiration)),
+										 StaticData.NOTIFICATION_COLOUR_ERROR);
 				// -----------------------------------------------------------------
 				// 10/03/2018 ECU clear the data object
 				// -----------------------------------------------------------------

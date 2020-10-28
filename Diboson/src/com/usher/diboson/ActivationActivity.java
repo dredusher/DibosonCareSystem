@@ -1,13 +1,13 @@
 package com.usher.diboson;
 
-import java.text.SimpleDateFormat;
-import java.util.Locale;
-
 import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.text.SimpleDateFormat;
+import java.util.Locale;
 
 public class ActivationActivity extends DibosonActivity 
 {

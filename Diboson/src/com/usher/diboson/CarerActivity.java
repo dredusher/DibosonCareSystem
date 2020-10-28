@@ -1,26 +1,26 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
 import android.app.Activity;
 import android.bluetooth.BluetoothDevice;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
 import android.view.Menu;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemLongClickListener;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListView;
 import android.widget.Spinner;
 import android.widget.TextView;
-import android.widget.AdapterView.OnItemClickListener;
-import android.widget.AdapterView.OnItemLongClickListener;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class CarerActivity extends DibosonActivity
 {
@@ -47,6 +47,26 @@ public class CarerActivity extends DibosonActivity
 	//                first attempt.
 	// 20/03/2017 ECU changed "" to BLANK.....
 	// 24/03/2017 ECU in SelectAction indicate the state of the visit
+	// 22/01/2020 ECU For the carer visit start/stop display provide the facility to
+	//                send a text message to a specified carer
+	// 24/01/2020 ECU when setting the start/stop of a visit manually the display of
+	//                carers provides the ability to phone/SMS a particular carer.
+	//                Utilities.phoneCallCapability is used to check if the device
+	//                is capable of performing these tasks - if not and a 'phone
+	//                server' is defined then the method will check that this device
+	//                can communicate to the server and that the server is not in
+	//                'airplane mode'. This introduces a delay which may or may not
+	//                be acceptable - the socket time out is set as low as sensible.
+	// 25/01/2020 ECU added phoneCallCapability to indicate if this device can make
+	//				  a phone call, either locally or using the phone server
+	// 23/04/2020 ECU There was a comment in WriteCarerDataToDisk which indicated
+	// 				  that there was a problem with calling Utilities.SynchroniseNow
+	// 				  - have investigated and all seems to be well so leave the call in
+	// 02/05/2020 ECU When a scheduled visit is taking place then, when that visit is
+	//                started, display the tasks that are to be performed.
+	//            ECU Also when a scheduled visit is started then cancel any 'scheduled
+	//                visit due to end' warning, which relates to the 'scheduled start'
+	//                and set it relative to the 'actual start'
 	// -----------------------------------------------------------------------------
 	// =============================================================================
 	// =============================================================================
@@ -66,8 +86,12 @@ public class CarerActivity extends DibosonActivity
 				ArrayList<ListItem> 	listItems = new ArrayList<ListItem>();
 																// 05/02/2014 ECU list of carers
 				ListView    			listView;				// 05/02/2014 ECU added
+	static 		boolean					phoneCallCapability = false;
+																// 25/01/2020 ECU added
 	static 		RefreshHandler			refreshHandler;			// 04/10/2016 ECU added
 	static      boolean                 refreshKeepRunning;		// 04/10/2016 ECU added
+	static      int						refreshObject	= StaticData.OBJECT_CARERS;
+																// 25/01/2020 ECU added
 				int						selectedItem	= StaticData.NO_RESULT;									
 																// 28/08/2015 ECU added
 	// =============================================================================
@@ -167,7 +191,9 @@ public class CarerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				if (Carer.Size () > 0)
 				{
+					// -------------------------------------------------------------
 					HandleCarerVisit (this);
+					// -------------------------------------------------------------
 				}
 				else
 				{
@@ -280,8 +306,13 @@ public class CarerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static ArrayList<ListItem> BuildTheCarersList ()
+	public static ArrayList<ListItem> BuildTheCarersList (int theObjectType)
 	{
+		// -------------------------------------------------------------------------
+		// 25/01/2020 ECU added the object type argument so that the visibility the
+		// 				  buttons that control the ability to phone or send text
+		// 				  messages can be set
+		// -------------------------------------------------------------------------
 		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem>();
 		// -------------------------------------------------------------------------
 		// 27/11/2014 ECU add in the check on size
@@ -322,16 +353,48 @@ public class CarerActivity extends DibosonActivity
 					//                whether a visit has been started
 					// 27/11/2016 ECU tidy up the selection of a colour
 					// -------------------------------------------------------------
-					localListItem.colour = StaticData.DEFAULT_BACKGROUND_COLOUR;
+					localListItem.colour 		= StaticData.DEFAULT_BACKGROUND_COLOUR;
+					// -------------------------------------------------------------
+					// 07/07/2020 ECU default the legend which will indicate when the
+					//                current visit started
+					// -------------------------------------------------------------
+					localListItem.bottomLegend 	= StaticData.BLANK_STRING;
 					// -------------------------------------------------------------
 					// 27/11/2016 ECU now decide if the colour is to be changed
 					// -------------------------------------------------------------
 					if (localCarer.visitActive)
 					{
 						if (localCarer.visitStarted)
+						{
 							localListItem.colour = StaticData.CARE_VISIT_STARTED;
+							// -----------------------------------------------------
+							// 07/07/2020 ECU set the legend that will be displayed
+							//                at the bottom of the item
+							// 10/07/2020 ECU changed from 'This visit'
+							// -----------------------------------------------------
+							localListItem.bottomLegend
+								= "Visit started at " + PublicData.dateFormatterShort.format(localCarer.startOfVisit);
+							// -----------------------------------------------------
+						}
 						else
+						{
 							localListItem.colour = StaticData.CARE_VISIT_ENDING;
+						}
+					}
+					// -------------------------------------------------------------
+					// 25/01/2020 ECU indicate the phone call capability
+					// -------------------------------------------------------------
+					if (theObjectType == StaticData.OBJECT_CARER_VISITS)
+					{
+						// ---------------------------------------------------------
+						// 25/01/2020 ECU on the 'carer visit' screen it is possible
+						//                to phone or text the carer but only want
+						//                to show the buttons if this device is
+						//                capable of making a phone call
+						// ---------------------------------------------------------
+						localListItem.visibilityCustom 	= phoneCallCapability;
+						localListItem.visibilityHelp 	= phoneCallCapability;
+						// ---------------------------------------------------------
 					}
 					// -------------------------------------------------------------
 					// 04/10/2016 ECU Note - add the new record to the list
@@ -587,7 +650,7 @@ public class CarerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	static void CarerVisit (Context theContext,int theCarerIndex,boolean theStartStopFlag,boolean theManualFlag)
+	static void CarerVisit (Context theContext, int theCarerIndex, boolean theStartStopFlag, boolean theManualFlag)
 	{
 		// -------------------------------------------------------------------------
 		// 02/01/2016 ECU created to register the start or stop of a visit by the
@@ -631,9 +694,12 @@ public class CarerActivity extends DibosonActivity
 			// 02/01/2016 ECU process any actions associated with
 			//                the start of the visit
 			// 30/03/2016 ECU replace the <CARER> with the real carer's name
+			// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+			//                the former requires a REGEX so not sure why it ever
+			//				  worked
 			// ---------------------------------------------------------------------
 			Utilities.actionHandler (theContext,
-					PublicData.storedData.visit_start_actions.replaceAll 
+					PublicData.storedData.visit_start_actions.replace
 						(StaticData.CARER_REPLACEMENT,PublicData.carers.get(theCarerIndex).name));
 			// ---------------------------------------------------------------------
 		}
@@ -706,8 +772,11 @@ public class CarerActivity extends DibosonActivity
 			// 02/01/2016 ECU process any actions associated with
 			//                the end of the visit
 			// 30/03/2016 ECU replace the <CARER> with the actual name
+			// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+			//                the former requires a REGEX so not sure why it ever
+			//				  worked
 			// ---------------------------------------------------------------------
-			Utilities.actionHandler (theContext,PublicData.storedData.visit_end_actions.replaceAll(StaticData.CARER_REPLACEMENT,PublicData.carers.get(theCarerIndex).name));
+			Utilities.actionHandler (theContext,PublicData.storedData.visit_end_actions.replace(StaticData.CARER_REPLACEMENT,PublicData.carers.get(theCarerIndex).name));
 			// ---------------------------------------------------------------------
 		}
 	}
@@ -723,48 +792,110 @@ public class CarerActivity extends DibosonActivity
 		//                specified carer.
 		//            ECU NOTE - this code used to be in the VisitStartMethod
 		// 03/02/2018 ECU added the context as an arguemnt
+		// 30/04/2020 ECU changed because '...getPlan' now returns a list
 		// -------------------------------------------------------------------------
-		CarePlanVisit localVisit = CarePlan.getPlan ();
-   		if (localVisit != null)
+		List<CarePlanVisit> localVisits = CarePlan.getPlan ();
+		//--------------------------------------------------------------------------
+   		if (localVisits.size() > 0)
    		{
    			// ---------------------------------------------------------------------
-   			// 02/10/2016 ECU it appears that this is a scheduled visit but check if
-   			//                this is the scheduled carer
-   			// ----------------------------------------------------------------------
-   			if (theCarerIndex != localVisit.carerIndex)
-   			{
-   				// -----------------------------------------------------------------
-   				// 02/10/2016 ECU it appears that this is not the scheduled carer
-   				// 18/07/2019 ECU indicate the length of the visit
-   				// -----------------------------------------------------------------
-   				MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.different_carer_format), 
-   															PublicData.carers.get (theCarerIndex).name,
-   																PublicData.carers.get (localVisit.carerIndex).name,
-   																	localVisit.duration),
-   														    Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
-   				// -----------------------------------------------------------------
-   			}
-   			else
-   			{
-   				// -----------------------------------------------------------------
-   				// 02/10/2016 ECU it appears that this is a planned visit by the
-   				//                scheduled carer
-   				// -----------------------------------------------------------------
-   				// 05/10/2016 ECU confirm the visit as scheduled
-   				// 17/07/2019 ECU changed to use format and indicate the length of the visit
-   				// -----------------------------------------------------------------
-   				MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.scheduled_visit_format), 
-   															PublicData.carers.get(theCarerIndex).name,
-   																localVisit.duration),
-														    Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
-   				// ------------------------------------------------------------------
-   			}
-   			// ----------------------------------------------------------------------
-			// 05/10/2016 ECU set the tasks that have been set for this visit
-   			// 30/11/2016 ECU whether it is the write or wrong carer then the tasks
-   			//                associated with this visit need to be copied across
+   			// 30/04/2020 ECU scan through the scheduled visits to see if one of them
+   			//                relates to 'this' carer
+   			// ---------------------------------------------------------------------
+   			for (CarePlanVisit visit : localVisits)
+			{
+				// -----------------------------------------------------------------
+				// 30/04/2020 ECU check this visit to see if it relates to this carer
+				// -----------------------------------------------------------------
+				if (visit.carerIndex == theCarerIndex)
+				{
+					// -------------------------------------------------------------
+					// 30/04/2020 ECU this visit is for this carer
+					// -------------------------------------------------------------
+					// 05/10/2016 ECU confirm the visit as scheduled
+					// 17/07/2019 ECU changed to use format and indicate the length of the visit
+					// -------------------------------------------------------------
+					MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.scheduled_visit_format),
+															  PublicData.carers.get(theCarerIndex).name,
+							                                  visit.duration),
+															  Utilities.AbsoluteFileName (PublicData.carers.get (theCarerIndex).photo));
+					// -------------------------------------------------------------
+					// 30/04/2020 ECU set the scheduled tasks to be performed
+					// -------------------------------------------------------------
+					PublicData.carers.get (theCarerIndex).Tasks (visit.tasks);
+					// -------------------------------------------------------------
+					// 02/05/2020 ECU now want to display the tasks to be performed
+					// -------------------------------------------------------------
+					PublicData.carers.get (theCarerIndex).DisplayTasksToPerform (theContext);
+					// -------------------------------------------------------------
+					// 02/05/2020 ECU cancel any associated alarms for this visit
+					// 03/05/2020 ECU remove the 'Cancel...' because the existing
+					//                alarm, if it exists, will be reset to what
+					//                follows
+					// -------------------------------------------------------------
+					// visit.CancelAnyAlarms (theContext);
+					// -------------------------------------------------------------
+					// 02/05/2020 ECU set up an alarm for the end of the visit
+					// -------------------------------------------------------------
+					DailyScheduler.SetAnAlarm (theContext,
+											   visit.alarmID,
+							                   StaticData.ALARM_ID_CARE_VISIT,
+							                   Utilities.getAdjustedTime(true) +
+							                   		(visit.duration * StaticData.MILLISECONDS_PER_MINUTE),
+											   new int [] {StaticData.CARE_VISIT_DEPARTURE,
+														   visit.carerIndex,
+													       StaticData.NOT_SET,
+													       StaticData.CARE_VISIT_WARNING_PERIOD,
+														   StaticData.NOT_SET,
+													       StaticData.NOT_SET,
+													       visit.carerIndex});
+
+					// -------------------------------------------------------------
+					// 30/04/2020 ECU nothing more to do
+					// -------------------------------------------------------------
+					return;
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+			// 30/04/2020 ECU have scanned through the scheduled visits and there
+			//                isn't one for this carer so tell the users about this
+			//            ECU there may be multiple scheduled visits so indicate
+			//                each one
+			// 01/05/2020 ECU set the tasks for this 'unscheduled' visit as all the
+			//                tasks for the 'scheduled' visits.
+   			// ---------------------------------------------------------------------
+   			// 01/05/2020 ECU initialise the tasks to be performed
+   			// ---------------------------------------------------------------------
+			PublicData.carers.get (theCarerIndex).Tasks (null);
+			// ---------------------------------------------------------------------
+			for (CarePlanVisit visit : localVisits)
+			{
+				// -----------------------------------------------------------------
+				// 30/04/2020 ECU show the details of each scheduled visit
+				// -----------------------------------------------------------------
+				MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.different_carer_format),
+															PublicData.carers.get (theCarerIndex).name,
+   																PublicData.carers.get (visit.carerIndex).name,
+																	visit.duration),
+																		Utilities.AbsoluteFileName (PublicData.carers.get (theCarerIndex).photo));
+				// -----------------------------------------------------------------
+				// 05/10/2016 ECU set the tasks that have been set for this visit
+				// 30/11/2016 ECU whether it is the right or wrong carer then the tasks
+				//                associated with this visit need to be copied across
+				// 30/04/2020 ECU really want to concatenate the tasks from all
+				//                scheduled visits - at the moment only the last
+				//                set of tasks will be set
+				// 01/05/2020 ECU merge the tasks from each scheduled visit
+				// ------------------------------------------------------------------
+				PublicData.carers.get (theCarerIndex).TasksMerge (visit.tasks);
+				// ------------------------------------------------------------------
+			}
 			// ----------------------------------------------------------------------
-			PublicData.carers.get(theCarerIndex).Tasks (localVisit.tasks);
+			// 02/05/2020 ECU now want to display the tasks to be performed
+			// ----------------------------------------------------------------------
+			PublicData.carers.get (theCarerIndex).DisplayTasksToPerform (theContext);
 			// ----------------------------------------------------------------------
    		}
    		else
@@ -781,6 +912,42 @@ public class CarerActivity extends DibosonActivity
    			PublicData.carers.get (theCarerIndex).Tasks (null);
    			// ---------------------------------------------------------------------
    		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	private static void CheckPhoneCapability (final Context theContext, final int theTimeOut)
+	{
+		// -------------------------------------------------------------------------
+		// 25/01/2020 ECU created to use a thread to see if this device is
+		//                capable of making a phone call, either locally or using
+		//                the 'phone server'. Performed as a thread because there
+		//                could be delays if trying to contact the 'phone server'
+		//                and there is no route - a timeout will occur - do not
+		//                want the delay to impact on the user.
+		// -------------------------------------------------------------------------
+		// 25/01/2020 ECU define the thread that will do the checking
+		// -------------------------------------------------------------------------
+		Thread phoneThread = new Thread()
+		{
+			@Override
+			public void run()
+			{
+				// -----------------------------------------------------------------
+				// 25/01/2020 ECU check the capability and store so that it can be
+				//                used to modify the 'user display'
+				// -----------------------------------------------------------------
+				phoneCallCapability = Utilities.phoneCallCapability (theContext,theTimeOut);
+				// -----------------------------------------------------------------
+				// 25/01/2020 ECU request a refresh of the display
+				// -----------------------------------------------------------------
+				requestDisplayRefresh (StaticData.OBJECT_CARER_VISITS);
+				// -----------------------------------------------------------------
+			}
+		};
+		// -------------------------------------------------------------------------
+		// 25/01/2020 ECU now start the thread
+		// -------------------------------------------------------------------------
+		phoneThread.start();
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -1045,7 +1212,9 @@ public class CarerActivity extends DibosonActivity
 		if (Carer.Size () > 0)
 		{
 			// ---------------------------------------------------------------------
-			BuildTheCarersList ();
+			// 25/01/2020 ECU change to pass through the object type
+			// ---------------------------------------------------------------------
+			BuildTheCarersList (StaticData.OBJECT_CARERS);
 			SelectorUtilities.selectorParameter.rowLayout 				= R.layout.carer_row;
 			SelectorUtilities.selectorParameter.backMethodDefinition 	= new MethodDefinition<CarerActivity> (CarerActivity.class,"BackKeyMethod");
 			SelectorUtilities.selectorParameter.customMethodDefinition 	= new MethodDefinition<CarerActivity> (CarerActivity.class,"AddCarer");
@@ -1111,31 +1280,50 @@ public class CarerActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			SelectorUtilities.Initialise ();
 			// ---------------------------------------------------------------------
-			BuildTheCarersList ();
+			// 25/01/2020 ECU changed the object type to ....CARER_VISITS
+			//            ECU add the true to indicate phone call capability
+			//                monitoring wanted
+			// ---------------------------------------------------------------------
+			BuildTheCarersList (StaticData.OBJECT_CARER_VISITS);
 			SelectorUtilities.selectorParameter.rowLayout 				= R.layout.carer_visit_row;
 			SelectorUtilities.selectorParameter.classToRun 				= CarerActivity.class;
-			SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_CARERS;
+			SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_CARER_VISITS;
+			// ---------------------------------------------------------------------
+			// 02/01/2016 ECU declare the long press on item
+			// ---------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.longSelectMethodDefinition 
+				= new MethodDefinition<CarerActivity> (CarerActivity.class,"CarerVisit");
+			// ---------------------------------------------------------------------
+			// 28/11/2016 ECU indicate that the 'select' action must not 'finish'
+			//                the 'Selector' activity
+			// ---------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.finishOnSelect          = false;
+			// ---------------------------------------------------------------------
+			// 23/07/2019 ECU indicate that sorting is required
+			// ---------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.sort	= true;
+			// ---------------------------------------------------------------------
+			// 24/01/2020 ECU check if this device is capable of making a phone call
+			//                before providing the provision to make one and send an
+			//                SMS message
+			// 25/01/2020 ECU added the second argument which is the timeout when
+			//                creating the socket to the 'phone server'
 			// ---------------------------------------------------------------------
 			// 05/11/2016 ECU declare the method to handle the help key - here it
 			//                is being used to call the carer
 			// ---------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.helpMethodDefinition 	
-				= new MethodDefinition<CarerActivity> (CarerActivity.class,"PhoneCallAction");
-			// ----------------------------------------------------------------------
-			// 02/01/2016 ECU declare the long press on item
-			// ----------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.longSelectMethodDefinition 
-				= new MethodDefinition<CarerActivity> (CarerActivity.class,"CarerVisit");
-			// ----------------------------------------------------------------------
-			// 28/11/2016 ECU indicate that the 'select' action must not 'finish'
-			//                the 'Selector' activity
-			// ----------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.finishOnSelect          = false;
-			// ----------------------------------------------------------------------
-			// 23/07/2019 ECU indicate that sorting is required
-			// ----------------------------------------------------------------------
-			SelectorUtilities.selectorParameter.sort	= true;
-			// ----------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.helpMethodDefinition
+					= new MethodDefinition<CarerActivity> (CarerActivity.class,"PhoneCallAction");
+			// ---------------------------------------------------------------------
+			// 22/01/2020 ECU set up the custom button
+			// ---------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.customLegend
+					= theContext.getString (R.string.send_text_message);
+			SelectorUtilities.selectorParameter.customMethodDefinition
+					= new MethodDefinition<CarerActivity> (CarerActivity.class,"SMSMethod");
+			// ---------------------------------------------------------------------
+			// 24/01/2020 ECU Note - start up the selector activity
+			// ---------------------------------------------------------------------
 			SelectorUtilities.StartSelector (theContext,
 											 new MethodDefinition<CarerActivity> (CarerActivity.class,"SelectAction"),
 											 StaticData.OBJECT_CARERS);
@@ -1150,6 +1338,16 @@ public class CarerActivity extends DibosonActivity
 			// 06/11/2016 ECU add the 'true' for centering
 			// ---------------------------------------------------------------------
 			Utilities.popToastAndSpeak (theContext.getString (R.string.carer_visit_long_press),true);
+			// ---------------------------------------------------------------------
+			// 25/01/2020 ECU the buttons that control making a phone call or sending
+			//                a text message are dependent on whether the device can
+			//                make a phone call either locally or using the 'phone
+			//                server', if defined. The following method will sort this
+			//                out - the second argument being the 'timeout' in mS if
+			//                there is a need to create a socket to communicate to the
+			//                'phone server'.
+			// ---------------------------------------------------------------------
+			CheckPhoneCapability (theContext,1000);
 			// ---------------------------------------------------------------------
 		}
 	}
@@ -1226,8 +1424,9 @@ public class CarerActivity extends DibosonActivity
         				//                class has been initialised so added a
         				//                new version of the Rebuild method to check for
         				//                this
+        				// 25/01/2020 ECU pass through the refresh object
         				// ---------------------------------------------------------
-        				Selector.Rebuild (StaticData.OBJECT_CARERS);
+        				Selector.Rebuild (refreshObject);
         				// ---------------------------------------------------------
         				// 04/10/2016 ECU reset the flag to indicate action done
         				// ---------------------------------------------------------
@@ -1241,17 +1440,22 @@ public class CarerActivity extends DibosonActivity
         				this.sendEmptyMessageDelayed (StaticData.MESSAGE_REFRESH,1000);
         			// -------------------------------------------------------------
         			break;
+        			// -------------------------------------------------------------
         	}
         	// ---------------------------------------------------------------------
         }
     };
     // =============================================================================
-    public static void requestDisplayRefresh ()
+    public static void requestDisplayRefresh (int theObjectType)
     {
     	// -------------------------------------------------------------------------
     	// 24/03/2017 ECU  called to try and get the display refreshed
     	// -------------------------------------------------------------------------
     	PublicData.carerRefreshWanted = true;
+    	// -------------------------------------------------------------------------
+    	// 25/01/2020 ECU remember the type of object being refreshed
+    	// -------------------------------------------------------------------------
+    	refreshObject = theObjectType;
     	// -------------------------------------------------------------------------
     }
     // ============================================================================= 
@@ -1308,8 +1512,9 @@ public class CarerActivity extends DibosonActivity
     	{
     		// ---------------------------------------------------------------------
     		// 24/03/2017 ECU the selected carer is not visiting at the moment
+    		// 23/09/2020 ECU changed to use 'Phrase'
     		// ---------------------------------------------------------------------
-    		localResult += context.getString (R.string.carer_visit_none);
+    		localResult += localCarer.Phrase (context,context.getString (R.string.carer_visit_none));
     		// ---------------------------------------------------------------------
     	}
     	// -------------------------------------------------------------------------
@@ -1318,6 +1523,62 @@ public class CarerActivity extends DibosonActivity
     	Utilities.popToastAndSpeak (localResult,true);
     	// -------------------------------------------------------------------------   
     }
+    // =============================================================================
+    public static void SendSMSMethod (Object [] theObjects)
+	{
+		// -------------------------------------------------------------------------
+		// 22/01/2020 ECU called when the user has entered a message to send
+		// 31/01/2020 ECU changed from (int) to (Integer) because the former was
+		//                flagged as an error with Eclipse
+		// -------------------------------------------------------------------------
+		int    localPosition 	= (Integer) theObjects [0];
+		String localMessage 	= (String) theObjects [1];
+		// -------------------------------------------------------------------------
+		// 22/01/2020 ECU check if anything entered
+		// -------------------------------------------------------------------------
+		if (!Utilities.isStringBlank (localMessage))
+		{
+			// ---------------------------------------------------------------------
+			// 22/01/2020 ECU tell the user what is going on
+			// 23/01/2020 ECU changed to use the new method
+			// ---------------------------------------------------------------------
+			MessageHandler.popToastAndSpeakDelayed (Selector.context.getString (R.string.text_message_about_to_send) +
+											 PublicData.carers.get(localPosition).name);
+			// ---------------------------------------------------------------------
+			// 22/02/2020 ECU now cause the message to be sent
+			// ---------------------------------------------------------------------
+			Utilities.sendSMSMessage (context,
+									  PublicData.carers.get (localPosition).phone,
+					                  localMessage);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 22/01/2020 ECU there is nothing to send
+			// 23/01/2020 ECU changed to use the new method
+			// ---------------------------------------------------------------------
+			MessageHandler.popToastAndSpeakDelayed (Selector.context.getString (R.string.nothing_to_send));
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+    // =============================================================================
+	public static void SMSMethod (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 22/01/2020 ECU called up when the custom button is clicked
+		// -------------------------------------------------------------------------
+		Intent localIntent = new Intent (((CarerActivity) context),GetMessage.class);
+		// -------------------------------------------------------------------------
+		// 22/01/2020 ECU request the SMS method
+		// -------------------------------------------------------------------------
+		localIntent.putExtra (StaticData.PARAMETER_METHOD,new MethodDefinition<CarerActivity> (CarerActivity.class,"SendSMSMethod"));
+		localIntent.putExtra (StaticData.PARAMETER_DATA,thePosition);
+		localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
+		((CarerActivity) context).startActivityForResult (localIntent,StaticData.REQUEST_CODE_FILE);
+		// -------------------------------------------------------------------------
+	}
 	// ============================================================================= 
     public static void SwipeAction (int thePosition)
     {
@@ -1404,9 +1665,11 @@ public class CarerActivity extends DibosonActivity
     		// ---------------------------------------------------------------------
     		// 25/03/2017 ECU want to trigger an immediate synchronisation but because
     		//                the writeObject.. is async then leave a slight delay
-    		//            ECU seems to be an issue here which needs investigation FRIG
+    		//            ECU seems to be an issue here which needs investigation
+    		// 23/04/2020 ECU investigated the issue mentioned above and all seems
+    		//                to be working well - so leave as it is
     		// ---------------------------------------------------------------------
-    		// FRIGUtilities.synchroniseNow (StaticData.ONE_SECOND * 5);
+    		Utilities.synchroniseNow (StaticData.ONE_SECOND * 5);
     		// ---------------------------------------------------------------------
     	}
     }
@@ -1517,7 +1780,7 @@ public class CarerActivity extends DibosonActivity
    		// -------------------------------------------------------------------------
    		// 04/10/2016 ECU get the display refreshed
    		// ------------------------------------------------------------------------- 
-   		Selector.Rebuild();
+   		Selector.Rebuild ();
   		// -------------------------------------------------------------------------
    	}
   	// =============================================================================

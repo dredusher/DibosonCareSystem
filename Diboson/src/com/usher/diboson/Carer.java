@@ -1,9 +1,10 @@
 package com.usher.diboson;
 
-import java.io.Serializable;
-import java.util.Arrays;
 import android.content.Context;
 import android.widget.Toast;
+
+import java.io.Serializable;
+import java.util.Arrays;
 
 public class Carer implements Serializable
 {
@@ -23,6 +24,15 @@ public class Carer implements Serializable
 	// 20/03/2017 ECU changed from "" to BLANK.....
 	// 06/06/2017 ECU changed "\n" to StaticData.NEWLINE
 	// 08/09/2017 ECU added the 'hashCode' method to take account of the delete flag
+	// 23/09/2020 ECU it is possible that a user may choose to include more than one
+	//                carer in one record, e.g. if the same carers work in pairs. In
+	//                these cases the 'name' will contain each carer's name separated
+	//                by a 'conjunction' like 'and' or '&'. This does not cause any
+	//                issues but when the app speaks or displays phrases to the user
+	//                the the wrong verb will be used - e.g. if the name is stored
+	//                as 'John Smith and Joan Black' then the verb would be 'is'
+	//                instead of 'are'. The field 'multipleCarers' has been added to
+	//                sort this out.
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -31,6 +41,8 @@ public class Carer implements Serializable
 	public int      agencyIndex;	// 14/01/2014 ECU index to agency
 	public String	bluetooth;		// 09/01/2014 ECU bluetooth name
 	public boolean  deleted;		// 31/01/2016 ECU added - this carer has been deleted
+	public boolean  multipleCarers; // 23/09/2020 ECU added - indicate whether more than
+	                                //                carer is defined in the name
 	public String	name;			// 09/01/2014 ECU name of the carer
 	public String	phone;			// 09/01/2014 ECU contact phone number
 	public String	photo;			// 05/02/2014 ECU added - path to photo
@@ -87,6 +99,11 @@ public class Carer implements Serializable
 		name 		= theName;
 		phone		= thePhone;
 		photo		= Utilities.getRelativeFileName (thePhotoPath);									
+		// -------------------------------------------------------------------------
+		// 23/09/2020 ECU decide if more that one carer is defined in the name
+		// -------------------------------------------------------------------------
+		multipleCarers = Utilities.checkForPlural (name,
+			MainActivity.activity.getResources().getStringArray (R.array.conjunctions));
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
@@ -151,20 +168,25 @@ public class Carer implements Serializable
 			// ---------------------------------------------------------------------
 			// 26/01/2015 ECU the carer is in range so decide whether to make the
 			//                announcement
+			// 23/09/2020 ECU changed to use Phrase
 			// ---------------------------------------------------------------------
 			if (!announcedInRange)
 			{
-				Utilities.SpeakAPhrase (theContext,name + theContext.getString (R.string.in_range));
+				Utilities.SpeakAPhrase (theContext,name + Phrase (theContext,theContext.getString (R.string.in_range)));
 				// -----------------------------------------------------------------
 				// 25/08/2015 ECU pop up toast
 				// 27/11/2016 ECU removed '+ " " + ' as added into resource
 				// -----------------------------------------------------------------
-				Utilities.popToast (name + theContext.getString (R.string.in_range),
+				Utilities.popToast (name +  Phrase (theContext,theContext.getString (R.string.in_range)),
 									true,
 									Toast.LENGTH_LONG,
 									PublicData.projectFolder + photo);
 				// -----------------------------------------------------------------
+				// 15/11/2019 ECU Note - indicate that the 'in range' announcement
+				//                       has been made
+				// ------------------------------------------------------------------
 				announcedInRange = true;
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 		}
@@ -176,13 +198,23 @@ public class Carer implements Serializable
 			// ---------------------------------------------------------------------
 			if (announcedInRange)
 			{
-				Utilities.SpeakAPhrase (theContext,name + theContext.getString (R.string.out_of_range));
+				// -----------------------------------------------------------------
+				// 15/11/2019 ECU Note - the bluetooth device is out of range
+				// 23/09/2020 ECU changed to use Phrase
+				// ------------------------------------------------------------------
+				Utilities.SpeakAPhrase (theContext,name + Phrase (theContext,theContext.getString (R.string.out_of_range)));
 				// -----------------------------------------------------------------
 				// 26/08/2015 ECU pop up toast
+				// 23/09/2020 ECU changed to use Phrase
 				// -----------------------------------------------------------------
-				Utilities.popToast (name + " " + theContext.getString (R.string.out_of_range),
-										true,Toast.LENGTH_LONG,PublicData.projectFolder + photo);
+				Utilities.popToast (name + Phrase (theContext,theContext.getString (R.string.out_of_range)),
+									true,
+									Toast.LENGTH_LONG,
+									PublicData.projectFolder + photo);
 				// -----------------------------------------------------------------
+				// 15/11/2019 ECU Note - indicate that the 'out of range' announcement
+				//                       has been made
+				// ------------------------------------------------------------------
 				announcedInRange = false;
 				// -----------------------------------------------------------------
 			}
@@ -229,6 +261,20 @@ public class Carer implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public void DisplayTasksToPerform (Context theContext)
+	{
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU created to display the tasks that are currently set for
+		//                this carer
+		// -------------------------------------------------------------------------
+		Utilities.popToast (Utilities.getRootView (theContext),
+							PrintTasks (theContext,theContext.getString (R.string.carer_visit_tasks)),
+							theContext.getString (R.string.press_to_clear),
+							StaticData.MILLISECONDS_PER_MINUTE,
+							true);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	@Override
 	public int hashCode ()
 	{
@@ -238,6 +284,20 @@ public class Carer implements Serializable
 		// -------------------------------------------------------------------------
 		return super.hashCode () + (deleted ? 1 : 0);
 		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public String Phrase (Context theContext,String thePhrase)
+	{
+		// ------------------------------------------------------------------------
+		// 23/09/2020 ECU returns a phrase of the form
+		//
+		//                <verb depending on 'mulipleCarers'><thePhrase>
+		// ------------------------------------------------------------------------
+		return StaticData.SPACE_STRING +
+					theContext.getString (multipleCarers ? R.string.plural_verb_are
+		                                                 : R.string.single_verb_is)
+		                       + thePhrase;
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public String Print ()
@@ -266,6 +326,57 @@ public class Carer implements Serializable
 			   "Start of Visit : " + PublicData.dateFormatter.format(startOfVisit) + StaticData.NEWLINE +
 			   "End   of Visit : " + PublicData.dateFormatter.format(endOfVisit) + StaticData.NEWLINE +
 			   "Deleted : " + deleted + StaticData.NEWLINE;
+	}
+	// =============================================================================
+	public String PrintTasks (Context theContext,String theTitle)
+	{
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU created to print the tasks
+		// -------------------------------------------------------------------------
+		String 		localTasks = theTitle + StaticData.NEWLINEx2;
+		boolean		localCheck = false;
+		// -------------------------------------------------------------------------
+		if (tasks != null)
+		{
+			// ---------------------------------------------------------------------
+			// 02/05/2020 ECU loop through the stored tasks
+			// ---------------------------------------------------------------------
+			for (int index = 0; index < tasks.length; index++)
+			{
+				// -----------------------------------------------------------------
+				// 02/05/2020 ECU check if this task is set
+				// -----------------------------------------------------------------
+				if (tasks [index])
+				{
+					// -------------------------------------------------------------
+					// 02/05/2020 ECU add this task into the list
+					// -------------------------------------------------------------
+					localTasks += StaticData.INDENT + PublicData.tasksToDo [index] + StaticData.NEWLINE;
+					// -------------------------------------------------------------
+					// 02/05/2020 ECU indicate that some tasks have been set
+					// -------------------------------------------------------------
+					localCheck = true;
+					// -------------------------------------------------------------
+				}
+			}
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU check if any tasks have been added
+		// -------------------------------------------------------------------------
+		if (!localCheck)
+		{
+			// ---------------------------------------------------------------------
+			// 02/05/2020 ECU no tasks have been set for this carer
+			// ---------------------------------------------------------------------
+			localTasks = theContext.getString (R.string.carer_visit_no_tasks) + StaticData.NEWLINE;
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU return the generated string
+		// -------------------------------------------------------------------------
+		return localTasks;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public static int Size ()
@@ -333,6 +444,44 @@ public class Carer implements Serializable
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public void TasksMerge (boolean [] theTasks)
+	{
+		// -------------------------------------------------------------------------
+		// 01/05/2020 ECU this method is called when the carer is performing an
+		//                unscheduled visit and there are already scheduled visits
+		//                for this period. The tasks for all of the scheduled visits
+		//                will be merged to be performed on this unscheduled visit
+		// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		// 01/05/2020 ECU check if the lengths are the same - if so then scan the
+		//                supplied array with that stored
+		// -------------------------------------------------------------------------
+		if (tasks.length == theTasks.length)
+		{
+			// ---------------------------------------------------------------------
+			// 01/05/2020 ECU the arrays are of the same length so doing the merging
+			// ---------------------------------------------------------------------
+			for (int index = 0; index < tasks.length; index++)
+			{
+				// -----------------------------------------------------------------
+				// 01/05/2020 ECU only interested in adding tasks rather than resetting
+				//                any that were set
+				// -----------------------------------------------------------------
+				if (!tasks [index])
+				{
+					// --------------------------------------------------------------
+					// 01/05/2020 ECU this task is not set so can overwrite with that
+					//                supplied
+					// --------------------------------------------------------------
+					tasks [index] = theTasks [index];
+					// --------------------------------------------------------------
+				}
+			}
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public String TasksPerformed (String theTitle)
 	{
 		boolean localTitle = true;
@@ -388,6 +537,7 @@ public class Carer implements Serializable
 			// ---------------------------------------------------------------------
 			visitStarted = theNewState;
 			return true;
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -395,6 +545,7 @@ public class Carer implements Serializable
 			// 04/10/2016 ECU no state change so indicate this to the caller
 			// ---------------------------------------------------------------------
 			return false;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}

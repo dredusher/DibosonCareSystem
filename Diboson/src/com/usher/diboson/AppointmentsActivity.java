@@ -1,13 +1,9 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.List;
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.text.method.ScrollingMovementMethod;
 import android.view.Menu;
 import android.view.MotionEvent;
@@ -25,6 +21,10 @@ import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.TimePicker;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
 
 
 public class AppointmentsActivity extends DibosonActivity
@@ -89,7 +89,6 @@ public class AppointmentsActivity extends DibosonActivity
 	Button			appointmentNewButton;		// 07/01/2014 ECU added
 	TextView		appointmentNotes;
 	TextView		appointmentPhoneNumber;
-	ScrollView		appointmentScrollView;
 	TimePicker		appointmentTime;
 	Spinner 		appointmentType;
 	static int		initialHashCodeData;		// 30/03/2016 ECU added
@@ -143,7 +142,7 @@ public class AppointmentsActivity extends DibosonActivity
 			// 07/01/2014 ECU check if any incoming parameters
 			// ---------------------------------------------------------------------
 			Bundle extras = getIntent ().getExtras ();
-	
+			// ---------------------------------------------------------------------
 			if (extras != null) 
 			{	
 				// -----------------------------------------------------------------
@@ -152,6 +151,7 @@ public class AppointmentsActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				appointmentsDisplay = extras.getBoolean(StaticData.PARAMETER_APPOINTMENTS);
 				selectType 			= extras.getString (StaticData.PARAMETER_SELECT);
+				// -----------------------------------------------------------------
 			}  
 			// ---------------------------------------------------------------------
 			setContentView (R.layout.activity_appointments);
@@ -277,8 +277,7 @@ public class AppointmentsActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 06/01/2014 ECU make sure the first item in the list is selected
 			// ---------------------------------------------------------------------
-			appointmentType.setSelection(0);
-			appointmentScrollView = (ScrollView) findViewById (R.id.appointments_scrollview);
+			appointmentType.setSelection (0);
 			// ---------------------------------------------------------------------
 			// 30/03/2016 ECU get the initial hash codes
 			// ---------------------------------------------------------------------
@@ -296,7 +295,6 @@ public class AppointmentsActivity extends DibosonActivity
 			}
 			else
 			{
-
 				// -----------------------------------------------------------------
 				// 07/01/2014 ECU default to displaying the first appointment in protected mode
 				//            ECU if there are no appointments then start in create mode
@@ -357,6 +355,7 @@ public class AppointmentsActivity extends DibosonActivity
 					// 06/01/2014 ECU cancel button pressed
 					// -------------------------------------------------------------
 					finish ();
+					// -------------------------------------------------------------
 					break;
 				}
 				// -----------------------------------------------------------------
@@ -375,9 +374,11 @@ public class AppointmentsActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					if (PublicData.appointments.size() == 0)
 					{
+						// ---------------------------------------------------------
 						Utilities.popToast (getString(R.string.all_appointments_deleted));
-						
+						// ---------------------------------------------------------
 						finish ();
+						// ---------------------------------------------------------
 					}
 					else
 					{
@@ -473,6 +474,7 @@ public class AppointmentsActivity extends DibosonActivity
 		// Inflate the menu; this adds items to the action bar if it is present.
 		// -------------------------------------------------------------------------
 		return true;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
@@ -948,7 +950,7 @@ public class AppointmentsActivity extends DibosonActivity
 				appointmentTypeDetails = new AppointmentTypeDetails ();
 				
 				appointmentTypeDetails.type			= appointmentDetails.type;
-				appointmentTypeDetails.name 		= appointmentDetails.name;;
+				appointmentTypeDetails.name 		= appointmentDetails.name;
 				appointmentTypeDetails.address 		= appointmentDetails.address;
 				appointmentTypeDetails.contactName 	= appointmentDetails.contactName;
 				appointmentTypeDetails.phoneNumber 	= appointmentDetails.phoneNumber;
@@ -1044,7 +1046,7 @@ public class AppointmentsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		final Activity localActivity = ((Activity) Selector.context);
 		localActivity.setContentView (R.layout.display_appointment_details);
-	
+		// -------------------------------------------------------------------------
 				 details		= (TextView) localActivity.findViewById (R.id.appointment_details);
 		TextView active  		= (TextView) localActivity.findViewById (R.id.appointment_active);
 		Button   play    		= (Button)   localActivity.findViewById (R.id.notes_play_button);
@@ -1597,8 +1599,9 @@ public class AppointmentsActivity extends DibosonActivity
 			// 06/01/2014 ECU get other fields updated
 			// ---------------------------------------------------------------------
 			RefreshFields (position);
+			// ---------------------------------------------------------------------
 		}
-		/* ------------------------------------------------------------------------ */
+		// ------------------------------------------------------------------------
 		@Override
 		public void onNothingSelected(AdapterView<?> arg0) 
 		{
@@ -1770,6 +1773,7 @@ public class AppointmentsActivity extends DibosonActivity
 													   details);
 			// ---------------------------------------------------------------------
 		}
+		// -------------------------------------------------------------------------
 		handleProgressBar.startProgressBarUpdate ();
 		// -------------------------------------------------------------------------
 	}

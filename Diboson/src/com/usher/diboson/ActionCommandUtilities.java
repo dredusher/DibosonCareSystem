@@ -1,13 +1,13 @@
 package com.usher.diboson;
 
-import java.lang.reflect.Method;
-
 import android.app.Activity;
 import android.content.Context;
 import android.os.Vibrator;
 import android.text.InputType;
 
-public class ActionCommandUtilities 
+import java.lang.reflect.Method;
+
+public class ActionCommandUtilities
 {
 	// =============================================================================
 	// 23/01/2016 ECU change literal strings to resource strings
@@ -18,6 +18,8 @@ public class ActionCommandUtilities
 	// =============================================================================
 	static String		actionString;
 	static String  [] 	activities;
+	static String  [] 	bluetoothDevices;
+	static String  [] 	namedActions;
 	static Context		context;
 	static Method		returnMethod;
 	static Object		underlyingObject;
@@ -94,6 +96,28 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public static void ActivityLongSelectionMethod (int theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 20/07/2020 ECU created to handle the 'long' selection of a specific activity
+		// -------------------------------------------------------------------------
+		activities = activities [theActivity].split (StaticData.LEGEND_SEPARATOR);
+		// -------------------------------------------------------------------------
+		// 20/07/2020 ECU at this point
+		//					activities [0] contains 'legend'
+		//                  activities [1] contains 'long legend'
+		// -------------------------------------------------------------------------
+		// 14/06/2017 ECU created to handle the selection of the name of stored
+		//                actions
+		// -------------------------------------------------------------------------
+		actionString += activities [1];
+		// -------------------------------------------------------------------------
+		// 14/06/2017 ECU the command is complete
+		// -------------------------------------------------------------------------
+		ActionCommandComplete ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static void SelectCommand (Context theContext,Object theUnderlyingObject,Method theReturnMethod)
 	{
 		// -------------------------------------------------------------------------
@@ -129,7 +153,20 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	
+
+	// =============================================================================
+	// =============================================================================
+	public static void ActionFile (String theFileName)
+	{
+		// -------------------------------------------------------------------------
+		// 11/04/2020 ECU added to define the file that contains actions to be
+		//                processed
+		// -------------------------------------------------------------------------
+		actionString += theFileName;
+		// -------------------------------------------------------------------------
+		ActionCommandComplete ();
+		// -------------------------------------------------------------------------
+	}
 	// =============================================================================
 	public static void AlexaMethod (String theAlexaCommands)
 	{
@@ -139,6 +176,91 @@ public class ActionCommandUtilities
 		actionString += theAlexaCommands;
 		// -------------------------------------------------------------------------
 		// 10/04/2019 ECU the command is complete
+		// -------------------------------------------------------------------------
+		ActionCommandComplete ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	// =============================================================================
+	public static void BluetoothMethod (int theBluetoothOption)
+	{
+		// -------------------------------------------------------------------------
+		// 22/01/2016 ECU handle the options
+		// -------------------------------------------------------------------------
+		switch (theBluetoothOption)
+		{
+			// ---------------------------------------------------------------------
+			case 0:
+				// -----------------------------------------------------------------
+				// 12/04/2020 ECU select a paired device to connect to
+				// -----------------------------------------------------------------
+				bluetoothDevices = BluetoothUtilities.getNamesOfBondedDevices ();
+				// -----------------------------------------------------------------
+				// 12/04/2020 ECU check if there are any devices
+				// -----------------------------------------------------------------
+				if (bluetoothDevices != null)
+				{
+					// -------------------------------------------------------------
+					// 12/04/2020 ECU there are devices so let the user select one
+					// --------------------------------------------------------------
+					DialogueUtilities.singleChoice (context,
+													context.getString (R.string.select_bluetooth_title),
+													bluetoothDevices,
+													0,
+													Utilities.createAMethod (ActionCommandUtilities.class,"BluetoothSelectionMethod",0),
+													null);
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 12/04/2020 ECU either no bluetooth adapter or no bonded devices
+					// -------------------------------------------------------------
+					Utilities.popToastAndSpeak (context.getString (R.string.bluetooth_no_bonded_devices),true);
+					// -------------------------------------------------------------
+					// 12/04/2020 ECU make sure that the action string is tidied up
+					//                at this point the action string ends
+					//                with 'bluetooth:" which needs to be removed
+					// -------------------------------------------------------------
+					actionString = actionString.substring(0,actionString.length()
+						- (StaticData.ACTION_DESTINATION_BLUETOOTH.length() + StaticData.ACTION_DELIMITER.length()));
+					// -------------------------------------------------------------
+					ActionCommandComplete ();
+					// -------------------------------------------------------------
+
+				}
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
+			case 1:
+				// -----------------------------------------------------------------
+				// 12/04/2020 ECU disconnect from currently connected device
+				//            ECU need to remove the trailing delimiter which was
+				//                initially added
+				//                the "$" means the end of the line as 'replaceAll'
+				//                uses REGEX - so this will delete the last delimiter
+				//                in the action string
+				// -----------------------------------------------------------------
+				actionString = actionString.replaceAll (StaticData.ACTION_DELIMITER + "$",StaticData.BLANK_STRING);
+				// -----------------------------------------------------------------
+				// 12/04/2020 ECU indicate that this action is complete
+				// -----------------------------------------------------------------
+				ActionCommandComplete ();
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void BluetoothSelectionMethod (int theDevice)
+	{
+		// -------------------------------------------------------------------------
+		// 12/04/2020 ECU created to handle the selection of a specific device
+		// -------------------------------------------------------------------------
+		actionString += bluetoothDevices [theDevice];
+		// -------------------------------------------------------------------------
+		// 14/06/2017 ECU the command is complete
 		// -------------------------------------------------------------------------
 		ActionCommandComplete ();
 		// -------------------------------------------------------------------------
@@ -214,16 +336,20 @@ public class ActionCommandUtilities
 		// 03/05/2017 ECU created to handle the options associated with using
 		//                named actions
 		// -------------------------------------------------------------------------
+		namedActions = NamedAction.getNames ();
+		// -------------------------------------------------------------------------
 		switch (theOption)
 		{
 			// ---------------------------------------------------------------------
 			case 0:
 				// -----------------------------------------------------------------
 				// 03/05/2017 ECU just the named action is to be selected
+				// 13/04/2020 ECU changed to use 'namedActions' which has the data
+				//                sorted alphabetically
 				// -----------------------------------------------------------------
 				DialogueUtilities.singleChoice (context,
 											    context.getString (R.string.named_actions_name_title),
-											    NamedAction.getNames (),
+											    namedActions,
 											    0, 
 											    Utilities.createAMethod (ActionCommandUtilities.class,"NamedActionsNameMethod",0),
 											    null);
@@ -257,8 +383,10 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 		// 04/08/2016 ECU created to handle the selection of the name of stored
 		//                actions
+		// 13/04/2020 ECU changed to use 'namedActions' which has the data sorted
+		//                alphabetically
 		// -------------------------------------------------------------------------
-		actionString += PublicData.namedActions.get (theIndex).name;
+		actionString += namedActions [theIndex];
 		// -------------------------------------------------------------------------
 		// 13/07/2016 ECU the command is complete
 		// -------------------------------------------------------------------------
@@ -334,6 +462,62 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public static void PhotographMethod (int thePhotographOption)
+	{
+		// -------------------------------------------------------------------------
+		// 15/10/2020 ECU handle the options
+		// -------------------------------------------------------------------------
+		switch (thePhotographOption)
+		{
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			case 0:
+				// -----------------------------------------------------------------
+				// 15/10/2020 ECU select the path to the photograph
+				// -----------------------------------------------------------------
+				Utilities.selectAFile (context,StaticData.EXTENSION_PHOTOGRAPH,
+						new MethodDefinition <ActionCommandUtilities> (ActionCommandUtilities.class,"PlayFile"));
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			case 1:
+				// -----------------------------------------------------------------
+				// 15/10/2020 ECU add the '0' as a minimum value
+				// -----------------------------------------------------------------
+				DialogueUtilities.sliderChoice (context,
+											    context.getString (R.string.photograph_time_to_display_title),
+												context.getString (R.string.photograph_time_to_display),
+												R.drawable.timer,
+												null,
+												0,
+												0,
+												120,
+												context.getString (R.string.click_to_set_delay),
+												Utilities.createAMethod (ActionCommandUtilities.class,"PhotographDelayMethod",0),
+												context.getString (R.string.cancel_operation));
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void PhotographDelayMethod (int theDelay)
+	{
+		// -------------------------------------------------------------------------
+		// 15/10/2020 ECU created to set the time the photograph is displayed
+		// -------------------------------------------------------------------------
+		actionString += StaticData.BLANK_STRING + (theDelay * 1000) + StaticData.ACTION_DELIMITER;
+		// -------------------------------------------------------------------------
+		// 07/03/2016 ECU changed to use multiline text input
+		// -------------------------------------------------------------------------
+		Utilities.selectAFile (context,StaticData.EXTENSION_PHOTOGRAPH,
+				new MethodDefinition <ActionCommandUtilities> (ActionCommandUtilities.class,"PlayFile"));
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static void PackageNameMethod (String thePackageName)
 	{
 		// -------------------------------------------------------------------------
@@ -352,8 +536,10 @@ public class ActionCommandUtilities
 		// 16/11/2016 ECU changed to use the new method
 		// 29/11/2018 ECU use the new method to replace the must root folder, if
 		//                initialised, with a static marker
+		// 14/02/2020 ECU add the conversion for any embedded delimiters or
+		//                separator
 		// -------------------------------------------------------------------------
-		actionString += Utilities.musicLibraryReplacement (theFileName,true);
+		actionString += Utilities.musicLibraryReplacement (actionStringReplacement (theFileName,true),true);
 		// -------------------------------------------------------------------------
 		ActionCommandComplete ();
 		// -------------------------------------------------------------------------
@@ -418,8 +604,9 @@ public class ActionCommandUtilities
 			// ---------------------------------------------------------------------
 			// 14/06/2017 ECU generate an array of activity legends
 			// 01/01/2019 ECU changed from PublicData.storedData.gridImages
+			// 25/07/2020 ECU indicate that sorting is not required
 			// ---------------------------------------------------------------------
-			activities = GridImages.returnLegends (GridActivity.originalGridImages);
+			activities = GridImages.returnLegends (GridActivity.originalGridImages,false);
 			// ---------------------------------------------------------------------
 			// 14/06/2017 ECU now ask the user to select an activity
 			// ---------------------------------------------------------------------
@@ -449,11 +636,22 @@ public class ActionCommandUtilities
 											context.getString (R.string.select_activity_long_title),
 											activities,
 											0, 
-											Utilities.createAMethod (ActionCommandUtilities.class,"ActivitySelectionMethod",0),
+											Utilities.createAMethod (ActionCommandUtilities.class,"ActivityLongSelectionMethod",0),
 											null);
 			// ---------------------------------------------------------------------
 		}
 		else
+		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_ACTIONFILE))
+		{
+			// ---------------------------------------------------------------------
+			// 11/04/2020 ECU added to get the action file
+			// ---------------------------------------------------------------------
+			Utilities.selectAFile (context,StaticData.EXTENSION_ACTIONS,
+					new MethodDefinition <ActionCommandUtilities> (ActionCommandUtilities.class,"ActionFile"));
+			// ----------------------------------------------------------------------
+		}
+		else
+
 		// -------------------------------------------------------------------------
 		if (StaticData.ACTION_COMMANDS [theCommandIndex].command.equalsIgnoreCase(StaticData.ACTION_DESTINATION_ALEXA))
 		{
@@ -483,6 +681,22 @@ public class ActionCommandUtilities
 		}
 		else
 		// -------------------------------------------------------------------------
+		if (StaticData.ACTION_COMMANDS [theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_BLUETOOTH))
+		{
+			// ---------------------------------------------------------------------
+			// 12/04/2020 ECU connect to a 'paired' (bonded) bluetooth device and
+			//                provide option to disconnect it
+			// ---------------------------------------------------------------------
+			DialogueUtilities.listChoice (context,
+					context.getString (R.string.select_speak_bluetooth),
+					StaticData.ACTION_COMMANDS [theCommandIndex].ReturnParameters(),
+					Utilities.createAMethod (ActionCommandUtilities.class,"BluetoothMethod",0),
+					context.getString (R.string.cancel),
+					null);
+			// ---------------------------------------------------------------------
+		}
+		else
+		// -------------------------------------------------------------------------
 		if (StaticData.ACTION_COMMANDS [theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_DELAY))
 		{
 			// ---------------------------------------------------------------------
@@ -501,7 +715,18 @@ public class ActionCommandUtilities
 				    						Utilities.createAMethod (ActionCommandUtilities.class,"DelayMethod",0),
 				    						context.getString (R.string.cancel_operation));
 			// ---------------------------------------------------------------------
-		}	
+		}
+		else
+			// --------------------------------------------------------------------------
+			if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_DOCUMENT))
+			{
+				// ---------------------------------------------------------------------
+				// 12/10/2020 ECU select a document
+				// ---------------------------------------------------------------------
+				Utilities.selectAFile (context,StaticData.EXTENSION_DOCUMENT,
+						new MethodDefinition <ActionCommandUtilities> (ActionCommandUtilities.class,"PlayFile"));
+				// ----------------------------------------------------------------------
+			}
 		// -------------------------------------------------------------------------
 		else
 		if (StaticData.ACTION_COMMANDS [theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_FLUSH))
@@ -531,7 +756,7 @@ public class ActionCommandUtilities
 				// ---------------------------------------------------------------------
 				DialogueUtilities.listChoice (context, 
 											  context.getString (R.string.select_named_actions_option),
-											  StaticData.ACTION_COMMANDS [theCommandIndex].ReturnParameters(),
+											  StaticData.ACTION_COMMANDS [theCommandIndex].ReturnParameters (),
 											  Utilities.createAMethod (ActionCommandUtilities.class,"NamedActionsMethod",0),
 											  context.getString (R.string.cancel),
 											  null);
@@ -588,6 +813,21 @@ public class ActionCommandUtilities
 			// ----------------------------------------------------------------------
 		}
 		else
+		// --------------------------------------------------------------------------
+		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_PHOTOGRAPH))
+		{
+			// ---------------------------------------------------------------------
+			// 12/10/2020 ECU select a photograph
+			// ---------------------------------------------------------------------
+			DialogueUtilities.listChoice (context,
+										  context.getString (R.string.select_photograph_option),
+					                      StaticData.ACTION_COMMANDS [theCommandIndex].ReturnParameters(),
+					                      Utilities.createAMethod (ActionCommandUtilities.class,"PhotographMethod",0),
+					                      context.getString (R.string.cancel),
+					                      null);
+			// ----------------------------------------------------------------------
+		}
+		else
 		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_SCREEN))
 		{
 			// ---------------------------------------------------------------------
@@ -598,7 +838,8 @@ public class ActionCommandUtilities
 					   				 context.getString (R.string.on_off_arguments),
 					   				 null,
 					   				 true,"On",Utilities.createAMethod (ActionCommandUtilities.class,"OnMethod",(Object) null),
-					   				 true,"Off",Utilities.createAMethod (ActionCommandUtilities.class,"OffMethod",(Object) null)); 
+					   				 true,"Off",Utilities.createAMethod (ActionCommandUtilities.class,"OffMethod",(Object) null));
+			// ---------------------------------------------------------------------
 		}
 		else
 		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_SMS))
@@ -626,7 +867,22 @@ public class ActionCommandUtilities
 										  context.getString (R.string.cancel),
 										  null);
 			// ----------------------------------------------------------------------
-
+		}
+		else
+		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_SPEAKANDDISPLAY))
+		{
+			// ---------------------------------------------------------------------
+			// 11/08/2020 ECU handle the definition of a 'phrase'to speak and
+			//                display
+			// ---------------------------------------------------------------------
+			DialogueUtilities.multilineTextInput (context,
+					                              context.getString (R.string.phrase_to_be_spoken_and_displayed),
+												  context.getString (R.string.enter_phrase_to_be_spoken_and_displayed),
+					  							  2,
+												  StaticData.HINT + context.getString (R.string.type_in_phrase_to_be_spoken),
+												  Utilities.createAMethod (ActionCommandUtilities.class,"SpeakPhraseMethod",StaticData.BLANK_STRING),
+												  null);
+			// ----------------------------------------------------------------------
 		}
 		else
 		if (StaticData.ACTION_COMMANDS[theCommandIndex].command.equalsIgnoreCase (StaticData.ACTION_DESTINATION_TIME))
@@ -761,6 +1017,17 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
+	public static void SpeakFile (String theFileName)
+	{
+		// -------------------------------------------------------------------------
+		// 13/10/2020 ECU create to set up the file to be spoken
+		// -------------------------------------------------------------------------
+		actionString += StaticData.ACTION_FILE + StaticData.ACTION_DELIMITER + Utilities.musicLibraryReplacement (actionStringReplacement (theFileName,true),true);
+		// -------------------------------------------------------------------------
+		ActionCommandComplete ();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public static void SpeakMethod (int theSpeakOption)
 	{
 		// -------------------------------------------------------------------------
@@ -768,6 +1035,7 @@ public class ActionCommandUtilities
 		// -------------------------------------------------------------------------
 		switch (theSpeakOption)
 		{
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			case 0:
 				// -----------------------------------------------------------------
@@ -783,6 +1051,7 @@ public class ActionCommandUtilities
 											 		  null);
 				// -----------------------------------------------------------------
 				break;
+			// ---------------------------------------------------------------------
 			// ---------------------------------------------------------------------
 			case 1:
 				// -----------------------------------------------------------------
@@ -802,8 +1071,17 @@ public class ActionCommandUtilities
 				// -----------------------------------------------------------------
 				break;
 			// ---------------------------------------------------------------------
-				
-			
+			// ---------------------------------------------------------------------
+			case 2:
+				// -----------------------------------------------------------------
+				// 13/10/2020 ECU the option to have the option to speak the
+				//                contents of the specified file
+				// -----------------------------------------------------------------
+				Utilities.selectAFile (context,StaticData.EXTENSION_TEXT,
+						new MethodDefinition <ActionCommandUtilities> (ActionCommandUtilities.class,"SpeakFile"));
+				// -----------------------------------------------------------------
+				break;
+			// ---------------------------------------------------------------------
 		}
 		// -------------------------------------------------------------------------
 	}
@@ -873,7 +1151,7 @@ public class ActionCommandUtilities
 	{
 		// -------------------------------------------------------------------------
 		// 22/01/2016 ECU handle the WeMo device
-		// 08/06/2019 ECU chnged to use Static...
+		// 08/06/2019 ECU changed to use Static...
 		// -------------------------------------------------------------------------
 		actionString += theDeviceName + StaticData.SPACE_STRING;
 		// -------------------------------------------------------------------------
@@ -887,6 +1165,61 @@ public class ActionCommandUtilities
 								 	Utilities.createAMethod (ActionCommandUtilities.class,"OnMethod",(Object) null),
 								 true,context.getString (R.string.Off),
 								 	Utilities.createAMethod (ActionCommandUtilities.class,"OffMethod",(Object) null)); 
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+
+	// =============================================================================
+	public static String actionStringReplacement (String theString,boolean theDirection)
+	{
+		// -------------------------------------------------------------------------
+		// 12/04/2020 ECU when defining the data associated with an action it is
+		//                possible that a 'separator' or 'delimiter' can be included
+		//                within the data and this will cause problems when the
+		//                action is subsequently processed - there parser will produce
+		//                the wrong results, e.g.
+		//
+		//                    play:music folder;the track;speak:hello there
+		//                    |       action 1            |    action 2
+		//
+		//                but because of the ';' in the data the parser will see
+		//
+		//                    play:music folder;the track;speak:hello there
+		//                    |     action 1    |action 2 |  action 3
+		//
+		//                which is clearly wrong.
+		//
+		//                This method aims to replace any embedded delimiters or
+		//                separators with replacement strings which can be converted
+		//                back prior to the data being actioned.
+		//
+		//                The direction variable indicates :-
+		//
+		//                   true ................ convert any delimiters or separators
+		//                                         to their replacement strings
+		//                   false ............... convert any replacement strings back
+		//                                         to delimiters or separators
+		// -------------------------------------------------------------------------
+		// 12/04/2020 ECU decide which way around the conversion is to take place
+		// -------------------------------------------------------------------------
+		if (theDirection)
+		{
+			// ---------------------------------------------------------------------
+			// 12/04/2020 ECU convert to the replacement strings
+			// ---------------------------------------------------------------------
+			return (theString.replace(StaticData.ACTION_DELIMITER,StaticData.ACTION_DELIMITER_REPLACEMENT))
+						.replace(StaticData.ACTION_SEPARATOR,StaticData.ACTION_SEPARATOR_REPLACEMENT);
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 12/04/2020 ECU convert from the replacement strings
+			// ---------------------------------------------------------------------
+			return (theString.replace(StaticData.ACTION_DELIMITER_REPLACEMENT,StaticData.ACTION_DELIMITER))
+					.replace(StaticData.ACTION_SEPARATOR_REPLACEMENT,StaticData.ACTION_SEPARATOR);
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

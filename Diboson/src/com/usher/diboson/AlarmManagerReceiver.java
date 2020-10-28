@@ -1,15 +1,14 @@
 package com.usher.diboson;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Locale;
-
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Locale;
 
 public class AlarmManagerReceiver extends BroadcastReceiver
 {
@@ -23,7 +22,7 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 	
 	/* ============================================================================= */
 	@Override
-	public void onReceive (Context context, Intent intent) 
+	public void onReceive (Context context, Intent intent)
 	{
 		Bundle localExtras = intent.getExtras();
 		// -------------------------------------------------------------------------
@@ -48,11 +47,12 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 			// ---------------------------------------------------------------------
 	    }
 		// -------------------------------------------------------------------------
-		// 07/03/2016 ECU check whether this is receiver is being called when the
+		// 07/03/2016 ECU check whether this receiver is being called when the
 		//                app is not running. Normally the receiver is disabled
 		//                when the app is destroyed unless the panic alarm is enabled
+		// 08/05/2020 ECU changed to use 'Check....'
 		// -------------------------------------------------------------------------
-		if ((PublicData.storedData != null) && PublicData.storedData.initialised)
+		if (StoredData.CheckIfInitialised ())
 		{
 			//----------------------------------------------------------------------
 			// 23/02/2014 ECU log useful information
@@ -79,6 +79,32 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 					// -------------------------------------------------------------
 					if (PublicData.bluetoothUtilities != null)
 						BluetoothUtilities.handleAlarm (context,alarmType);
+					// -------------------------------------------------------------
+					// 16/04/2020 ECU if necessary then start up bluetooth tracking
+					// 17/04/2020 ECU moved here from MainActivity and add the check
+					//                on '.initialised'
+					// -------------------------------------------------------------
+					if (StaticData.BLUETOOTH_TRACKING)
+					{
+						// ---------------------------------------------------------
+						// 16/04/2020 ECU check if configured to start bluetooth tracking
+						// ---------------------------------------------------------
+						if (PublicData.storedData.bluetoothTracking)
+						{
+							// -----------------------------------------------------
+							//17/04/2020 ECU check if already initialised
+							// -----------------------------------------------------
+							if (!BluetoothTracking.initialised)
+							{
+								// -------------------------------------------------
+								// 16/04/2020 ECU initialise bluetooth tracking
+								// -------------------------------------------------
+								BluetoothTracking.Initialise (context);
+								// -------------------------------------------------
+							}
+							// -----------------------------------------------------
+						}
+					}
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -167,9 +193,12 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 			//                from now
 			// 03/11/2016 ECU changed to use the global alarm manager
 			// 15/03/2019 ECU addedFLAG_CURRENT_FLAG
+			// 09/05/2020 ECU changed to use 'ALARM....FLAGS'
 			// ---------------------------------------------------------------------
 			PendingIntent alarmPendingIntent = PendingIntent.getBroadcast (context,
-													alarmID,intent,Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT);  
+													alarmID,
+													intent,
+													StaticData.ALARM_PENDING_INTENT_FLAGS);
 			// ---------------------------------------------------------------------
 			// 24/12/2015 ECU changed to use the new method
 			// 03/11/2016 ECU changed to use the global alarm manager
@@ -182,8 +211,9 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 			// ---------------------------------------------------------------------
 			// 07/03/2016 ECU added the 'true' argument to indicate that the user
 			//                interface should be started without user input
+			// 13/05/2020 ECU added TAG to identify which receiver restarted the app
 			// ---------------------------------------------------------------------
-			MainActivity.restartThisApp (context,true);
+			MainActivity.restartThisApp (context,true,TAG);
 			// ---------------------------------------------------------------------
 		}
 	} 

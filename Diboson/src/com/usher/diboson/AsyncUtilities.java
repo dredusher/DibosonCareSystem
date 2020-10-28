@@ -1,14 +1,14 @@
 package com.usher.diboson;
 
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.widget.ImageView;
+
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 
 public class AsyncUtilities 
 {
@@ -89,6 +89,25 @@ public class AsyncUtilities
 			new AsyncClass (Utilities.createAMethod (Utilities.class, "writeObjectToDisk",StaticData.BLANK_STRING,(Object)StaticData.BLANK_STRING),
 					theFileName,theObject).execute().get();
 	
+			return true;
+		}
+		catch (Exception theException)
+		{
+			return false;
+		}
+	}
+	// =============================================================================
+	public static boolean writeObjectToDiskAndBackup (String theFileName,Object theObject)
+	{
+		// -------------------------------------------------------------------------
+		// 29/08/2020 ECU created to perform a 'write' after making backup of the
+		//                specified file, if it exists
+		// -------------------------------------------------------------------------
+		try
+		{
+			new AsyncClass (Utilities.createAMethod (Utilities.class, "writeObjectToDiskAndBackup",StaticData.BLANK_STRING,(Object)StaticData.BLANK_STRING),
+					theFileName,theObject).execute().get();
+
 			return true;
 		}
 		catch (Exception theException)

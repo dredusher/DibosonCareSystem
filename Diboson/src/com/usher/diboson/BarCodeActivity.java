@@ -1,13 +1,15 @@
 package com.usher.diboson;
 
-import java.util.ArrayList;
-import java.util.Collections;
-
-import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.Menu;
+import android.widget.TextView;
+
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class BarCodeActivity extends DibosonActivity
 {
@@ -27,8 +29,10 @@ public class BarCodeActivity extends DibosonActivity
 	// 09/04/2018 ECU changed to use 'ListViewSelector' class rather than the Selector
 	//                activity which was causing the over use of 'static' variables
 	//                and methods
-	// 11/04/2018 ECU put in some check on whether the listViewSelectorhas been
+	// 11/04/2018 ECU put in some checks on whether the listViewSelector has been
 	//                initialised and whether there are any barcodes to be displayed.
+	// 11/01/2020 ECU added 'bar code only' option
+	// 31/08/2020 ECU set the camera for scanning from that set in the 'settings'
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -39,11 +43,21 @@ public class BarCodeActivity extends DibosonActivity
 	final static String BARCODE_PACKAGE     = "com.google.zxing.client.android";
 	final static String BARCODE_SCAN        = BARCODE_PACKAGE + ".SCAN";
 	/* =============================================================================== */
-			Activity			activity;
-	        boolean             captureImmediately = false;
-	        Context				context;			// 21/11/2015 ECU added
-	 		ListViewSelector 	listViewSelector;	// 09/04/2018 ECU added
-			int					initialHashCode;	// 30/03/2016 ECU added
+	// 01/09/2020 ECU 'activity' needs to be static so that 'ActionsCompletedMethod',
+	//                which is invoked by the MessageHandler, can function correctly
+	// 02/09/2020 ECU same comment as above applies to making 'finishAfterProcessing'
+	//                static
+	// -------------------------------------------------------------------------------
+	static	Activity				activity;
+			Method 					barcodeMethod 	= null;
+														// 14/01/2020 ECU added
+			boolean					barcodeOnly;		// 11/01/2020 ECU added
+			TextView				barcodeTextView;	// 02/09/2020 ECU added
+	 		boolean             	captureImmediately = false;
+	        Context					context;			// 21/11/2015 ECU added
+	static  boolean                 finishAfterProcessing = false;
+			int						initialHashCode;	// 30/03/2016 ECU added
+	 		ListViewSelector 		listViewSelector;	// 09/04/2018 ECU added
 	// ===============================================================================
 		
 			
@@ -69,6 +83,22 @@ public class BarCodeActivity extends DibosonActivity
 			if (extras != null) 
 			{
 				captureImmediately = extras.getBoolean(StaticData.PARAMETER_BARCODE, false);
+				// -----------------------------------------------------------------
+				// 11/01/2020 ECU added to indicate that only want this activity to
+				//                return the scanned barcode - no local processing
+				// -----------------------------------------------------------------
+				barcodeOnly 	   = extras.getBoolean(StaticData.PARAMETER_BARCODE_ONLY, false);
+				// -----------------------------------------------------------------
+				// 14/01/2020 ECU check if a method definition has been passed
+				// -----------------------------------------------------------------
+				MethodDefinition<?> methodDefinition
+						= (MethodDefinition<?>) extras.getSerializable (StaticData.PARAMETER_METHOD_DEFINITION);
+				// -----------------------------------------------------------------
+				// 14/01/2020 ECU now define the method if a definition has been provided
+				// -----------------------------------------------------------------
+				if (methodDefinition != null)
+					barcodeMethod =  methodDefinition.ReturnMethod (StaticData.BLANK_STRING);
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 21/11/2015 ECU remember the context and activity for later use
@@ -76,7 +106,13 @@ public class BarCodeActivity extends DibosonActivity
 			context	= this;
 			activity = (Activity) this;
 			// ---------------------------------------------------------------------
-			// 30/03/2016 ECU get the initial hascode for the data
+			// 02/09/2020 ECU reset the flag that indicates if the user wants to
+			//                terminate the activity when in 'captureImmediately'
+			//                mode
+			// ---------------------------------------------------------------------
+			finishAfterProcessing = false;
+			// ---------------------------------------------------------------------
+			// 30/03/2016 ECU get the initial hashcode for the data
 			// ---------------------------------------------------------------------
 			initialHashCode = PublicData.barCodes.hashCode();
 			// ---------------------------------------------------------------------
@@ -110,10 +146,29 @@ public class BarCodeActivity extends DibosonActivity
 				{
 					Utilities.popToastAndSpeak (getString (R.string.barcode_none_stored),true);
 				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 02/09/2020 ECU display the 'capture' screen
+					// -------------------------------------------------------------
+					setContentView (R.layout.activity_bar_code);
+					barcodeTextView = (TextView) findViewById (R.id.bar_code_textview);
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 				// 14/02/2014 ECU capture a new barcode (the first)
+				// 12/09/2020 ECU check if the the 'barcode' scanning package is
+				//                installed - if not then inform the user and exit
+				//                this activity
 				// -----------------------------------------------------------------
-				CaptureBarCode (this);
+				if (!CaptureBarCode (this))
+				{
+					// -------------------------------------------------------------
+					// 12/09/2020 ECU package not installed so exit
+					// -------------------------------------------------------------
+					finish ();
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 			}
 		}
@@ -152,10 +207,60 @@ public class BarCodeActivity extends DibosonActivity
 	        	// -----------------------------------------------------------------
 	            String barcodeRead   = theIntent.getStringExtra ("SCAN_RESULT");
 	            String barcodeFormat = theIntent.getStringExtra ("SCAN_RESULT_FORMAT");
-	            // -----------------------------------------------------------------
-	            // 30/08/2013 ECU call the appropriate handler
-	            // -----------------------------------------------------------------
-	            barcodeHandler (getBaseContext(),barcodeRead,barcodeFormat);
+				// -----------------------------------------------------------------
+				// 11/01/2020 ECU have got the code OK so decide whether to process
+				//                locally or just return the barcode
+				// -----------------------------------------------------------------
+				if (!barcodeOnly)
+				{
+	            	// -------------------------------------------------------------
+	            	// 30/08/2013 ECU call the appropriate handler
+	            	// -------------------------------------------------------------
+	            	barcodeHandler (getBaseContext(),barcodeRead,barcodeFormat);
+					// -------------------------------------------------------------
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 14/01/2020 ECU check whether to pass the barcode back via
+					//                the method or in the resultant intent
+					// -------------------------------------------------------------
+					if (barcodeMethod == null)
+					{
+						// ---------------------------------------------------------
+						// 11/01/2020 ECU just want to return the barcode
+						// ---------------------------------------------------------
+						Intent localIntent = new Intent ();
+						localIntent.putExtra (StaticData.PARAMETER_BARCODE, barcodeRead);
+						setResult (RESULT_OK,localIntent);
+						// ---------------------------------------------------------
+					}
+					else
+					{
+						// ---------------------------------------------------------
+						// 14/01/2020 ECU want to pass the barcode back via the
+						//                defined method
+						// ---------------------------------------------------------
+						try
+						{
+							// -----------------------------------------------------
+							// 14/01/2020 ECU call the method that handles barcode
+							// -----------------------------------------------------
+							Utilities.invokeMethod (barcodeMethod, new Object [] {barcodeRead});
+							// -----------------------------------------------------
+						}
+						catch (Exception theException)
+						{
+							// -----------------------------------------------------
+						}
+						// ---------------------------------------------------------
+					}
+					// -------------------------------------------------------------
+					// 11/01/2020 ECU finish this activity
+					// -------------------------------------------------------------
+					finish ();
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 	        } 
 	        else 
@@ -178,8 +283,13 @@ public class BarCodeActivity extends DibosonActivity
 	        		// -------------------------------------------------------------
 	        		// 11/04/2018 ECU nothing has been captured and there is nothing
 	        		//                to be displayed
+	        		// 02/09/2020 ECU only display a message if not in 'capture' mode
 	        		// -------------------------------------------------------------
-	        		Utilities.popToastAndSpeak (getString (R.string.barcode_none_finish),true);
+	        		if (!captureImmediately)
+					{
+	        			Utilities.popToastAndSpeak (getString (R.string.barcode_none_finish),true);
+					}
+					// -------------------------------------------------------------
 	        		finish ();
 	        		// -------------------------------------------------------------
 	        	}
@@ -210,9 +320,63 @@ public class BarCodeActivity extends DibosonActivity
 	        } 
 	    }
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	@Override
+	public void onBackPressed ()
+	{
+		// -------------------------------------------------------------------------
+		// 02/09/2020 ECU added to process the the 'back key'
+		// -------------------------------------------------------------------------
+		// 02/09/2020 ECU if processing barcodes then do not process - just indicate
+		//                that the activity will stop at the end of processing the
+		//                current barcode
+		// -------------------------------------------------------------------------
+		if (!captureImmediately)
+		{
+			// ---------------------------------------------------------------------
+			// 02/09/2020 ECU finish this activity
+			// ---------------------------------------------------------------------
+			finish ();
+			// ---------------------------------------------------------------------
+			// 02/09/2020 ECU now call the super for this method
+			// ---------------------------------------------------------------------
+			super.onBackPressed();
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 02/09/2020 ECU check if already indicated that activity is to be
+			//                finished after processing
+			// ---------------------------------------------------------------------
+			if (!finishAfterProcessing)
+			{
+				// -----------------------------------------------------------------
+				// 02/09/2020 ECU tell the user that the current barcode will be
+				//                processed before the activity is 'finished'
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.bar_code_finish_after_processing),true);
+				// -----------------------------------------------------------------
+				// 02/09/2020 ECU indicate that the activity must finish when all of the
+				//                current actions have completed
+				// -----------------------------------------------------------------
+				finishAfterProcessing = true;
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 02/09/2020 ECU confirm that the activity is to be finished
+				// -----------------------------------------------------------------
+				Utilities.popToastAndSpeak (getString (R.string.bar_code_already_set_to_finish),true);
+				// -----------------------------------------------------------------
+			}
+		}
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public void onDestroy()
-	{	
+	{
 		// -------------------------------------------------------------------------
 		// 08/02/2014 ECU make sure the disk is update
 		// -------------------------------------------------------------------------
@@ -230,6 +394,36 @@ public class BarCodeActivity extends DibosonActivity
 		}
 		// -------------------------------------------------------------------------
 		super.onDestroy();
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void ActionsCompletedMethod ()
+	{
+		// -------------------------------------------------------------------------
+		// 01/09/2020 ECU created to be invoked when the actions associated with a
+		//                barcode have been processed
+		// -------------------------------------------------------------------------
+		// 01/09/2020 ECU start up the bar code scanner
+		// -------------------------------------------------------------------------
+		// 18/12/2016 ECU 'finish' this activity
+		// -------------------------------------------------------------------------
+		activity.finish ();
+		// -------------------------------------------------------------------------
+		// 02/09/2020 ECU check if want to continue processing bar codes
+		//                Note - 'captureImmediately' needs to be 'static'
+		// -------------------------------------------------------------------------
+		if (!finishAfterProcessing)
+		{
+			// --------------------------------------------------------------------
+			// 18/12/2016 ECU restart this activity
+			// --------------------------------------------------------------------
+			Intent localIntent = new Intent (activity,BarCodeActivity.class);
+			localIntent.putExtra (StaticData.PARAMETER_BARCODE,true);
+			localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
+			// --------------------------------------------------------------------
+			activity.startActivity (localIntent);
+			// --------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
@@ -263,6 +457,24 @@ public class BarCodeActivity extends DibosonActivity
 					if (localBarCode.actions != null)
 					{
 						// ---------------------------------------------------------
+						// 01/09/2020 ECU want to define the method that will be
+						//                called when associated actions are
+						//                complete
+						// ---------------------------------------------------------
+						if (captureImmediately)
+						{
+							// -----------------------------------------------------
+							// 02/09/2020 ECU inform the user that processing is in
+							//                progress
+							// -----------------------------------------------------
+							barcodeTextView.setText (String.format (getString (R.string.bar_code_processing_format),
+															localBarCode.barCode,localBarCode.actions));
+							// -----------------------------------------------------
+							PublicData.messageHandler.actionsCompleteMethodSet (Utilities.createAMethod(BarCodeActivity.class,
+																				"ActionsCompletedMethod"));
+							// -----------------------------------------------------
+						}
+						// ---------------------------------------------------------
 						// 04/04/2018 ECU changed to use 'theContext' instead of a
 						//                'static context'
 						// ---------------------------------------------------------
@@ -282,8 +494,11 @@ public class BarCodeActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 21/11/2015 ECU need to restart the Selector activity
 					// 10/04/2018 ECU changed to use new 'refresh' method
+					// 02/09/2020 ECU only want to refresh the display if not
+					//                doing an immediate capture
 					// -------------------------------------------------------------
-					refreshDisplay ();
+					if (!captureImmediately)
+						refreshDisplay ();
 					// -------------------------------------------------------------
 					return;
 					// -------------------------------------------------------------
@@ -294,29 +509,56 @@ public class BarCodeActivity extends DibosonActivity
 		// 13/06/2016 ECU get here if the bar code does not exist
 		// ---------------------------------------------------------------------
 		// 15/09/2013 ECU product is not known so register it
+		// 02/09/2020 ECU only register if not in 'immediate capture' mode
 		// ---------------------------------------------------------------------
-		Intent localIntent = new Intent (theContext,BarCodeEntry.class);
-		// ---------------------------------------------------------------------
-		// 15/09/2013 ECU feed through the barcode that has just been read
-		// 08/02/2014 ECU changed to use PARAMETER_ rather than literal
-		// 04/04/2018 ECU changed to use 'theContext' rather than a 'static activity'
-		// ---------------------------------------------------------------------
-		localIntent.putExtra (StaticData.PARAMETER_BARCODE,theBarCode);
-		activity.startActivityForResult (localIntent,StaticData.RESULT_CODE_BARCODE_NEW);
-		// ---------------------------------------------------------------------
+		if (!captureImmediately)
+		{
+			Intent localIntent = new Intent (theContext,BarCodeEntry.class);
+			// ---------------------------------------------------------------------
+			// 15/09/2013 ECU feed through the barcode that has just been read
+			// 08/02/2014 ECU changed to use PARAMETER_ rather than literal
+			// 04/04/2018 ECU changed to use 'theContext' rather than a 'static activity'
+			// ---------------------------------------------------------------------
+			localIntent.putExtra (StaticData.PARAMETER_BARCODE,theBarCode);
+			activity.startActivityForResult (localIntent,StaticData.RESULT_CODE_BARCODE_NEW);
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 02/09/2020 ECU tell the user that bar code is not registered
+			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (getString (R.string.bar_code_not_registered),true);
+			// ---------------------------------------------------------------------
+			// 02/09/2020 ECU start up the scanner to get a new barcode
+			// ---------------------------------------------------------------------
+			CaptureBarCode (context);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	void CaptureBarCode (Context theContext)
+	boolean CaptureBarCode (Context theContext)
 	{
 		// -------------------------------------------------------------------------
 		// 08/02/2014 ECU indicate what is going on
 		// 13/06/2016 ECU changed to use the resource
-		// -------------------------------------------------------------------------
-		TextToSpeechService.SpeakAPhrase (theContext.getString (R.string.bar_code_place_camera));
+		// 12/09/2020 ECU changed to boolean to reflect if the package is installed
 		// -------------------------------------------------------------------------
 		if (Utilities.checkIfAppInstalled (theContext,BARCODE_PACKAGE))
 		{
+			// ---------------------------------------------------------------------
+			// 12/09/2020 ECU Note - tell the user what to do
+			// ---------------------------------------------------------------------
+			TextToSpeechService.SpeakAPhrase (String.format (theContext.getString (R.string.bar_code_place_camera_format),
+					PublicData.storedData.cameraSettings.CameraLegend ()));
+			// ---------------------------------------------------------------------
+			// 12/09/2020 ECU NOte - start up the package to scan the barcode
+			// ---------------------------------------------------------------------
 			Intent localIntent = new Intent (BARCODE_SCAN);
+			// ---------------------------------------------------------------------
+			// 31/08/2020 ECU set the camera for scanning from the 'settings'
+			// ---------------------------------------------------------------------
+			localIntent.putExtra ("SCAN_CAMERA_ID",PublicData.storedData.cameraSettings.camera);
 			// ---------------------------------------------------------------------
 			// 30/08/2013 ECU do not specify a SCAN_MODE so that any barcodes, QR
 			//				  codes can be scanned
@@ -330,6 +572,11 @@ public class BarCodeActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			activity.startActivityForResult (localIntent,StaticData.RESULT_CODE_BARCODE);
 			// ---------------------------------------------------------------------
+			// 12/09/2020 ECU indicate that the package is installed so that a
+			//                barcode can be scanned
+			// ---------------------------------------------------------------------
+			return true;
+			// ---------------------------------------------------------------------
 		}
 		else
 		{
@@ -337,6 +584,10 @@ public class BarCodeActivity extends DibosonActivity
 			// 30/08/2013 ECU the required barcode software is not installed
 			// ---------------------------------------------------------------------
 			Utilities.popToast (BARCODE_PACKAGE + " is not installed");
+			// ---------------------------------------------------------------------
+			// 12/09/2020 ECU indicate that the opackage is not installed
+			// ---------------------------------------------------------------------
+			return false;
 			// ---------------------------------------------------------------------
 		}
 	}
@@ -393,6 +644,7 @@ public class BarCodeActivity extends DibosonActivity
 		// 08/02/2014 ECU now speak the description
 		// -------------------------------------------------------------------------
 		TextToSpeechService.SpeakAPhrase (PublicData.barCodes.get(theBarcodeSelected).description);
+		// -------------------------------------------------------------------------
     }
 	// =============================================================================
 	void initialiseDisplay (Activity theActivity)
@@ -568,14 +820,14 @@ public class BarCodeActivity extends DibosonActivity
   		// -------------------------------------------------------------------------
   		if (PublicData.barCodes.size () > 0)
   		{
-  		// -------------------------------------------------------------------------
-  		// 10/06/2015 ECU rebuild and then display the updated list view
-  		// 09/04/2018 ECU change to use the new object handler
-  		// 10/04/2018 ECU changed to use new 'refresh' method
-  		// 11/04/2018 ECU changed to use new method
-  		// -------------------------------------------------------------------------
-  		refreshDisplay ();
-  		// -------------------------------------------------------------------------
+  			// ---------------------------------------------------------------------
+  			// 10/06/2015 ECU rebuild and then display the updated list view
+  			// 09/04/2018 ECU change to use the new object handler
+  			// 10/04/2018 ECU changed to use new 'refresh' method
+  			// 11/04/2018 ECU changed to use new method
+  			// ---------------------------------------------------------------------
+  			refreshDisplay ();
+  			// ---------------------------------------------------------------------
   		}
   		else
   		{

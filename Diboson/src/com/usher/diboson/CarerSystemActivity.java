@@ -307,12 +307,14 @@ public class CarerSystemActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		setContentView (R.layout.activity_system_info);
 		// -------------------------------------------------------------------------
-		setTitle ("Display of the Visits Log");
+		// 23/09/2020 ECU changed to use resource
+		// -------------------------------------------------------------------------
+		setTitle (getString (R.string.careplan_visits_log_title));
 		// -------------------------------------------------------------------------
 		// 29/01/2016 ECU set up the text view which will display the visits log 
 		// 20/03/2017 ECU changed to use BLANK....
 		// -------------------------------------------------------------------------
-		TextView visitsLogTextView  = (TextView)findViewById (R.id.system_info_textview);
+		TextView visitsLogTextView  = (TextView) findViewById (R.id.system_info_textview);
 		visitsLogTextView.setGravity (Gravity.LEFT);
 		visitsLogTextView.setTypeface (Typeface.MONOSPACE,Typeface.BOLD); 
 		visitsLogTextView.setText (StaticData.BLANK_STRING);

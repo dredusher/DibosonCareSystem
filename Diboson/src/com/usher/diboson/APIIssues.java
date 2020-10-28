@@ -1,16 +1,17 @@
 package com.usher.diboson;
 
+import android.content.Context;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Build;
+import android.os.StrictMode;
+
 import java.io.File;
 import java.net.InterfaceAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.List;
-
-import android.content.Context;
-import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.StrictMode;
 
 public class APIIssues 
 {
@@ -88,6 +89,58 @@ public class APIIssues
 		//			((theNetworkLength & 0x00FF0000) >>> 16) + "." +
 		//			((theNetworkLength & 0x0000FF00) >>> 8)  + "." +
 		//			((theNetworkLength & 0x000000FF));
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static boolean CheckPermission (String thePermission)
+	{
+		// -------------------------------------------------------------------------
+		// 14/08/2020 ECU check for any permissions that are introduced at a
+		//                particular API level and which could have 'permission
+		//                denied' and cannot be changed
+		// -------------------------------------------------------------------------
+		// 14/08/2020 ECU at the moment the issue is :-
+		//
+		//                  >= Oreo          FOREGROUND+SERVICE
+		// -------------------------------------------------------------------------
+		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O)
+		{
+			// ---------------------------------------------------------------------
+			// 14/08/2020 ECU on pre Oreo check for the fore ground service
+			// ---------------------------------------------------------------------
+			if (thePermission.equals ("android.permission.FOREGROUND_SERVICE"))
+			{
+				// -----------------------------------------------------------------
+				// 14/08/2020 ECU indicate that, although the permission has been
+				//                denied, it is a normal permission that the user
+				//                cannot do anything about
+				// -----------------------------------------------------------------
+				// 14/08/2020 ECU indicate that the permission is to be left as it is
+				//                with no user intervention
+				// -----------------------------------------------------------------
+				return true;
+				// -----------------------------------------------------------------
+			}
+			else
+			{
+				// -----------------------------------------------------------------
+				// 14/08/2020 ECU allow the user to grant/deny permission on this
+				//                item
+				// ------------------------------------------------------------------
+				return false;
+				// ------------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 14/08/2020 ECU indicate that there are no issues and normal processing
+			//                should take place
+			// ---------------------------------------------------------------------
+			return false;
+			// ---------------------------------------------------------------------
+		}
 		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */

@@ -1,16 +1,29 @@
 package com.usher.diboson;
 
+import android.util.Base64;
+
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import android.util.Base64;
 
 // =================================================================================
 public class Cryptography 
 {
+	// =============================================================================
+	// 27/10/2020 ECU Note - the class is used  as follows
+	//
+	//                         Cryptography crypto = new Crytography (the key supplied
+	//                                                                as a string)
+	//                         String encodedString = crypto.encrypt (the string to be
+	//                                                                encoded)
+	//                         String decryptedString = crypto.decrypt (encodedString)
+	//
+	//                        at this point the 'decryptedString' will equal 'the
+	//                        string to be encoded'
+	//
 	// =============================================================================
 	
 	// =============================================================================

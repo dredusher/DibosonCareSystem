@@ -1,7 +1,5 @@
 package com.usher.diboson;
 
-import java.util.List;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -12,6 +10,8 @@ import android.hardware.Camera.Size;
 import android.os.Handler;
 import android.os.Message;
 
+import java.util.List;
+
 
 // =================================================================================
 public class BrightnessFromCamera 
@@ -19,6 +19,7 @@ public class BrightnessFromCamera
 	// =============================================================================
 	// 09/09/2019 ECU created to handle all aspects of obtaining a 'rough' brightness
 	//                from a specified camera
+	// 05/08/2020 ECU make sure that the 'shutter sound' is disabled
 	// =============================================================================
 	
 	// =============================================================================
@@ -150,6 +151,13 @@ public class BrightnessFromCamera
 			// 05/09/2019 ECU now open up the selected camera
 			// ---------------------------------------------------------------------
 			cameraSelected = Camera.open (cameraIndex);
+			// ---------------------------------------------------------------------
+			// 05/08/2020 ECU check if can disable the shutter sound
+			// ---------------------------------------------------------------------
+			if (cameraInfo.canDisableShutterSound)
+			{
+				cameraSelected.enableShutterSound(false);
+			}
 			// ---------------------------------------------------------------------
 			// 09/09/2019 ECU get the required picture size if not already initialised
 			// ---------------------------------------------------------------------

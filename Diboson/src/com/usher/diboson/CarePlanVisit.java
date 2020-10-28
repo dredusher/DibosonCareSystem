@@ -1,5 +1,7 @@
 package com.usher.diboson;
 
+import android.content.Context;
+
 import java.io.Serializable;
 import java.util.List;
 
@@ -7,8 +9,9 @@ public class CarePlanVisit implements Serializable
 {
 	/* ============================================================================= */
 	// 12/01/2014 ECU created to contain details of a carer
-	// 25/03 2017 ECU put in methods to try and adjust the stored tasks if the
+	// 25/03/2017 ECU put in methods to try and adjust the stored tasks if the
 	//                PublicData.tasksToDo has been edited
+	// 02/05/2020 ECU added the id of the associated alarm for this vist
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -17,6 +20,8 @@ public class CarePlanVisit implements Serializable
 	public int			agencyIndex;		// index of the agency
 	public int			carerIndex;			// index of the carer
 	public boolean [] 	tasks;				// correspond to entries in CarePlanVisitActivity
+	public int			alarmID;			// 02/05/2020 ECU this is the ID of any alarms that
+											//                have been set for this visit
 	/* ============================================================================= */
 	public CarePlanVisit (long theStartTime,
 			              int theDuration,
@@ -32,6 +37,44 @@ public class CarePlanVisit implements Serializable
 		agencyIndex		= theAgencyIndex;
 		carerIndex		= theCarerIndex;
 		tasks			= theTaskFlags;		// 13/01/2014 ECU added
+		// ------------------------------------------------------------------------
+		// 02/05/2020 ECU initialise the 'alarm id' to not being set
+		// ------------------------------------------------------------------------
+		alarmID			= StaticData.NOT_SET;
+		// ------------------------------------------------------------------------
+	}
+	// ============================================================================
+	public void AlarmID (Context theContext,int theAlarmId)
+	{
+		// ------------------------------------------------------------------------
+		// 02/05/2020 ECU created to set the alarm identifier
+		// ------------------------------------------------------------------------
+		alarmID = theAlarmId;
+		// ------------------------------------------------------------------------
+		// 02/05/2020 ECU make sure the stored data is updated
+		// ------------------------------------------------------------------------
+		CarePlanActivity.UpdateCarePlanOnDisk (theContext);
+		// ------------------------------------------------------------------------
+	}
+	// ============================================================================
+	public void CancelAnyAlarms (Context theContext)
+	{
+		// -------------------------------------------------------------------------
+		// 02/05/2020 ECU cancel any associated alarms if there are any
+		// -------------------------------------------------------------------------
+		if (alarmID != StaticData.NOT_SET)
+		{
+			// ---------------------------------------------------------------------
+			// 02/05/2020 ECU this alarm seems to be active so it can be cancelled
+			// ---------------------------------------------------------------------
+			DailyScheduler.CancelAlarm (theContext,alarmID);
+			// ---------------------------------------------------------------------
+			// 02/05/2020 ECU reset the flag to indicate it being cancelled
+			// ---------------------------------------------------------------------
+			AlarmID (theContext,StaticData.NOT_SET);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	public Carer CarerRecord ()

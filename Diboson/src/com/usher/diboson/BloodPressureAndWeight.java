@@ -44,11 +44,13 @@ public class BloodPressureAndWeight
 	// =============================================================================
 	public void setWeight (float theKilograms)
 	{
+		// -------------------------------------------------------------------------
 		kilograms = theKilograms;
 		
 		float localPounds = theKilograms * StaticData.POUNDS_PER_KILO;
 		stones = (int) (localPounds / 14.0f);
 		pounds = Math.round (localPounds - (stones * 14.0f));
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	

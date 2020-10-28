@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.text.Editable;
+import android.text.Selection;
+import android.text.SpannableString;
 import android.text.TextWatcher;
 import android.text.method.ScrollingMovementMethod;
 import android.util.TypedValue;
@@ -120,7 +122,7 @@ public class BloodPressureActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					setContentView (R.layout.blood_pressure_summary);
 					// -------------------------------------------------------------
-					TextView summaryTextview  = (TextView) findViewById (R.id.summary_textview);
+					final TextView summaryTextview  = (TextView) findViewById (R.id.summary_textview);
 					// -------------------------------------------------------------
 					// 27/08/2017 ECU set the maximum lines of the information field
 					//            ECU set monospacing and left adjusted
@@ -147,8 +149,13 @@ public class BloodPressureActivity extends DibosonActivity
 					{
 						// ---------------------------------------------------------
 						// 27/08/2017 ECU display the contents of the file
+						// 30/09/2020 ECU scroll to the end of the displayed data
+						//                used to be just :-
+						//                  summaryTextview.setText (new String (bytesRead));
 						// ---------------------------------------------------------
-						summaryTextview.setText (new String (bytesRead));
+						SpannableString spannableData = new SpannableString (new String (bytesRead));
+						Selection.setSelection (spannableData, spannableData.length());
+						summaryTextview.setText (spannableData, TextView.BufferType.SPANNABLE);
 						// ---------------------------------------------------------
 						// 05/09/2017 ECU decide whether the 'mail button' is to be
 						//                displayed
@@ -161,9 +168,24 @@ public class BloodPressureActivity extends DibosonActivity
 							//                just process it
 							// -----------------------------------------------------
 							// 05/09/2017 ECU tell the user about the mail button
+							// 30/09/2020 ECU changed from 'popToast'
 							// -----------------------------------------------------
-							Utilities.popToast(String.format (getString (R.string.blood_pressure_email_format),
-										PublicData.emailDetails.recipients),true);
+							Utilities.SpeakAPhraseAndDisplay (String.format (getString (R.string.blood_pressure_email_format),
+										PublicData.emailDetails.recipients));
+							// ----------------------------------------------------
+							// 01/10/2020 ECU warn about needing to do a 'long click'
+							//                to send the readings
+							// -----------------------------------------------------
+							sendMailButton.setOnClickListener (new View.OnClickListener()
+							{
+								@Override
+								public void onClick (View theView)
+								{
+									// ---------------------------------------------
+									Utilities.SpeakAPhraseAndDisplay (getString (R.string.blood_pressure_mail_warning));
+									// ---------------------------------------------
+								}
+							});
 							// -----------------------------------------------------
 							// 05/09/2017 ECU check on the handling of the send mail
 							//                button
@@ -830,8 +852,10 @@ public class BloodPressureActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		((Button)findViewById (R.id.enter_weight)).setOnClickListener (buttonListener);
 		// -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
 		kilogramsField.addTextChangedListener(new TextWatcher() 
-		{ 
+		{
+			// ---------------------------------------------------------------------
 			@Override
 			public void afterTextChanged (Editable theData) 
 			{
@@ -849,15 +873,18 @@ public class BloodPressureActivity extends DibosonActivity
 			}
 			// ---------------------------------------------------------------------
 			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) 
+			public void onTextChanged (CharSequence s, int start, int before, int count)
 			{	
 			}
 			// ---------------------------------------------------------------------	
         });
-		poundsField.addTextChangedListener(new TextWatcher() 
-		{ 
+        // -------------------------------------------------------------------------
+        // -------------------------------------------------------------------------
+		poundsField.addTextChangedListener (new TextWatcher ()
+		{
+			// ---------------------------------------------------------------------
 			@Override
-			public void afterTextChanged(Editable theData) 
+			public void afterTextChanged (Editable theData)
 			{	
 				// -----------------------------------------------------------------
 				if (processTextChange)
@@ -873,15 +900,17 @@ public class BloodPressureActivity extends DibosonActivity
 			}
 			// ---------------------------------------------------------------------
 			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) 
-			{	
+			public void onTextChanged (CharSequence s, int start, int before, int count)
+			{
 			}
 			// ---------------------------------------------------------------------	
         });
-		stonesField.addTextChangedListener(new TextWatcher() 
+        // -------------------------------------------------------------------------
+		// -------------------------------------------------------------------------
+		stonesField.addTextChangedListener (new TextWatcher()
 		{ 
 			@Override
-			public void afterTextChanged(Editable theData) 
+			public void afterTextChanged (Editable theData)
 			{
 				// -----------------------------------------------------------------
 				if (processTextChange)
@@ -897,7 +926,7 @@ public class BloodPressureActivity extends DibosonActivity
 			}
 			// ---------------------------------------------------------------------
 			@Override
-			public void onTextChanged(CharSequence s, int start, int before, int count) 
+			public void onTextChanged (CharSequence s, int start, int before, int count)
 			{	
 			}
 			// ---------------------------------------------------------------------	
@@ -1069,6 +1098,13 @@ public class BloodPressureActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					weight.setWeight (weight.stones,inputInt);
 					// -------------------------------------------------------------
+					// 30/09/2020 ECU redisplay the pounds field to remove any
+					//                leading zeroes. Position the cursor at the
+					//                end of the field
+					// -------------------------------------------------------------
+					updateField (poundsField,String.format ("%d",weight.pounds));
+					poundsField.setSelection (poundsField.getText().length());
+					// -------------------------------------------------------------
 					updateField (stonesField,String.format ("%d",weight.stones));
 					updateField (kilogramsField,String.format ("%3.1f",weight.kilograms));
 					// -------------------------------------------------------------
@@ -1077,6 +1113,7 @@ public class BloodPressureActivity extends DibosonActivity
 					bmiDisplay ();
 					// -------------------------------------------------------------
 					return true;
+					// -------------------------------------------------------------
 				}
 				else
 				{
@@ -1136,5 +1173,4 @@ public class BloodPressureActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-	
 }

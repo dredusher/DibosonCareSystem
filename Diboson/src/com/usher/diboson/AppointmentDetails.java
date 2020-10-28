@@ -3,7 +3,6 @@ package com.usher.diboson;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -331,11 +330,12 @@ public class AppointmentDetails implements Serializable
 		// -------------------------------------------------------------------------
 		// 06/03/2014 ECU if there is a reminder configured then show the details
 		// 09/03/2014 ECU changed with the redefinition of reminderTime
+		// 17/11/2019 ECU added the final new line
 		// -------------------------------------------------------------------------
 		if (reminderTrigger != StaticData.APPOINTMENT_NO_REMINDER)
 		{
 			theString += "Reminder Repeat  : " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + StaticData.NEWLINE +
-						 "Reminder Time    : " +  Utilities.AdjustedTime(reminderTimeHour, reminderTimeMinute);
+						 "Reminder Time    : " +  Utilities.AdjustedTime(reminderTimeHour, reminderTimeMinute) + StaticData.NEWLINE;
 		}
 		// -------------------------------------------------------------------------
 		return theString;
@@ -379,9 +379,12 @@ public class AppointmentDetails implements Serializable
 		// 28/03/2016 ECU include the 'body' envelope and do any necessary
 		//                replacements
 		// 30/07/2017 ECU changed to use HTML_...
+		// 16/11/2019 ECU changed from 'replaceAll' to 'replace' because
+		//                the former requires a REGEX so not sure why it ever
+		//				  worked
 		// -------------------------------------------------------------------------
 		return "<body>" + 
-			   theString.replaceAll (StaticData.NEWLINE,StaticData.HTML_BREAK).replaceAll (" ", "&nbsp;") +
+			   theString.replace (StaticData.NEWLINE,StaticData.HTML_BREAK).replace (" ", "&nbsp;") +
 			   "</body>";
 		// -------------------------------------------------------------------------
 	}

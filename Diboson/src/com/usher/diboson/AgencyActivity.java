@@ -1,17 +1,17 @@
 package com.usher.diboson;
 
 
-import java.util.ArrayList;
-import java.util.Collections;
-
-import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.view.Menu;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.TextView;
+
+import java.util.ArrayList;
+import java.util.Collections;
 
 public class AgencyActivity extends DibosonActivity
 {
@@ -273,7 +273,7 @@ public class AgencyActivity extends DibosonActivity
 			agencyContactNameView.setText (StaticData.BLANK_STRING);
 			agencyEmailAddressView.setText (StaticData.BLANK_STRING);
 			agencyNameView.setText (StaticData.BLANK_STRING);
-			agencyNotesView.setText (StaticData.BLANK_STRING);;
+			agencyNotesView.setText (StaticData.BLANK_STRING);
 			agencyPhoneNumberView.setText (StaticData.BLANK_STRING);
 			//----------------------------------------------------------------------
 			// 05/02/2014 ECU update the button legend
@@ -290,7 +290,7 @@ public class AgencyActivity extends DibosonActivity
 				agencyContactNameView.setText (localAgency.contactName);
 				agencyEmailAddressView.setText (localAgency.emailAddress);
 				agencyNameView.setText (localAgency.name);
-				agencyNotesView.setText (localAgency.notes);;
+				agencyNotesView.setText (localAgency.notes);
 				agencyPhoneNumberView.setText (localAgency.phoneNumber);
 				//------------------------------------------------------------------
 				// 05/02/2014 ECU update the button legend
