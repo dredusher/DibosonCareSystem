@@ -7,6 +7,8 @@ public class CarePlanVisit implements Serializable
 {
 	/* ============================================================================= */
 	// 12/01/2014 ECU created to contain details of a carer
+	// 25/03 2017 ECU put in methods to try and adjust the stored tasks if the
+	//                PublicData.tasksToDo has been edited
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -16,8 +18,11 @@ public class CarePlanVisit implements Serializable
 	public int			carerIndex;			// index of the carer
 	public boolean [] 	tasks;				// correspond to entries in CarePlanVisitActivity
 	/* ============================================================================= */
-	public CarePlanVisit (long theStartTime,int theDuration,int theAgencyIndex,
-								int theCarerIndex,boolean [] theTaskFlags)
+	public CarePlanVisit (long theStartTime,
+			              int theDuration,
+			              int theAgencyIndex,
+						  int theCarerIndex,
+						  boolean [] theTaskFlags)
 	{
 		// -------------------------------------------------------------------------
 		// 12/01/2014 ECU copy variables into the class on creation
@@ -116,6 +121,85 @@ public class CarePlanVisit implements Serializable
 	public String ShortPrint ()
 	{
 		return PublicData.dateFormatterShort.format (startTime) + " for " + duration + " minutes by " + (PublicData.carers.get(carerIndex).name);
+	}
+	// =============================================================================
+	public void tasksAdjustment (int theLength)
+	{
+		// -------------------------------------------------------------------------
+		// 25/03/2017 ECU the length of the master tasks list has altered
+		// -------------------------------------------------------------------------
+		boolean [] newTasks = new boolean [theLength];
+		// -------------------------------------------------------------------------
+		if (theLength > tasks.length)
+		{
+			// ---------------------------------------------------------------------
+			// 25/03/2017 ECU the tasks list has grown in size so create new list
+			// ---------------------------------------------------------------------
+			// 25/03/2017 ECU copy across the existing tasks - the extra entries will
+			//                be false by default
+			// ---------------------------------------------------------------------
+			for (int task = 0; task < tasks.length; task++)
+				newTasks [task] = tasks [task];
+			// ---------------------------------------------------------------------	
+		}
+		else
+		{
+			// ---------------------------------------------------------------------
+			// 25/03/2017 ECU there are less entries now so only copy up to the new
+			//                new length
+			// ---------------------------------------------------------------------
+			for (int task = 0; task < theLength; task++)
+				newTasks [task] = tasks [task];
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 25/03/2017 ECU now reset the original entry
+		// -------------------------------------------------------------------------
+		tasks = newTasks;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void tasksAdjustmentAll ()
+	{
+		// -------------------------------------------------------------------------
+		// 25/03/2017 ECU created to modify the tasks associated with a visit
+		//                following the addition or deletion of tasks
+		// -------------------------------------------------------------------------
+		int tasksLength = PublicData.tasksToDo.length;
+		// -------------------------------------------------------------------------
+		for (int theDayIndex = 0; theDayIndex < PublicData.daysOfTheWeek.length; theDayIndex++)
+		{
+			// ---------------------------------------------------------------------
+			// 25/03/2017 ECU check if any visits defined for the indexed day
+			// ---------------------------------------------------------------------
+			if (PublicData.carePlan.visits [theDayIndex] != null)
+			{
+				// -----------------------------------------------------------------
+				// 25/03/2017 ECU check if there are any visits
+				// -----------------------------------------------------------------
+				if (PublicData.carePlan.visits [theDayIndex].size() > 0)
+				{
+					// -------------------------------------------------------------
+					// 25/03/2017 ECU loop for each visit
+					// -------------------------------------------------------------
+					for (int theVisit = 0; theVisit < PublicData.carePlan.visits [theDayIndex].size(); theVisit++)
+					{
+						if (PublicData.carePlan.visits [theDayIndex].get(theVisit).tasks.length != PublicData.tasksToDo.length)
+						{
+							// -----------------------------------------------------
+							// 25/03/2017 ECU get each visit to adjust its stored tasks
+							// ------------------------------------------------------
+							PublicData.carePlan.visits [theDayIndex].get(theVisit).tasksAdjustment (tasksLength);
+							// ------------------------------------------------------
+						}
+					}
+					// -------------------------------------------------------------
+				}
+				// ----------------------------------------------------------------- 
+			}
+			// ---------------------------------------------------------------------
+		}
+		// ------------------------------------------------------------------------
 	}
 	// =============================================================================
 }

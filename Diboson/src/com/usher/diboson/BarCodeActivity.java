@@ -8,7 +8,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.view.Menu;
-import android.widget.ListView;
 
 public class BarCodeActivity extends DibosonActivity
 {
@@ -25,25 +24,30 @@ public class BarCodeActivity extends DibosonActivity
 	//                be written to disk. Am aware that this is not perfect but good 
 	//                first attempt.
 	// 13/06/2016 ECU mods to accommodate the addition of 'actions'
+	// 09/04/2018 ECU changed to use 'ListViewSelector' class rather than the Selector
+	//                activity which was causing the over use of 'static' variables
+	//                and methods
+	// 11/04/2018 ECU put in some check on whether the listViewSelectorhas been
+	//                initialised and whether there are any barcodes to be displayed.
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
 	//================================================================================
 	/* =============================================================================== */
-	final static String TAG = "BarCodeActivity";
+	//final static String TAG = "BarCodeActivity";
 	/* =============================================================================== */	
 	final static String BARCODE_PACKAGE     = "com.google.zxing.client.android";
 	final static String BARCODE_SCAN        = BARCODE_PACKAGE + ".SCAN";
 	/* =============================================================================== */
-	static 	Activity					activity;			// 08/02/2014 ECU added
-	        boolean                     captureImmediately = false;
-	static	Context						context;			// 21/11/2015 ECU added
-	static 	CustomListViewAdapter 		customListViewAdapter;
-			int							initialHashCode;	// 30/03/2016 ECU added
-	ArrayList<ListItem> 				listItems = new ArrayList<ListItem>();
-															// 07/02/2014 ECU list of barcodes
-	ListView    						listView;			// 07/02/2014 ECU added
-	/* =============================================================================== */
+			Activity			activity;
+	        boolean             captureImmediately = false;
+	        Context				context;			// 21/11/2015 ECU added
+	 		ListViewSelector 	listViewSelector;	// 09/04/2018 ECU added
+			int					initialHashCode;	// 30/03/2016 ECU added
+	// ===============================================================================
+		
+			
+	// ===============================================================================
 	@Override
 	protected void onCreate(Bundle savedInstanceState) 
 	{
@@ -55,8 +59,9 @@ public class BarCodeActivity extends DibosonActivity
 			// 22/10/2015 ECU the activity has been created anew
 			// ---------------------------------------------------------------------
 			// 16/02/2014 ECU call up routine to set common activity features
+			// 09/04/2018 ECU added the 'full screen' option
 			// ---------------------------------------------------------------------
-			Utilities.SetUpActivity (this);
+			Utilities.SetUpActivity (this,StaticData.ACTIVITY_FULL_SCREEN);
 			// ---------------------------------------------------------------------
 			// 13/06/2016 ECU check if any parameters fed through
 			// ---------------------------------------------------------------------
@@ -86,8 +91,9 @@ public class BarCodeActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 14/02/2014 ECU display existing bar codes
 				// 21/11/2015 ECU changed to use selector class
+				// 10/04/2018 ECU changed to use new display
 				// -----------------------------------------------------------------
-				selectBarCode ();
+				initialiseDisplay (activity);
 				// -----------------------------------------------------------------
 				// 21/11/2015 ECU tell the user what to do
 				// -----------------------------------------------------------------
@@ -96,6 +102,14 @@ public class BarCodeActivity extends DibosonActivity
 			}
 			else
 			{
+				// -----------------------------------------------------------------
+				// 11/04/2018 ECU tell the user that there are no stored bar codes
+				//                but only if not doing an immediate capture
+				// -----------------------------------------------------------------
+				if (!captureImmediately)
+				{
+					Utilities.popToastAndSpeak (getString (R.string.barcode_none_stored),true);
+				}
 				// -----------------------------------------------------------------
 				// 14/02/2014 ECU capture a new barcode (the first)
 				// -----------------------------------------------------------------
@@ -152,8 +166,23 @@ public class BarCodeActivity extends DibosonActivity
 	        	// -----------------------------------------------------------------
 	        	// 24/11/2015 ECU the scanning for a barcode has been cancelled so
 	        	//                just redisplay the list of current barcodes
+	        	// 10/04/2018 ECU changed to use new 'refresh' method
+	        	// 11/04/2018 ECU put in the check on null 
 	        	// -----------------------------------------------------------------
-	        	selectBarCode ();
+	        	if (listViewSelector != null)
+	        	{
+	        		listViewSelector.refresh ();
+	        	}
+	        	else
+	        	{
+	        		// -------------------------------------------------------------
+	        		// 11/04/2018 ECU nothing has been captured and there is nothing
+	        		//                to be displayed
+	        		// -------------------------------------------------------------
+	        		Utilities.popToastAndSpeak (getString (R.string.barcode_none_finish),true);
+	        		finish ();
+	        		// -------------------------------------------------------------
+	        	}
 	        	// -----------------------------------------------------------------
 	        }
 	    }
@@ -161,7 +190,8 @@ public class BarCodeActivity extends DibosonActivity
 	    // -------------------------------------------------------------------------
 	    // 21/11/2015 ECU check if a new bar code and its details have been entered
 	    // -------------------------------------------------------------------------
-	    if (theRequestCode == StaticData.RESULT_CODE_BARCODE_NEW) 
+	    if (theRequestCode == StaticData.RESULT_CODE_BARCODE_NEW ||
+	        theRequestCode == StaticData.RESULT_CODE_BARCODE_EDIT) 
 	    {
 	    	// ---------------------------------------------------------------------
 	    	// 24/11/2015 ECU whatever the result then just restart the Selector
@@ -172,8 +202,10 @@ public class BarCodeActivity extends DibosonActivity
 	        	// -----------------------------------------------------------------
 	        	// 21/11/2015 ECU a barcode was added.
 	        	//            ECU restart the Selector activity
+	        	// 10/04/2018 ECU changed to use new 'refresh' method
+	        	// 11/04/2018 ECU check if display already initialised
 	        	// -----------------------------------------------------------------
-	        	selectBarCode ();
+	        	refreshDisplay ();
 	            // -----------------------------------------------------------------
 	        } 
 	    }
@@ -198,9 +230,10 @@ public class BarCodeActivity extends DibosonActivity
 		}
 		// -------------------------------------------------------------------------
 		super.onDestroy();
+		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
-	public static void barcodeHandler (Context theContext,String theBarCode,String theBarCodeFormat)
+	void barcodeHandler (Context theContext,String theBarCode,String theBarCodeFormat)
 	{
 		// -------------------------------------------------------------------------
 		// 30/08/2013 ECU added - handle incoming barcodes
@@ -229,7 +262,12 @@ public class BarCodeActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					if (localBarCode.actions != null)
 					{
-						Utilities.actionHandler(context,localBarCode.actions);
+						// ---------------------------------------------------------
+						// 04/04/2018 ECU changed to use 'theContext' instead of a
+						//                'static context'
+						// ---------------------------------------------------------
+						Utilities.actionHandler (theContext,localBarCode.actions);
+						// ---------------------------------------------------------
 					}
 					else
 					{
@@ -243,10 +281,12 @@ public class BarCodeActivity extends DibosonActivity
 					}
 					// -------------------------------------------------------------
 					// 21/11/2015 ECU need to restart the Selector activity
+					// 10/04/2018 ECU changed to use new 'refresh' method
 					// -------------------------------------------------------------
-					selectBarCode ();
+					refreshDisplay ();
 					// -------------------------------------------------------------
 					return;
+					// -------------------------------------------------------------
 				}
 			}
 		}
@@ -257,63 +297,23 @@ public class BarCodeActivity extends DibosonActivity
 		// ---------------------------------------------------------------------
 		Intent localIntent = new Intent (theContext,BarCodeEntry.class);
 		// ---------------------------------------------------------------------
-		// 10/08/2013 ECU added the NEW_TASK flag
-		// ---------------------------------------------------------------------
-		//localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
-		// ---------------------------------------------------------------------
 		// 15/09/2013 ECU feed through the barcode that has just been read
 		// 08/02/2014 ECU changed to use PARAMETER_ rather than literal
+		// 04/04/2018 ECU changed to use 'theContext' rather than a 'static activity'
 		// ---------------------------------------------------------------------
 		localIntent.putExtra (StaticData.PARAMETER_BARCODE,theBarCode);
 		activity.startActivityForResult (localIntent,StaticData.RESULT_CODE_BARCODE_NEW);
+		// ---------------------------------------------------------------------
 	}
 	// =============================================================================
-	public static ArrayList<ListItem> BuildTheBarCodeList ()
-	{
-		// -------------------------------------------------------------------------
-		// 20/11/2015 ECU created to build the bar code list to be used with the
-		//                custom adapter
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.listItems = new ArrayList<ListItem>();
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU add in the check on size
-		// -------------------------------------------------------------------------  
-		if (PublicData.barCodes.size() > 0)
-		{
-			for (int theIndex = 0; theIndex < PublicData.barCodes.size(); theIndex++)
-			{
-				// -----------------------------------------------------------------
-				// 21/11/2015 ECU added the index as an argument
-				// 13/06/2016 ECU added 'actions' in the display
-				// -----------------------------------------------------------------
-				SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-								"",
-								PublicData.barCodes.get (theIndex).description,
-								PublicData.barCodes.get (theIndex).barCode,
-								((PublicData.barCodes.get (theIndex).actions == null) ? "" : "Actions Defined"),
-								theIndex));
-				// -----------------------------------------------------------------
-			}
-			// ---------------------------------------------------------------------
-			// 21/11/2015 ECU sort the items by the description
-			// ---------------------------------------------------------------------
-			Collections.sort (SelectorUtilities.selectorParameter.listItems);
-		}
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU return the list of barcodes that have been generated
-		// -------------------------------------------------------------------------
-		return SelectorUtilities.selectorParameter.listItems;
-		// -------------------------------------------------------------------------
-	}	
-	// =============================================================================
-	static void CaptureBarCode (Context theContext)
+	void CaptureBarCode (Context theContext)
 	{
 		// -------------------------------------------------------------------------
 		// 08/02/2014 ECU indicate what is going on
 		// 13/06/2016 ECU changed to use the resource
 		// -------------------------------------------------------------------------
 		TextToSpeechService.SpeakAPhrase (theContext.getString (R.string.bar_code_place_camera));
-		
+		// -------------------------------------------------------------------------
 		if (Utilities.checkIfAppInstalled (theContext,BARCODE_PACKAGE))
 		{
 			Intent localIntent = new Intent (BARCODE_SCAN);
@@ -341,50 +341,6 @@ public class BarCodeActivity extends DibosonActivity
 		}
 	}
 	// =============================================================================
-	static void selectBarCode ()
-	{
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU before activating the Selector activity then need to set up
-		//                various parameters
-		// -------------------------------------------------------------------------
-		// 22/11/2015 ECU initialise the stored arguments
-		// -------------------------------------------------------------------------
-		SelectorUtilities.Initialise ();
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU build up the list of items that will be displayed
-		// -------------------------------------------------------------------------
-		BuildTheBarCodeList ();
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU set up the variables that control the interaction with
-		//                the Selector activity
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.classToRun 				= BarCodeEntry.class;
-		SelectorUtilities.selectorParameter.customLegend 			= context.getString (R.string.edit);
-		SelectorUtilities.selectorParameter.rowLayout 				= R.layout.barcode_row;
-		SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_BARCODES;
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU declare the methods that will be called by the Selector
-		//                activity when certain key strokes occur
-		// -------------------------------------------------------------------------
-		SelectorUtilities.selectorParameter.backMethodDefinition 	
-							= new MethodDefinition<BarCodeActivity> (BarCodeActivity.class,"BackAction");
-		SelectorUtilities.selectorParameter.customMethodDefinition 	
-							= new MethodDefinition<BarCodeActivity> (BarCodeActivity.class,"EditAction");
-		SelectorUtilities.selectorParameter.helpMethodDefinition 	
-							= new MethodDefinition<BarCodeActivity> (BarCodeActivity.class,"HelpAction");
-		SelectorUtilities.selectorParameter.longSelectMethodDefinition 	
-							= new MethodDefinition<BarCodeActivity> (BarCodeActivity.class,"SelectAction");
-		SelectorUtilities.selectorParameter.swipeMethodDefinition	
-							= new MethodDefinition<BarCodeActivity> (BarCodeActivity.class,"SwipeAction");
-		// -------------------------------------------------------------------------
-		// 21/11/2015 ECU now start up the Selector activity which will be
-		//                configured using the arguments in the
-		//                'SelectorUtilities.selectorParameter'
-		// -------------------------------------------------------------------------
-		SelectorUtilities.StartSelector (context,StaticData.OBJECT_BARCODES);
-		// -------------------------------------------------------------------------
-	}
-	// =============================================================================
 	
 	
 	// =============================================================================
@@ -395,20 +351,7 @@ public class BarCodeActivity extends DibosonActivity
 	// =============================================================================
 	
 	// =============================================================================
-	public static void BackAction (int theDummyArgument)
-	{
-		// -------------------------------------------------------------------------
-		// 22/11/2015 ECU created to handle the BACK key when called from the
-		//                Selector activity. The argument is included but is not 
-		//                needed.
-		// -------------------------------------------------------------------------
-		// 22/11/2015 ECU just finish the activity
-		// -------------------------------------------------------------------------
-		activity.finish ();
-		//--------------------------------------------------------------------------
-	}
-	// =============================================================================
-    public static void CancelBarcodeMethod (String theBarcode)
+    public void CancelBarcodeMethod (String theBarcode)
     {
     	// -------------------------------------------------------------------------
     	// 23/11/2015 ECU create to cancel after barcode input
@@ -417,7 +360,7 @@ public class BarCodeActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
-    public static void EditAction (int theBarcodeSelected)
+    public void EditAction (int theBarcodeSelected)
     {
     	// -------------------------------------------------------------------------
     	// 21/11/2015 ECU create to handle the custom button
@@ -428,10 +371,6 @@ public class BarCodeActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		Intent localIntent = new Intent (context,BarCodeEntry.class);
 		// -------------------------------------------------------------------------
-		// 10/08/2013 ECU added the NEW_TASK flag
-		// -------------------------------------------------------------------------
-		localIntent.setFlags (Intent.FLAG_ACTIVITY_NEW_TASK);
-		// -------------------------------------------------------------------------
 		// 15/09/2013 ECU feed through the barcode that has just been read
 		// 08/02/2014 ECU changed to use PARAMETER_ rather than literal
 		// 13/06/2016 ECU include the 'actions'
@@ -440,11 +379,11 @@ public class BarCodeActivity extends DibosonActivity
 		localIntent.putExtra (StaticData.PARAMETER_BARCODE_DESC,PublicData.barCodes.get(theBarcodeSelected).description);
 		localIntent.putExtra (StaticData.PARAMETER_BARCODE_ACTIONS,PublicData.barCodes.get(theBarcodeSelected).actions);
 		// ------------------------------------------------------------------------
-		activity.startActivity (localIntent);
+		activity.startActivityForResult (localIntent,StaticData.RESULT_CODE_BARCODE_EDIT);
 		// ------------------------------------------------------------------------
     }
 	// =============================================================================
-    public static void HelpAction (int theBarcodeSelected)
+    public void HelpAction (int theBarcodeSelected)
     {
     	// -------------------------------------------------------------------------
     	// 21/11/2015 ECU create to process the selection of a barcode
@@ -455,48 +394,142 @@ public class BarCodeActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		TextToSpeechService.SpeakAPhrase (PublicData.barCodes.get(theBarcodeSelected).description);
     }
+	// =============================================================================
+	void initialiseDisplay (Activity theActivity)
+	{
+		// -------------------------------------------------------------------------
+		// 09/04/2018 ECU changed to use 'ListViewSelector' object
+		// 10/04/2018 ECU changed the name to make easier to understand
+		//            ECU changed to have the activity as an argument
+		// -------------------------------------------------------------------------
+		listViewSelector = new ListViewSelector (theActivity,
+				   								 R.layout.barcode_row,
+				   								 Utilities.createAMethod (BarCodeActivity.class, "PopulateBarCodeList"),
+				   								 true,
+				   								 StaticData.NO_HANDLING_METHOD,
+				   								 Utilities.createAMethod (BarCodeActivity.class, "LongSelectAction",0),
+				   								 Utilities.createAMethod (BarCodeActivity.class, "EditAction",0),
+				   								 getString (R.string.edit),
+				   								 Utilities.createAMethod (BarCodeActivity.class, "EditAction",0),
+				   								 Utilities.createAMethod (BarCodeActivity.class, "HelpAction",0),
+				   								 Utilities.createAMethod (BarCodeActivity.class, "SwipeAction",0)
+				   								);
+		// -------------------------------------------------------------------------
+	}
     // =============================================================================
-    public static void InputBarcodeMethod (String theBarcode)
+    public void InputBarcodeMethod (String theBarcode)
     {
     	// -------------------------------------------------------------------------
     	// 23/11/2015 ECU create to accept the input barcode
-    	//            ECU initialise 'finish' the Selector activity because the
-    	//                'barcodeHandler' will start it again as required
-    	// 24/11/2015 ECU changed to use the 'Finish' method
     	// -------------------------------------------------------------------------
-    	Selector.Finish();
+    	barcodeHandler (context,theBarcode,StaticData.BLANK_STRING);
     	// -------------------------------------------------------------------------
-    	barcodeHandler (context,theBarcode,"");
+    }
+    // =============================================================================
+    void refreshDisplay ()
+    {
+    	// -------------------------------------------------------------------------
+    	// 11/04/2018 ECU created to refresh the display if it exists or create the
+    	//                display if not
+    	// -------------------------------------------------------------------------
+    	if (listViewSelector == null)
+    	{
+    		// ---------------------------------------------------------------------
+    		// 11/04/2018 ECU need to build the display
+    		// ---------------------------------------------------------------------
+    		initialiseDisplay (activity);
+    		// ---------------------------------------------------------------------
+    	}
+    	else
+    	{
+    		// ---------------------------------------------------------------------
+    		// 11/04/2018 ECU display already initialised so just refresh it
+    		// ---------------------------------------------------------------------
+    		listViewSelector.refresh ();
+    		// ---------------------------------------------------------------------
+    	}
+        // -----------------------------------------------------------------
+    }
+    // =============================================================================
+    public void LongSelectAction (int theBarcodeSelected)
+    {
+    	// -------------------------------------------------------------------------
+    	// 21/11/2015 ECU create to handle the custom button
+    	// -------------------------------------------------------------------------
+    	DialogueUtilitiesNonStatic.yesNo (context,
+    									  activity,
+    									  getString (R.string.barcode_source),
+    									  getString (R.string.barcode_manually),
+    									  (Object) theBarcodeSelected,
+    									  Utilities.createAMethod (BarCodeActivity.class,"ManualMethod",(Object) null),
+    									  Utilities.createAMethod (BarCodeActivity.class,"ScanMethod",(Object) null)); 
     	// -------------------------------------------------------------------------
     }
 	// =============================================================================
-  	public static void ManualMethod (Object theSelection)
+  	public void ManualMethod (Object theSelection)
   	{
   		// -------------------------------------------------------------------------
   		// 23/11/2015 ECU created to manually input a barcode
   		// -------------------------------------------------------------------------
-  		DialogueUtilities.textInput (Selector.context,
-				   					 "Manually Enter a Barcode",
-				   					 "Just type in the information that defines a barcode",
-				   					 StaticData.HINT + "Type in the barcode",
-				   					 Utilities.createAMethod (BarCodeActivity.class,"InputBarcodeMethod",""),
-				   					 Utilities.createAMethod (BarCodeActivity.class,"CancelBarcodeMethod",""));
+  		DialogueUtilitiesNonStatic.textInput (context,
+  											  activity,
+  											  getString (R.string.barcode_manually_enter),
+  											  getString (R.string.barcode_just_type),
+  											  StaticData.HINT + getString (R.string.barcode_type_in_barcode),
+  											  Utilities.createAMethod (BarCodeActivity.class,"InputBarcodeMethod",StaticData.BLANK_STRING),
+  											  Utilities.createAMethod (BarCodeActivity.class,"CancelBarcodeMethod",StaticData.BLANK_STRING));
   		// -------------------------------------------------------------------------
   	}
 	// =============================================================================
-	public static void NoMethod (Object theSelection)
+	public void NoMethod (Object theSelection)
   	{
   	}
 	// =============================================================================
-	public static void ScanMethod (Object theSelection)
+	public ArrayList<ListItem> PopulateBarCodeList ()
 	{
 		// -------------------------------------------------------------------------
-		// 23/11/2015 ECU created to obtain the barcode by scanning
-		//            ECU initially close the Selector activity because the methods
-		//                called by CaptureBarCode will restart Selector as necessary
-		// 24/11/2015 ECU changed to use the new 'Finish' method
+		// 20/11/2015 ECU created to build the bar code list to be used with the
+		//                custom adapter
+		// 09/04/2018 ECU changed to use local list rather than SelectorParameter
 		// -------------------------------------------------------------------------
-		Selector.Finish();
+		ArrayList<ListItem> listItems = new ArrayList<ListItem>();
+		// -------------------------------------------------------------------------
+		// 21/11/2015 ECU add in the check on size
+		// -------------------------------------------------------------------------  
+		if (PublicData.barCodes.size() > 0)
+		{
+			for (int theIndex = 0; theIndex < PublicData.barCodes.size(); theIndex++)
+			{
+				// -----------------------------------------------------------------
+				// 21/11/2015 ECU added the index as an argument
+				// 13/06/2016 ECU added 'actions' in the display
+				// 20/03/2017 ECU change to use BLANK....
+				// -----------------------------------------------------------------
+				listItems.add (new ListItem (
+												StaticData.BLANK_STRING,
+												PublicData.barCodes.get (theIndex).description,
+												PublicData.barCodes.get (theIndex).barCode,
+												((PublicData.barCodes.get (theIndex).actions == null) ? StaticData.BLANK_STRING 
+														                                              : String.format (getString (R.string.barcode_actions_defined_format), 
+														                                            		  PublicData.barCodes.get (theIndex).actions)),
+												theIndex));
+				// -----------------------------------------------------------------
+			}
+			// ---------------------------------------------------------------------
+			// 21/11/2015 ECU sort the items by the description
+			// ---------------------------------------------------------------------
+			Collections.sort (listItems);
+			// ---------------------------------------------------------------------
+		}
+		// -------------------------------------------------------------------------
+		// 21/11/2015 ECU return the list of barcodes that have been generated
+		// -------------------------------------------------------------------------
+		return listItems;
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public void ScanMethod (Object theSelection)
+	{
 		// -------------------------------------------------------------------------
 		// 23/11/2015 ECU now scan or manually input a barcode
 		// -------------------------------------------------------------------------
@@ -504,35 +537,26 @@ public class BarCodeActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
-    public static void SelectAction (int theBarcodeSelected)
-    {
-    	// -------------------------------------------------------------------------
-    	// 21/11/2015 ECU create to handle the custom button
-    	// -------------------------------------------------------------------------
-    	DialogueUtilities.yesNo (Selector.context,"Barcode Source",
-	    		   				 "Do you want to manually enter a barcode ?",
-	    		   				 (Object) theBarcodeSelected,
-	    		   				 Utilities.createAMethod (BarCodeActivity.class,"ManualMethod",(Object) null),
-	    		   				 Utilities.createAMethod (BarCodeActivity.class,"ScanMethod",(Object) null)); 
-    	// -------------------------------------------------------------------------
-    }
-	// =============================================================================
-    public static void SwipeAction (int thePosition)
+    public void SwipeAction (int thePosition)
     {
     	// -------------------------------------------------------------------------
     	// 09/06/2015 ECU created to handle swipe actions on a list view item
     	// -------------------------------------------------------------------------
 		// 10/06/2015 ECU created to initiate the dialogue
+    	// 07/06/2019 ECU changed from 'R.string.liquid_delete_format'
 		// -------------------------------------------------------------------------
-		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-	    		   				 "Do you really want to delete the entry for '" + PublicData.barCodes.get (thePosition).description + "'",
-	    		   				 (Object) thePosition,
-	    		   				 Utilities.createAMethod (BarCodeActivity.class,"YesMethod",(Object) null),
-	    		   				 Utilities.createAMethod (BarCodeActivity.class,"NoMethod",(Object) null)); 
+		DialogueUtilitiesNonStatic.yesNo (context,
+										  activity,
+										  getString (R.string.item_deletion),
+										  String.format (getString (R.string.delete_confirmation_format), 
+												  PublicData.barCodes.get (thePosition).description),
+										  (Object) thePosition,
+										  Utilities.createAMethod (BarCodeActivity.class,"YesMethod",(Object) null),
+										  Utilities.createAMethod (BarCodeActivity.class,"NoMethod",(Object) null)); 
 		// -------------------------------------------------------------------------  
     }
   	// =============================================================================
-  	public static void YesMethod (Object theSelection)
+  	public void YesMethod (Object theSelection)
   	{
   		// -------------------------------------------------------------------------
   		// 10/06/2015 ECU the selected item can be deleted
@@ -540,10 +564,31 @@ public class BarCodeActivity extends DibosonActivity
   		int localSelection = (Integer) theSelection;
   		PublicData.barCodes.remove (localSelection);
   		// -------------------------------------------------------------------------
+  		// 11/04/2018 ECU check whether everything has been deleted or not
+  		// -------------------------------------------------------------------------
+  		if (PublicData.barCodes.size () > 0)
+  		{
+  		// -------------------------------------------------------------------------
   		// 10/06/2015 ECU rebuild and then display the updated list view
+  		// 09/04/2018 ECU change to use the new object handler
+  		// 10/04/2018 ECU changed to use new 'refresh' method
+  		// 11/04/2018 ECU changed to use new method
   		// -------------------------------------------------------------------------
-  		Selector.Rebuild();
+  		refreshDisplay ();
   		// -------------------------------------------------------------------------
+  		}
+  		else
+  		{
+  			// ---------------------------------------------------------------------
+  			// 11/04/2018 ECU tell the user that all codes have been deleted
+  			// ---------------------------------------------------------------------
+			Utilities.popToastAndSpeak (getString (R.string.barcode_all_deleted),true);
+			// ---------------------------------------------------------------------
+			// 11/04/2018 ECU cannot do any more so terminate this activity
+			// ---------------------------------------------------------------------
+			finish ();
+			// ---------------------------------------------------------------------
+  		}
   	}
   	// =============================================================================
 }

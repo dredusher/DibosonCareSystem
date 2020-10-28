@@ -300,7 +300,7 @@ public class CloneActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 14/12/2016 ECU optionally add the message and indicate an error occurred
 		// -------------------------------------------------------------------------
-		listOfFiles += "\n" + theFileName;
+		listOfFiles += StaticData.NEWLINE + theFileName;
 		// -------------------------------------------------------------------------
 		// 14/12/2016 ECU check if there is an error message
 		// -------------------------------------------------------------------------

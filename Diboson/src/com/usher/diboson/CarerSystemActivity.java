@@ -1,6 +1,7 @@
 package com.usher.diboson;
 
 import android.os.Bundle;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Typeface;
 import android.view.Gravity;
@@ -9,6 +10,15 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ScrollView;
 import android.widget.TextView;
+
+// ---------------------------------------------------------------------------------
+// 08/09/2017 ECU The following suppress was added because the class uses Gravity.LEFT
+//				  and this generates a warning stating that Gravity.START should be
+//				  used. However '.START' came in at API 14 and this is later than the
+//				  lowest API that this app is to support
+//----------------------------------------------------------------------------------
+@SuppressLint ("RtlHardcoded")
+// ---------------------------------------------------------------------------------
 
 public class CarerSystemActivity extends DibosonActivity 
 {
@@ -70,6 +80,7 @@ public class CarerSystemActivity extends DibosonActivity
  	   			//int selection	 = extras.getInt (MainActivity.PARAMETER_SELECTION,MainActivity.NO_RESULT);  
  	   			// -----------------------------------------------------------------  
  	   			finish ();
+ 	   			// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -78,7 +89,7 @@ public class CarerSystemActivity extends DibosonActivity
 				// 29/01/2016 ECU added the 'display visit log' button
 				// -----------------------------------------------------------------
 				setContentView(R.layout.activity_carer_system);
-			
+				// -----------------------------------------------------------------
 				displayVisitsLogButton	= (Button) findViewById (R.id.display_care_visit_log_button);
 				printCarePlanButton 	= (Button) findViewById (R.id.print_care_plan_button);
 				registerAgencyButton 	= (Button) findViewById (R.id.register_agency_button);
@@ -86,16 +97,22 @@ public class CarerSystemActivity extends DibosonActivity
 				registerCarePlanButton	= (Button) findViewById (R.id.register_care_plan_button);
 		
 				displayVisitsLogButton.setOnClickListener (buttonListener);	
-				printCarePlanButton.setOnClickListener (buttonListener);	
-				registerAgencyButton.setOnClickListener (buttonListener);				
-				registerCarerButton.setOnClickListener (buttonListener);
+				printCarePlanButton.setOnClickListener    (buttonListener);	
+				registerAgencyButton.setOnClickListener   (buttonListener);				
+				registerCarerButton.setOnClickListener    (buttonListener);
 				registerCarePlanButton.setOnClickListener (buttonListener);
-		
-				registerCarerButton.setOnLongClickListener (buttonListenerLong);
+				// -----------------------------------------------------------------
+				// 16/07/2017 ECU set the text of the button to show the options
+				//                available
+				// -----------------------------------------------------------------
+				displayVisitsLogButton.setText (Utilities.twoLineButtonLegend (this,
+												getString (R.string.display_care_visit_log_button), 
+												getString (R.string.display_short_care_visit_log)));
 				// -----------------------------------------------------------------
 				// 27/08/2015 ECU put in option to show the visits so far
+				// 16/07/2017 ECU changed the button to be 'long pressed'
 				// -----------------------------------------------------------------
-				printCarePlanButton.setOnLongClickListener (buttonListenerLong);
+				displayVisitsLogButton.setOnLongClickListener (buttonListenerLong);
 				// -----------------------------------------------------------------
 			}
 		}
@@ -133,8 +150,10 @@ public class CarerSystemActivity extends DibosonActivity
 				case R.id.display_care_visit_log_button:
 					// -------------------------------------------------------------
 					// 29/01/2016 ECU created to handle the display of the visits log
+					// 16/07/2017 ECU pass through the name of the required visits
+					//                file
 					// -------------------------------------------------------------
-					DisplayTheVisitsLog ();
+					DisplayTheVisitsLog (PublicData.visitLogFile);
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -155,7 +174,7 @@ public class CarerSystemActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 31/08/2015 ECU now display the care plan
 					// -------------------------------------------------------------
-					careInformationTextview.setText(PublicData.carePlan.Print());
+					careInformationTextview.setText (PublicData.carePlan.Print());
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -205,6 +224,7 @@ public class CarerSystemActivity extends DibosonActivity
 						// 14/01/2014 ECU indicate that cannot create a carer without an agency
 						// ---------------------------------------------------------
 						Utilities.popToast (getString (R.string.no_agencies));
+						// ---------------------------------------------------------
 					}
 					
 					break;
@@ -260,16 +280,14 @@ public class CarerSystemActivity extends DibosonActivity
 			switch (view.getId()) 
 			{
 				// ------------------------------------------------------------------
-				case R.id.print_care_plan_button: 
+				case R.id.display_care_visit_log_button: 
 				{
 					// -------------------------------------------------------------
-					// 27/08/2015 ECU display the visits that have occurred
+					// 15/07/2017 ECU display the contents of the 'visit log' with
+					//				  full details
+					// 16/07/2017 ECU show the abbreviated carer visit file
 					// -------------------------------------------------------------
-					setTitle (getString (R.string.current_visits));
-					setContentView (R.layout.activity_system_info);
-					TextView careInformationTextview  = (TextView)findViewById (R.id.system_info_textview);
-					careInformationTextview.setGravity (Gravity.LEFT);
-					careInformationTextview.setText(Visit.PrintAll());
+					DisplayTheVisitsLog (PublicData.carerLogFile);
 					// -------------------------------------------------------------
 					break;
 				}		
@@ -281,21 +299,23 @@ public class CarerSystemActivity extends DibosonActivity
 	/* ============================================================================= */
 	
 	// =============================================================================
-	void DisplayTheVisitsLog ()
+	void DisplayTheVisitsLog (String theFileName)
 	{
 		// -------------------------------------------------------------------------
 		// 29/01/2016 ECU created to display the contents of the display log
+		// 16/07/2017 ECU added the file name as an argument
 		// -------------------------------------------------------------------------
 		setContentView (R.layout.activity_system_info);
 		// -------------------------------------------------------------------------
 		setTitle ("Display of the Visits Log");
 		// -------------------------------------------------------------------------
 		// 29/01/2016 ECU set up the text view which will display the visits log 
+		// 20/03/2017 ECU changed to use BLANK....
 		// -------------------------------------------------------------------------
 		TextView visitsLogTextView  = (TextView)findViewById (R.id.system_info_textview);
 		visitsLogTextView.setGravity (Gravity.LEFT);
 		visitsLogTextView.setTypeface (Typeface.MONOSPACE,Typeface.BOLD); 
-		visitsLogTextView.setText ("");
+		visitsLogTextView.setText (StaticData.BLANK_STRING);
 		// -------------------------------------------------------------------------
 		// 29/01/2016 ECU set to auto scroll the text
 		// -------------------------------------------------------------------------
@@ -309,8 +329,11 @@ public class CarerSystemActivity extends DibosonActivity
 		});
 		// -------------------------------------------------------------------------
 		// 29/01/2016 ECU now display the visits data
-		// -------------------------------------------------------------------------
-		visitsLogTextView.append (Visit.PrintAll());
+		// 15/07/2017 ECU changed to use the display of the new 'full details' visit
+		//                log file
+		// 16/07/2017 ECU use the file name so as to be a bit more flexible
+		// ------------------------------------------------------------------------- ;
+		visitsLogTextView.append (new String (Utilities.readLinesFromEndOfFile (theFileName,StaticData.SYSTEM_INFO_MAX_LINES)));
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

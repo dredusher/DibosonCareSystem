@@ -99,10 +99,11 @@ public class BlueToothServiceUtilities
 		// -------------------------------------------------------------------------
 		// 24/07/2016 ECU change the check around because the input channel name
 		//                will be longer than that stored
+		// 18/11/2017 ECU 'televisionChannels' changed to an array list
 		// -------------------------------------------------------------------------
-		for (int theChannel = 0; theChannel < Television.televisionChannels.length; theChannel++)
+		for (int theChannel = 0; theChannel <Television.televisionChannels.size (); theChannel++)
 		{
-			if (theChannelName.startsWith (Television.televisionChannels[theChannel].channelName))
+			if (theChannelName.startsWith (Television.televisionChannels.get (theChannel).channelName))
 			{
 				// -----------------------------------------------------------------
 				// 02/03/2014 ECU have found a match for the spoken channel so now
@@ -111,8 +112,10 @@ public class BlueToothServiceUtilities
 				// 12/05/2015 ECU put in the call to the method which sends out the 
 				//                digits with a slight delay between each one
 				// 14/10/2015 ECU changed to use ....Utilities
+				// 18/11/2017 ECU 'televisionChannels' changed to a list (from an
+				//                array so change the code
 				// -----------------------------------------------------------------
-				sendToRemoteController (TelevisionChannel.ReturnChannel (Television.televisionChannels[theChannel].channel),StaticData.INTER_DIGIT_DELAY);
+				sendToRemoteController (TelevisionChannel.ReturnChannel (Television.televisionChannels.get (theChannel).channel),StaticData.INTER_DIGIT_DELAY);
 				// -----------------------------------------------------------------			
 				return true;
 			}

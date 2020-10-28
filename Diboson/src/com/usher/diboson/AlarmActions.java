@@ -1,6 +1,7 @@
 package com.usher.diboson;
 
 import java.util.Calendar;
+
 import android.os.Bundle;
 import android.content.Context;
 import android.content.Intent;
@@ -70,7 +71,7 @@ public class AlarmActions extends DibosonActivity
 					// 18/06/2013 ECU change from literal to stored value
 					// 04/12/2013 ECU try and make a phone call
 					// -------------------------------------------------------------
-					Utilities.makePhoneCall(this,getString(R.string.phone_number_ed));
+					Utilities.makePhoneCall (this,getString (R.string.phone_number_ed));
 					// -------------------------------------------------------------
 				}
 				if ((alarmData.action & StaticData.ALARM_ACTION_TABLET_REMINDER) == StaticData.ALARM_ACTION_TABLET_REMINDER)
@@ -128,9 +129,25 @@ public class AlarmActions extends DibosonActivity
 							// -----------------------------------------------------
 							// 06/02/2015 ECU have found the required alarm so 
 							//                action the specified activity
+							// 23/09/2017 ECU changed to use the stored 'message' rather
+							//                than the index that was in 'associatedData'.
+							//                The message contains the legend of the
+							//                activity to be started - do it this way
+							//                to adjust for when the 'sort by usage'
+							//                is being used
 							// -----------------------------------------------------
 							Intent localIntent = new Intent (getBaseContext(),GridActivity.class);
-							localIntent.putExtra (StaticData.PARAMETER_POSITION,PublicData.alarmData.get(alarmIndex).associatedData);
+							// -----------------------------------------------------
+							// 23/09/2017 ECU get the position of the activity in
+							//                the current array based on the legend
+							//                that is stored in the alarm data
+							// -----------------------------------------------------
+							int activityPosition = GridImages.returnPosition (GridActivity.gridImages,
+																				PublicData.alarmData.get(alarmIndex).message);
+							// -----------------------------------------------------
+							// 23/09/2017 ECU now activate the specified activity
+							// -----------------------------------------------------
+							localIntent.putExtra (StaticData.PARAMETER_POSITION,activityPosition);
 							localIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 							startActivity (localIntent);
 							// -----------------------------------------------------
@@ -191,11 +208,25 @@ public class AlarmActions extends DibosonActivity
 					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
+				if ((alarmData.action & StaticData.ALARM_ACTION_ACTIONS) == StaticData.ALARM_ACTION_ACTIONS)
+				{
+					// -------------------------------------------------------------
+					// 30/04/2017 ECU check for timed actions and action those
+					//                which are contained as a message in the alarm
+					//                data
+					//            ECU changed from '.message' to '.actions'
+					// -------------------------------------------------------------
+					Utilities.actionHandler (getBaseContext (),alarmData.actions);
+					// -------------------------------------------------------------
+				}
+				// -----------------------------------------------------------------
 			}
 			// ---------------------------------------------------------------------
 			// 04/12/2013 ECU default to no action to take
+			// 18/05/2017 ECU removed the following line as no longer needed
+			//            ECU highlighted when adding the 'repeat alarm' code
 			// ---------------------------------------------------------------------
-			alarmData.action = StaticData.ALARM_ACTION_NONE;
+			//alarmData.action = StaticData.ALARM_ACTION_NONE;
 			// ---------------------------------------------------------------------
 			// 18/06/2013 ECU want to make sure that this alarm is removed from  
 			//                the array - use id
@@ -206,6 +237,18 @@ public class AlarmActions extends DibosonActivity
 			//            ECU added the context as argument
 			// ---------------------------------------------------------------------
 			deleteAlarmFromList (this,alarmData.id,false);
+			// ---------------------------------------------------------------------
+			// 18/05/2017 ECU check if this alarm is a 'repeat' alarm
+			// ---------------------------------------------------------------------
+			if (alarmData.repeatInterval != StaticData.NO_RESULT)
+			{
+				// -----------------------------------------------------------------
+				// 18/05/2017 ECU it appears that this is an alarm which is to be
+				//                repeated
+				// -----------------------------------------------------------------
+				alarmData.setRepeatAlarm (this);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 			// 18/06/2013 ECU write the alarm data to disk
 			// 03/04/2014 ECU changed to use 'AsyncUtilities' rather than 'Utilities'

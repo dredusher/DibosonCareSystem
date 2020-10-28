@@ -3,7 +3,6 @@ package com.usher.diboson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import android.content.Context;
 import android.content.Intent;
 
@@ -46,13 +45,14 @@ public class CarePlanActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 29/08/2015 ECU build up the summary of visits per day
 		// 11/12/2016 ECU changed to use daysOfWeek
+		// 20/03/2017 ECU changed to use BLANK....
 		// -------------------------------------------------------------------------
 		for (int theDayIndex = 0; theDayIndex < PublicData.daysOfTheWeek.length; theDayIndex++)
 		{
 			SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-					"",
+					StaticData.BLANK_STRING,
 					PublicData.daysOfTheWeek [theDayIndex],
-					"",
+					StaticData.BLANK_STRING,
 					"Number of Visits = " + PublicData.carePlan.visits [theDayIndex].size(),
 					theDayIndex));
 		}
@@ -76,7 +76,7 @@ public class CarePlanActivity extends DibosonActivity
 		for (int theVisit = 0; theVisit < localVisits.size(); theVisit++)
 		{
 			SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-					"" + localVisits.get (theVisit).PrintStartTime(),
+					StaticData.BLANK_STRING + localVisits.get (theVisit).PrintStartTime(),
 					"Duration : " + localVisits.get (theVisit).duration + " minutes",
 					"Carer :  " + PublicData.carers.get(localVisits.get (theVisit).carerIndex).name +
 					" from " + PublicData.agencies.get(localVisits.get (theVisit).agencyIndex).name,
@@ -102,12 +102,22 @@ public class CarePlanActivity extends DibosonActivity
 	// =============================================================================
 	public static void HandleDailyCarePlanList (Context theContext,boolean theStartActivityFlag)
 	{
+		// -------------------------------------------------------------------------
+		// 24/07/2019 ECU make sure that the 'selector' parameter is initialised
+		// -------------------------------------------------------------------------
+		SelectorUtilities.Initialise ();
+		// -------------------------------------------------------------------------
 		BuildTheDailyCarePlanList ();
 		SelectorUtilities.selectorParameter.rowLayout 				= R.layout.care_plan_row;
 		SelectorUtilities.selectorParameter.sort 					= false;
 		SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_CARE_PLANS;
 		SelectorUtilities.selectorParameter.classToRun				= CarePlanVisitActivity.class;
 		SelectorUtilities.selectorParameter.swipeMethodDefinition	= null;				// 30/08/2015 ECU added
+		// ---------------------------------------------------------------------
+		// 24/07/2019 ECU declare the help function
+		// ---------------------------------------------------------------------
+		SelectorUtilities.selectorParameter.helpMethodDefinition 	
+						= new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"HelpButtonListAction");
 		// ----------------------------------------------------------------------
 		// 31/08/2015 ECU check if the activity is to be started or just want a
 		//                rebuild of the display
@@ -120,6 +130,7 @@ public class CarePlanActivity extends DibosonActivity
 			SelectorUtilities.StartSelector (theContext,
 										 new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"SelectAction"),
 										 StaticData.OBJECT_CARE_PLANS);
+			// --------------------------------------------------------------------
 		}
 		else
 		{
@@ -135,6 +146,11 @@ public class CarePlanActivity extends DibosonActivity
 	// =============================================================================
 	public static void HandleDailyCarePlanVisitsList (Context theContext)
 	{
+		// -------------------------------------------------------------------------
+		// 24/07/2019 ECU normally it would be expected to initialise the 'selector'
+		//                parameter, using SelectorUtilities.Initialise, but this
+		//                method relies on previous information being retained
+		// -------------------------------------------------------------------------
 		BuildTheDailyCarePlanVisitsList ();
 		SelectorUtilities.selectorParameter.rowLayout 				= R.layout.care_plan_visit_row;
 		SelectorUtilities.selectorParameter.sort 					= true;
@@ -143,14 +159,43 @@ public class CarePlanActivity extends DibosonActivity
 		SelectorUtilities.selectorParameter.customMethodDefinition 	= new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"AddVisit");
 		SelectorUtilities.selectorParameter.customLegend 			= theContext.getString (R.string.add);
 		SelectorUtilities.selectorParameter.swipeMethodDefinition	= new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"SwipeAction");
+		// ---------------------------------------------------------------------
+		// 24/07/2019 ECU declare the help function
+		// ---------------------------------------------------------------------
+		SelectorUtilities.selectorParameter.helpMethodDefinition 	
+						= new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"HelpButtonAction");
 		// ----------------------------------------------------------------------
 		SelectorUtilities.StartSelector (theContext,
 										 new MethodDefinition<CarePlanActivity> (CarePlanActivity.class,"SelectActionVisit"),
 										 StaticData.OBJECT_CARE_VISITS);
 		// ------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
-	
+	// =============================================================================
+	public static void HelpButtonAction (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 24/07/2019 ECU created to process the 'help button'
+		// -------------------------------------------------------------------------
+		Utilities.popToast (PublicData.carePlan.visits [(Integer) SelectorUtilities.selectorParameter.dataObject].get (thePosition).Print(),true);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
+	public static void HelpButtonListAction (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 24/07/2019 ECU created to process the 'help button'
+		// 25/07/2019 ECU changed to display a scrollable 'popToast' based on
+		//                the current context
+		// 26/07/2019 ECU added 'mono spaced'
+		// 27/07/2019 ECU specify the number of lines to use
+		// -------------------------------------------------------------------------
+		String carerString = StaticData.MONO_SPACED + PublicData.carePlan.Print (thePosition);
+		Utilities.popToast (Utilities.getRootView (Selector.context),
+							carerString,
+							Utilities.getNumberOfLines (carerString,StaticData.SCROLL_FIELD_LINES_MAX),
+							true);
+		// -------------------------------------------------------------------------
+	}
 	// ===============================================================================
     public static void SelectAction (int theDaySelected)
     {
@@ -163,7 +208,9 @@ public class CarePlanActivity extends DibosonActivity
     	// 29/08/2015 ECU check if there are any visits for this day
     	// -------------------------------------------------------------------------
     	if (PublicData.carePlan.visits[theDaySelected].size() > 0)
+    	{
     		HandleDailyCarePlanVisitsList (Selector.context);
+    	}
     	else
     	{
     		// ---------------------------------------------------------------------

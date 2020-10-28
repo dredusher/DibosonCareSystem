@@ -1,6 +1,9 @@
 package com.usher.diboson;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -13,6 +16,7 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 	// =============================================================================
 	// 01/12/2015 ECU added the PANIC_ALARM handling
 	// 29/12/2015 ECU added bluetooth discovery handling
+	// 19/11/2018 ECU added the watchdog timer
 	/* ============================================================================= */
 	final static String TAG = "AlarmManagerReceiver";
 	/* ============================================================================= */
@@ -25,14 +29,23 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 		// -------------------------------------------------------------------------
 		// 02/12/2015 ECU added the retrieval of ALARM_TYPE which may or may not be 
 		//                used by tasks using the alarm manager
+		// 26/07/2017 ECU added the alarm time which will, if provided, contain
+		//                the time when the alarm was for rather than the current
+		//                time
 		// -------------------------------------------------------------------------
-		int theAlarmID 		= StaticData.NO_RESULT;
-		int theAlarmType	= StaticData.NO_RESULT;
+		int 	alarmID 	= StaticData.NO_RESULT;
+		long	alarmTime	= StaticData.NO_RESULT;
+		int 	alarmType	= StaticData.NO_RESULT;
 		// -------------------------------------------------------------------------
 		if (localExtras != null)
 	    {
-			theAlarmID 		= intent.getIntExtra (StaticData.PARAMETER_ALARM_ID,StaticData.NO_RESULT);  
-			theAlarmType 	= intent.getIntExtra (StaticData.PARAMETER_ALARM_TYPE,StaticData.NO_RESULT);  
+			alarmID 	= intent.getIntExtra (StaticData.PARAMETER_ALARM_ID,StaticData.NO_RESULT);  
+			alarmType 	= intent.getIntExtra (StaticData.PARAMETER_ALARM_TYPE,StaticData.NO_RESULT); 
+			// ---------------------------------------------------------------------
+			// 26/07/2017 ECU check if the actual time required has been stored
+			// ---------------------------------------------------------------------
+			alarmTime 	= intent.getLongExtra (StaticData.PARAMETER_ALARM_TIME,StaticData.NOT_SET); 
+			// ---------------------------------------------------------------------
 	    }
 		// -------------------------------------------------------------------------
 		// 07/03/2016 ECU check whether this is receiver is being called when the
@@ -44,12 +57,18 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 			//----------------------------------------------------------------------
 			// 23/02/2014 ECU log useful information
 			// 15/12/2015 ECU added the alarm type
+			// 26/07/2017 ECU make the type conditional
+			// 16/03/2019 ECU added the alarmTime and make conditional
 			//----------------------------------------------------------------------
-			Utilities.LogToProjectFile (TAG,"Alarm ID = " + theAlarmID + " " + theAlarmType);
+			Utilities.LogToProjectFile (TAG,"Alarm ID = " + alarmID + 
+					((alarmType != StaticData.NO_RESULT) ? (" " + alarmType) 
+							                             : StaticData.BLANK_STRING) +
+					((alarmTime != StaticData.NO_RESULT) ? (" " + new SimpleDateFormat (StaticData.ALARM_TIME_FORMAT,Locale.getDefault()).format(alarmTime))
+							                             : StaticData.BLANK_STRING));
 			// ---------------------------------------------------------------------
 			// 23/02/2014 ECU handle the individual alarms
 			// ---------------------------------------------------------------------	   	
-			switch (theAlarmID)
+			switch (alarmID)
 			{
 				// -----------------------------------------------------------------
 				case StaticData.ALARM_ID_BLUETOOTH_DISCOVERY:
@@ -59,7 +78,7 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 					// 31/12/2015 ECU put in the cheeck on null - just in case
 					// -------------------------------------------------------------
 					if (PublicData.bluetoothUtilities != null)
-						BluetoothUtilities.handleAlarm (context,theAlarmType);
+						BluetoothUtilities.handleAlarm (context,alarmType);
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
@@ -73,7 +92,7 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 					// -------------------------------------------------------------
 					if (PublicData.userInterfaceRunning)
 					{
-						PanicAlarmActivity.handleAlarm (context,theAlarmType);
+						PanicAlarmActivity.handleAlarm (context,alarmType);
 					}
 					else
 					{
@@ -86,23 +105,45 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 					// -------------------------------------------------------------
 					break;
 				// -----------------------------------------------------------------
+				case StaticData.ALARM_ID_RANDOM_EVENT:
+					// -------------------------------------------------------------
+					// 21/06/2018 ECU a 'random event' has occurred
+					// -------------------------------------------------------------
+					PublicData.storedData.randomEvent.alarmHandler (context);
+					// -------------------------------------------------------------
+					break;
+				// -----------------------------------------------------------------
 				case StaticData.ALARM_ID_SPEAKING_CLOCK:
 					// -------------------------------------------------------------
 					// 01/12/2015 ECU changed to use StaticData.AL.....
+					// 20/03/2017 ECU pass through the context
+					// 23/11/2018 ECU because the Android OS doesn't return the
+					//                alarm at the exact time that it was set then
+					//                indicate that the current time should be spoken
+					// 16/03/2019 ECU just tidied up the code
 					// -------------------------------------------------------------
-					Utilities.SpeakingClock ();
+					SpeakingClockActivity.SpeakingClock (context,StaticData.NOT_SET);
 					// -------------------------------------------------------------
 					// 26/02/2014 ECU IMPORTANT - see notes
 					// 06/03/2014 ECU the code that was here has been moved
 					// 09/03/2014 ECU renamed the 'fix'
+					// 19/07/2017 ECU pass through the context to the fix
 					// -------------------------------------------------------------
-					APIIssues.Fix001 (android.os.Build.VERSION.SDK_INT);
+					APIIssues.Fix001 (context,android.os.Build.VERSION.SDK_INT);
 					// -------------------------------------------------------------
 					// 23/02/2014 ECU set up the next time in the sequence
 					// -------------------------------------------------------------
 					SpeakingClockActivity.RepeatTheAlarm (context);
 					// -------------------------------------------------------------
 					break;
+				// -----------------------------------------------------------------
+				case StaticData.ALARM_ID_WATCHDOG_TIMER:
+					// -------------------------------------------------------------
+					// 19/11/2018 ECU handle a watchdog timer alarm
+					// -------------------------------------------------------------
+					PublicData.storedData.watchdogTimer.Alarm (context);
+					// -------------------------------------------------------------
+					break;	
 				// -----------------------------------------------------------------
 				case StaticData.ALARM_ID_WESTMINSTER_CHIME:
 					// -------------------------------------------------------------
@@ -125,13 +166,14 @@ public class AlarmManagerReceiver extends BroadcastReceiver
 			//                started which will be StaticData.RESTART_TIME millisecs
 			//                from now
 			// 03/11/2016 ECU changed to use the global alarm manager
+			// 15/03/2019 ECU addedFLAG_CURRENT_FLAG
 			// ---------------------------------------------------------------------
 			PendingIntent alarmPendingIntent = PendingIntent.getBroadcast (context,
-													theAlarmID,intent,Intent.FLAG_ACTIVITY_NEW_TASK);  
+													alarmID,intent,Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT);  
 			// ---------------------------------------------------------------------
 			// 24/12/2015 ECU changed to use the new method
 			// 03/11/2016 ECU changed to use the global alarm manager
-			// 06/02/2017 ECU go back to local arm manager in case the Public version
+			// 06/02/2017 ECU go back to local alarm manager in case the Public version
 			//                not set yet
 			// ---------------------------------------------------------------------
 			Utilities.SetAnExactAlarm ((AlarmManager) context.getSystemService (Context.ALARM_SERVICE),

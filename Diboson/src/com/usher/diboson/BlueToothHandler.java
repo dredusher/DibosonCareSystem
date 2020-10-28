@@ -38,11 +38,11 @@ public class BlueToothHandler
 		// 01/03/2014 ECU check the state of the 'messenger' so that caller can take
 		//                any actions
 		// -------------------------------------------------------------------------
-		
 		if (messenger == null)
 			return false;
 		else
 			return true;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	static class IncomingHandler extends Handler 

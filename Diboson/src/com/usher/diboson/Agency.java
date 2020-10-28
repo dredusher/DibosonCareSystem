@@ -16,8 +16,12 @@ public class Agency implements Serializable
 	public String contactName;		// name of contact at agency
 	public String notes;			// any relevant notes
 	/* ============================================================================= */
-	public Agency (String theName,String theAddress,String thePhoneNumber,
-				String theEmailAddress,String theContactName,String theNotes)
+	public Agency (String theName,
+			       String theAddress,
+			       String thePhoneNumber,
+			       String theEmailAddress,
+			       String theContactName,
+			       String theNotes)
 	{
 		//-------------------------------------------------------------------------- 
 		// 12/01/2014 ECU copy across the data into the class variables
@@ -28,16 +32,19 @@ public class Agency implements Serializable
 		emailAddress 	= theEmailAddress;
 		contactName 	= theContactName;
 		notes 			= theNotes;	
+		// -------------------------------------------------------------------------
 	}	
-	/* ================================================================= */
+	/* ============================================================================= */
 	public String Print ()
 	{
-		return "Name : " + name + "\n" +
-				"Address : " + address + "\n" +
-				"Phone Number : " + phoneNumber + "\n" + 
-				"Email Address : " + emailAddress + "\n" +
-				"Contact Name : " + contactName + "\n" +
-				"Notes : " + notes;	
+		// -------------------------------------------------------------------------
+		return "Name : " + name + StaticData.NEWLINE +
+			   "Address : " + address + StaticData.NEWLINE +
+			   "Phone Number : " + phoneNumber + StaticData.NEWLINE + 
+			   "Email Address : " + emailAddress + StaticData.NEWLINE +
+			   "Contact Name : " + contactName + StaticData.NEWLINE +
+			   "Notes : " + notes;
+		// -------------------------------------------------------------------------
 	}
-	/* ================================================================= */
+	/* ============================================================================= */
 }

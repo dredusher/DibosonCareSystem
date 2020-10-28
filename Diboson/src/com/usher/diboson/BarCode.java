@@ -25,8 +25,9 @@ public class BarCode implements Serializable
 		description	=	theDescription;
 		// -------------------------------------------------------------------------
 		// 13/06/2016 ECU just check if need to adjust the fields
+		// 20/03/2017 ECU changed to use BLANK_STRING
 		// -------------------------------------------------------------------------
-		if (actions.equals(""))
+		if (actions.equals (StaticData.BLANK_STRING))
 			actions = null;
 		// -------------------------------------------------------------------------
 	}
@@ -35,10 +36,11 @@ public class BarCode implements Serializable
 	{
 		// -------------------------------------------------------------------------
 		// 13/06/2016 ECU added the 'actions'
+		// 09/04/2018 ECU optionally display any stored actions
 		// -------------------------------------------------------------------------
 		return 	"Description : " + description + StaticData.NEWLINE +
-				"Bar Code : " + barCode + StaticData.NEWLINE +
-				"Actions : " + actions;
+				"Bar Code : " + barCode + 
+				((actions == null) ? StaticData.BLANK_STRING : (StaticData.NEWLINE + "Actions : " + actions));
 		// -------------------------------------------------------------------------
 	}
 	// =============================================================================

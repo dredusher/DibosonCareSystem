@@ -151,12 +151,15 @@ public class CompassActivity extends DibosonActivity implements SensorEventListe
 	}
 	/* ============================================================================= */
 	@Override
-	public boolean onCreateOptionsMenu(Menu menu) 
+	public boolean onCreateOptionsMenu (Menu menu) 
 	{
+		// -------------------------------------------------------------------------
 		// Inflate the menu; this adds items to the action bar if it is present.
-		
-		menu.add(0,MENU_REMOTE,0,"Set Remote Monitoring Mode");
+		// -------------------------------------------------------------------------
+		menu.add (0,MENU_REMOTE,0,"Set Remote Monitoring Mode");
+		// -------------------------------------------------------------------------
 		return true;
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	@Override
@@ -182,7 +185,8 @@ public class CompassActivity extends DibosonActivity implements SensorEventListe
 		// -------------------------------------------------------------------------	
 		// 21/10/2014 ECU used the method to build menu
 		// -------------------------------------------------------------------------	
-		return onCreateOptionsMenu(menu);
+		return onCreateOptionsMenu (menu);
+		// -------------------------------------------------------------------------
 	}
 	/* ============================================================================= */
 	public boolean onOptionsItemSelected (MenuItem item)
@@ -203,9 +207,14 @@ public class CompassActivity extends DibosonActivity implements SensorEventListe
 				remoteMonitor = true;
 				// -----------------------------------------------------------------
 				return true;
-				// -----------------------------------------------------------------
+			// ---------------------------------------------------------------------
+			// 31/12/2017 ECU added the default
+			// ---------------------------------------------------------------------
+			default:
+	            return super.onOptionsItemSelected(item);
+	        // ---------------------------------------------------------------------
 		}
-		return true;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================
 	@Override

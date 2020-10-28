@@ -9,6 +9,9 @@ public class CarePlan implements Serializable
 {
 	/* ================================================================= */
 	// 12/01/2014 ECU created to contain details of a carer
+	// 24/07/2019 ECU provide a new method 'Print (day ...)' so that the
+	//                planned visits for the specified day can be printed.
+	//                Changed 'Print ()' to use this method.
 	/* ================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ================================================================= */
@@ -25,32 +28,44 @@ public class CarePlan implements Serializable
 	/* ================================================================= */
 	public String Print ()
 	{
-		String localMessage = "";
+		String localMessage = StaticData.BLANK_STRING;
 		
 		for (int theIndex = 0; theIndex < PublicData.daysOfTheWeek.length; theIndex++)
 		{
 			// ---------------------------------------------------------------------
-			// 11/12/2016 ECU chaned to use 'daysOfWeek'
+			// 11/12/2016 ECU changed to use 'daysOfWeek'
+			// 24/07/2019 ECU changed to use the new method
 			// ----------------------------------------------------------------------
-			localMessage += "Visits for " + PublicData.daysOfTheWeek [theIndex] + 
-										"\n====================\n";
-			
-			if (visits [theIndex].size() > 0)
-			{
-				for (int theVisit = 0; theVisit < visits [theIndex].size(); theVisit++)
-				{
-					localMessage += visits [theIndex].get(theVisit).Print() +
-							"----------------------------\n";			
-				}
-			}
-			else
-			{
-				localMessage += "There are no scheduled visits\n";
-			}
+			localMessage += Print (theIndex);
 			// ---------------------------------------------------------------------
 			// 31/08/2015 ECU add a separating blank line
 			// ---------------------------------------------------------------------
-			localMessage += "\n";
+			localMessage += StaticData.NEWLINE;
+		}
+		return localMessage;
+	}
+	// =============================================================================
+	public String Print (int theDayOfTheWeek)
+	{
+		String localMessage = StaticData.BLANK_STRING;
+		
+		// ---------------------------------------------------------------------
+		// 11/12/2016 ECU chaned to use 'daysOfWeek'
+		// ----------------------------------------------------------------------
+		localMessage += "Visits for " + PublicData.daysOfTheWeek [theDayOfTheWeek] + 
+										"\n====================\n";
+		// ----------------------------------------------------------------------	
+		if (visits [theDayOfTheWeek].size() > 0)
+		{
+			for (int theVisit = 0; theVisit < visits [theDayOfTheWeek].size(); theVisit++)
+			{
+				localMessage += visits [theDayOfTheWeek].get (theVisit).Print () +
+						"----------------------------\n";			
+			}
+		}
+		else
+		{
+			localMessage += "There are no scheduled visits\n";
 		}
 		return localMessage;
 	}

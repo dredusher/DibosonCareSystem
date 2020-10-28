@@ -30,6 +30,7 @@ public class AudioRecorder extends DibosonActivity
 	// 14/11/2016 ECU changed to use a random access file so that there is no
 	//                need for a temporary file and gives the possibility of appending
 	//                to an existing file
+	// 11/06/2017 ECU check for the parameter to start recording immediately
 	// -----------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -48,20 +49,21 @@ public class AudioRecorder extends DibosonActivity
     public  static final byte []    WAV_FILE_FORMAT         = {'W','A','V','E','f','m','t',' '};
     public  static final int        WAV_FILE_FORMAT_OFFSET	= 8;
 	/* ============================================================================= */
-    private static  boolean         appendToExistingFile;				// 14/11/2016 ECU added
-	private static 	int 			bufferSize 				= 0;
-	private static  Button			buttonPlay;							// 19/08/2016 ECU added
-	private static	Context			context;							// 20/08/2016 ECU added
-    private static 	String 			destinationAudioFolder;
-    private static  RandomAccessFile	
+    private   		boolean         appendToExistingFile;				// 14/11/2016 ECU added
+	private 	 	int 			bufferSize 				= 0;
+	private 		Button			buttonPlay;							// 19/08/2016 ECU added
+	private 		Context			context;							// 20/08/2016 ECU added
+    private  		String 			destinationAudioFolder;
+    private   		RandomAccessFile	
     								destinationFile;					// 14/11/2016 ECU added
     private			TextView		elapsedTimeTextView;				// 20/08/2016 ECU added
     private 		boolean 		isRecording 			= false;
-    private static 	String 			lastFileWritten 		= null;		// 19/08/2016 ECU changed from "" to null
-    private static 	int    			numberOfChannels;
+    private  		String 			lastFileWritten 		= null;		// 19/08/2016 ECU changed from "" to null
+    private  		int    			numberOfChannels;
     private 		ProgressBar		progress_bar;
     private 		AudioRecord 	recorder 				= null;
-    private static  int    			recorderChannels;
+    private 		int    			recorderChannels;
+    private 		boolean			recorderStart			= false;	// 11/06/2017 ECU added
     private 		Thread 			recordingThread 		= null;
     private 		String 			specifiedFileToUse;					// 14/11/2016 ECU name changed from fileToUse
     private			MethodDefinition<?>	
@@ -164,6 +166,11 @@ public class AudioRecorder extends DibosonActivity
     			//                to an existing file
     			// -----------------------------------------------------------------
     			appendToExistingFile = extras.getBoolean (StaticData.PARAMETER_APPEND);
+    			// -----------------------------------------------------------------
+    			// 11/06/2017 ECU check if the parameter is supplied which tells
+    			//                this activity to start recoding immediately
+    			// -----------------------------------------------------------------
+    			recorderStart = extras.getBoolean (StaticData.PARAMETER_RECORDER_START);
     			// ----------------------------------------------------------------- 
     			// 30/05/2013 ECU see if a start/stop command has been received
     			// 14/11/2016 ECU do not think that this bit is used any more
@@ -195,6 +202,11 @@ public class AudioRecorder extends DibosonActivity
     		// ---------------------------------------------------------------------
     		if (PublicData.monitorServiceRunning)
     			MonitorService.StopMonitoring ();	 
+    		// ---------------------------------------------------------------------
+    		// 11/06/2017 ECU check if the recorder is to be started immediately
+    		// ---------------------------------------------------------------------
+    		if (recorderStart)
+    			startRecording (true);
     		// ---------------------------------------------------------------------
     	}
     	else
@@ -240,17 +252,10 @@ public class AudioRecorder extends DibosonActivity
  		      	{
  		      		// -------------------------------------------------------------
  		      		// 19/08/2016 ECU swap the next two lines around
+ 		      		// 11/06/2017 ECU add 'true' to trigger code that was here
+ 		      		//                to change displayed options
  		      		// -------------------------------------------------------------
- 		      		startRecording ();
- 		      		enableButtons (true);
- 		      		// -------------------------------------------------------------
- 		      		// 20/08/2016 ECU make the play button invisible
- 		      		// -------------------------------------------------------------
- 		      		buttonPlay.setVisibility (View.INVISIBLE);
- 		      		// -------------------------------------------------------------
- 		      		// 20/08/2016 ECU start up the elapsed time display
- 		      		// -------------------------------------------------------------
- 		      		Utilities.elapsedTimeDisplay (elapsedTimeTextView,1000);
+ 		      		startRecording (true);
  		      		// -------------------------------------------------------------
  		      		break;
  		      	}
@@ -281,11 +286,12 @@ public class AudioRecorder extends DibosonActivity
  	   	}
     };
     // =============================================================================
-    public static void AudioFileNameCancel (String theFileName)
+    public void AudioFileNameCancel (String theFileName)
   	{
     	// -------------------------------------------------------------------------
      	// 14/11/2016 ECU the user has chosen to retain the default name of the
      	//                file so nothing needs to be done
+    	// 22/03/2018 ECU changed from static
      	// -------------------------------------------------------------------------
      	// 14/11/2016 ECU confirm the file name to the user
      	// -------------------------------------------------------------------------
@@ -293,10 +299,11 @@ public class AudioRecorder extends DibosonActivity
      	// -------------------------------------------------------------------------
   	}
  	// =============================================================================
-    public static void AudioFileNameConfirm (String theFileName)
+    public void AudioFileNameConfirm (String theFileName)
   	{
     	// -------------------------------------------------------------------------
      	// 14/11/2016 ECU want to rename the file that was written
+    	// 22/03/2018 ECU changed from static
      	// -------------------------------------------------------------------------
      	File localFile = new File (lastFileWritten);
      	// -------------------------------------------------------------------------
@@ -315,7 +322,7 @@ public class AudioRecorder extends DibosonActivity
      	// -------------------------------------------------------------------------
   	}
     // ============================================================================
-    static void confirmToUser (String theFileName)
+    void confirmToUser (String theFileName)
     {
     	// --------------------------------------------------------------------------
   	   	// 14/11/2016 ECU close down the destination file
@@ -346,10 +353,10 @@ public class AudioRecorder extends DibosonActivity
     }
     /* ============================================================================= */
     public static byte [] GetWaveFileHeader (long totalAudioLength,
-		   								     long totalDataLength, 
-		   								     long sampleRate, 
-		   								     int channels,
-		   								     long byteRate)
+		   							  		 long totalDataLength, 
+		   							  		 long sampleRate, 
+		   							  		 int channels,
+		   							  		 long byteRate)
     {
     	// -------------------------------------------------------------------------
     	//	The header of a WAV (RIFF) file is 44 bytes long and has the following format: 
@@ -481,7 +488,7 @@ public class AudioRecorder extends DibosonActivity
 	   	((Button) findViewById(R.id.btnFormat)).setOnClickListener (btnClick);
     }
     /* ============================================================================= */
-    private static void setWavHeaderAndClose ()
+    private void setWavHeaderAndClose ()
     {
 	   	// -------------------------------------------------------------------------
    		// 14/11/2016 ECU set the header in the destination file
@@ -518,7 +525,7 @@ public class AudioRecorder extends DibosonActivity
    		} 
     }
     /* ============================================================================= */   
-    private void startRecording ()
+    private void startRecording (boolean theDisplayOptions)
     {
     	// -------------------------------------------------------------------------
  	   	// 14/11/2016 ECU set up the destination file
@@ -606,6 +613,24 @@ public class AudioRecorder extends DibosonActivity
  	 	   		destinationFile.write (new byte [WAV_FILE_HEADER_SIZE]);
  	 	   		// -----------------------------------------------------------------
  	   		}
+ 	   		// ---------------------------------------------------------------------
+ 	   		// 11/06/2017 ECU check if the display option is set
+ 	   		// ---------------------------------------------------------------------
+ 	   		if (theDisplayOptions)
+ 	   		{
+ 	   			// -----------------------------------------------------------------
+	      		enableButtons (true);
+	      		// -----------------------------------------------------------------
+	      		// 20/08/2016 ECU make the play button invisible
+	      		// -----------------------------------------------------------------
+	      		buttonPlay.setVisibility (View.INVISIBLE);
+	      		// -----------------------------------------------------------------
+	      		// 20/08/2016 ECU start up the elapsed time display
+	      		// -----------------------------------------------------------------
+	      		Utilities.elapsedTimeDisplay (elapsedTimeTextView,1000);
+	      		// -----------------------------------------------------------------
+ 	   		}
+ 	   		// ---------------------------------------------------------------------
  	   	}
  	  	catch (Exception theException)
  	   	{
@@ -712,13 +737,15 @@ public class AudioRecorder extends DibosonActivity
     	{
     		// ---------------------------------------------------------------------
     		// 20/08/2016 ECU request the name of the file which will receive the data
+    		// 22/03/2018 ECU changed to use ...NonStatic
     		// ---------------------------------------------------------------------
-    		DialogueUtilities.textInput (context,
-    									 context.getString (R.string.audio_file_name_title),
-				   						 context.getString (R.string.audio_file_name_summary),
-				   						 StaticData.HINT + context.getString (R.string.audio_file_name_hint),
-				   						 Utilities.createAMethod (AudioRecorder.class,"AudioFileNameConfirm",""),
-				   						 Utilities.createAMethod (AudioRecorder.class,"AudioFileNameCancel","")); 
+    		DialogueUtilitiesNonStatic.textInput (context,
+    											  this,
+    											  context.getString (R.string.audio_file_name_title),
+    											  context.getString (R.string.audio_file_name_summary),
+				   						 		  StaticData.HINT + context.getString (R.string.audio_file_name_hint),
+				   						 		  Utilities.createAMethod (AudioRecorder.class,"AudioFileNameConfirm",StaticData.BLANK_STRING),
+				   						 		  Utilities.createAMethod (AudioRecorder.class,"AudioFileNameCancel",StaticData.BLANK_STRING)); 
 			// ---------------------------------------------------------------------
     	} 	
     	// -------------------------------------------------------------------------

@@ -127,7 +127,7 @@ public class ActionsPreference extends DialogPreference
 						  context.getString (R.string.action_command_summary),
 						  5,
 						  defaultText,
-						  Utilities.createAMethod (ActionsPreference.class,"DefineActionCommand",""),
+						  Utilities.createAMethod (ActionsPreference.class,"DefineActionCommand",StaticData.BLANK_STRING),
 						  null,
 						  StaticData.NO_RESULT,
 						  context.getString (R.string.press_to_define_command));
@@ -267,16 +267,20 @@ public class ActionsPreference extends DialogPreference
     		// ---------------------------------------------------------------------
     		// 22/02/2016 ECU get the persisted value or if not found then return the
     		//                default value, which is in the argument
+    		// 20/03/2017 ECU changed to use BLANK_STRING
     		// ---------------------------------------------------------------------
-    		input = getPersistedString ((defaultValue == null) ? "" : defaultValue.toString());
+    		input = getPersistedString ((defaultValue == null) ? StaticData.BLANK_STRING 
+    				 										   : defaultValue.toString());
     		// ---------------------------------------------------------------------
     	}
     	else 
     	{
     		// ---------------------------------------------------------------------
     		// 22/02/2016 ECU set the preference to the supplied value
+    		// 20/03/2017 ECU changed to use BLANK_STRING
     		// ---------------------------------------------------------------------
-    		input = (defaultValue == null) ? "" : defaultValue.toString(); 
+    		input = (defaultValue == null) ? StaticData.BLANK_STRING 
+    				                       : defaultValue.toString(); 
     		// ---------------------------------------------------------------------
     		// 22/02/2016 ECU store the value in the shared preferences if required
     		// ---------------------------------------------------------------------

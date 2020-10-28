@@ -41,7 +41,7 @@ public class BarCodeEntry extends DibosonActivity
 			// ---------------------------------------------------------------------
 			// 22/10/2015 ECU the activity has been created anew
 			// ---------------------------------------------------------------------
-			setContentView(R.layout.activity_bar_code_entry);
+			setContentView (R.layout.activity_bar_code_entry);
 			// ---------------------------------------------------------------------
 			// 13/06/2016 ECU save the context for future use
 			// ---------------------------------------------------------------------
@@ -213,6 +213,7 @@ public class BarCodeEntry extends DibosonActivity
 				// 15/09/2013 ECU terminate this activity
 				// -----------------------------------------------------------------
 				finish ();	
+				// -----------------------------------------------------------------
 			}
 			else
 			{
@@ -239,7 +240,7 @@ public class BarCodeEntry extends DibosonActivity
 												  context.getString (R.string.action_command_summary),
 												  3,
 												  actions,
-												  Utilities.createAMethod (BarCodeEntry.class,"ActionsMethod",""),
+												  Utilities.createAMethod (BarCodeEntry.class,"ActionsMethod",StaticData.BLANK_STRING),
 												  null,
 												  StaticData.NO_RESULT,
 												  context.getString (R.string.press_to_define_command));

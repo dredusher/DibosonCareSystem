@@ -454,8 +454,11 @@ public class BluetoothUtilities extends Activity
 		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_TYPE,theAlarmType);
 		// -------------------------------------------------------------------------
 		alarmIntent.putExtra (StaticData.PARAMETER_ALARM_ID,StaticData.ALARM_ID_BLUETOOTH_DISCOVERY);
+		// -------------------------------------------------------------------------
+		// 14/03/2019 ECU added FLAG_UPDATE_CURRENT
+		// -------------------------------------------------------------------------
 		alarmPendingIntent = PendingIntent.getBroadcast (theContext,
-				StaticData.ALARM_ID_BLUETOOTH_DISCOVERY,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK);  
+				StaticData.ALARM_ID_BLUETOOTH_DISCOVERY,alarmIntent,Intent.FLAG_ACTIVITY_NEW_TASK | PendingIntent.FLAG_UPDATE_CURRENT);  
 		// -------------------------------------------------------------------------
 		// 24/12/2015 ECU changed to use the new method
 		// -------------------------------------------------------------------------

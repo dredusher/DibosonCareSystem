@@ -15,7 +15,7 @@ public class ActionCommand
 	public ActionCommand (String theCommand,String [][] theParameters)
 	{
 		// -------------------------------------------------------------------------
-		// 11/12/2015 EC declare structure for initialising the private variables
+		// 11/12/2015 ECU declare structure for initialising the private variables
 		// -------------------------------------------------------------------------
 		command		= theCommand;
 		parameters	= theParameters;
@@ -33,7 +33,9 @@ public class ActionCommand
 		// -------------------------------------------------------------------------
 		// 
 		for (int localCommand = 0; localCommand < localCommands.length; localCommand++)
+		{
 			localCommands [localCommand] = StaticData.ACTION_COMMANDS [localCommand].command;
+		}
 		// -------------------------------------------------------------------------
 		// 11/12/2015 ECU return the generated commands
 		// -------------------------------------------------------------------------
@@ -58,7 +60,7 @@ public class ActionCommand
 			// ---------------------------------------------------------------------
 			// 11/12/2015 ECU initialise the return string
 			// ---------------------------------------------------------------------
-			parameterSets [theSet] = "";
+			parameterSets [theSet] = StaticData.BLANK_STRING;
 			// ---------------------------------------------------------------------
 			for (int theParameter=0; theParameter < parameters [theSet].length; theParameter++)
 			{
@@ -75,6 +77,7 @@ public class ActionCommand
 		// 11/12/2015 ECU return the generated parameter sets
 		// -------------------------------------------------------------------------
 		return parameterSets;
+		// -------------------------------------------------------------------------
 	}
 	// =============================================================================	
 }

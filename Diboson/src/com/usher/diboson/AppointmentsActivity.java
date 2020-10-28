@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.List;
-
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
@@ -49,6 +48,7 @@ public class AppointmentsActivity extends DibosonActivity
 	//                =========   but it is working so leave until later when a rewrite
 	//                            would seem appropriate
 	//            ECU all MODE_ changed to StaticData.APPOINTMENT_MODE_
+	// 20/03/2017 ECU changed from "" to BLANK....
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -103,7 +103,9 @@ public class AppointmentsActivity extends DibosonActivity
 	long			reminderNextGap;			// 08/01/2014 ECU added
 	long			reminderNextTime;			// 08/01/2014 ECU added
 	ScrollView		scrollView;
-	String			selectType = "";			// 07/01/2014 ECU added
+	String			selectType = StaticData.BLANK_STRING;			
+												// 07/01/2014 ECU added
+												// 20/03/2017 ECU changed to use BLANK...
 	// =============================================================================
 	static int				appointmentIndex = 0;	// 07/01/2014 ECU added - record index
 	static RelativeLayout	appointmentLayout;		// 07/01/2014 ECU added
@@ -142,7 +144,7 @@ public class AppointmentsActivity extends DibosonActivity
 			// ---------------------------------------------------------------------
 			Bundle extras = getIntent ().getExtras ();
 	
-			if(extras !=null) 
+			if (extras != null) 
 			{	
 				// -----------------------------------------------------------------
 				// 29/11/2016 ECU check for parameter that indicates if appointments
@@ -184,7 +186,7 @@ public class AppointmentsActivity extends DibosonActivity
 			appointmentEditButton 		= ((Button) findViewById (R.id.appointment_edit_button));
 			appointmentFinishedButton	= ((Button) findViewById (R.id.appointment_finished_button));
 			appointmentNewButton 		= ((Button) findViewById (R.id.appointment_new_button));
-	
+			// ---------------------------------------------------------------------
 			appointmentAcceptButton.setOnClickListener   (buttonListener);
 			appointmentCancelButton.setOnClickListener   (buttonListener);
 			appointmentDeleteButton.setOnClickListener   (buttonListener);
@@ -195,7 +197,7 @@ public class AppointmentsActivity extends DibosonActivity
 			// 24/10/2016 ECU the notes field is scrollable within a scroll view
 			//                so try and get this to work properly
 			// ---------------------------------------------------------------------
-			appointmentNotes.setMovementMethod(new ScrollingMovementMethod ());
+			appointmentNotes.setMovementMethod (new ScrollingMovementMethod ());
 			
 			scrollView = (ScrollView) findViewById (R.id.appointments_scrollview);
 			// ---------------------------------------------------------------------
@@ -205,7 +207,7 @@ public class AppointmentsActivity extends DibosonActivity
 			scrollView.setOnTouchListener (new OnTouchListener()
 			{ 
 				@Override
-				public boolean onTouch(View theView, MotionEvent theEvent) 
+				public boolean onTouch (View theView, MotionEvent theEvent) 
 				{
 					theView.performClick ();
 					appointmentNotes.getParent ().requestDisallowInterceptTouchEvent (false);
@@ -219,7 +221,7 @@ public class AppointmentsActivity extends DibosonActivity
 			appointmentNotes.setOnTouchListener (new OnTouchListener() 
 			{
 				@Override
-				public boolean onTouch(View theView, MotionEvent theEvent) 
+				public boolean onTouch (View theView, MotionEvent theEvent) 
 				{
 					theView.performClick ();
 					appointmentNotes.getParent ().requestDisallowInterceptTouchEvent (true);
@@ -242,24 +244,30 @@ public class AppointmentsActivity extends DibosonActivity
 			// 06/01/2014 ECU declare and set the spinner's adapter
 			// 31/10/2016 ECU changed to use the resource array
 			// ---------------------------------------------------------------------
-			ArrayAdapter<String> adapter = new ArrayAdapter<String> (
-						this, R.layout.spinner_row, R.id.spinner_textview,getResources().getStringArray(R.array.appointment_type_values));
+			ArrayAdapter<String> adapter = new ArrayAdapter<String> (this, 
+																	 R.layout.spinner_row, 
+																	 R.id.spinner_textview,
+																	 getResources().getStringArray (R.array.appointment_type_values));
 					
-			appointmentType.setAdapter(adapter);
+			appointmentType.setAdapter (adapter);
 			// ---------------------------------------------------------------------
 			// 08/01/2014 ECU set for reminder time
 			// 31/10/2016 ECU changed to use the resource array
 			// ---------------------------------------------------------------------
-			ArrayAdapter<String> reminderAdapter = new ArrayAdapter<String> (
-						this, R.layout.spinner_row, R.id.spinner_textview,getResources().getStringArray(R.array.appointment_reminder_start_values));
+			ArrayAdapter<String> reminderAdapter = new ArrayAdapter<String> (this,
+																			 R.layout.spinner_row,
+																			 R.id.spinner_textview,
+																			 getResources().getStringArray (R.array.appointment_reminder_start_values));
 					
 			reminderTime.setAdapter (reminderAdapter);
 			// ---------------------------------------------------------------------
 			// 08/01/2014 ECU set for reminder repeat time
 			// 31/10/2016 ECU changed to use the resource array
 			// ---------------------------------------------------------------------	
-			ArrayAdapter<String> reminderRepeatAdapter = new ArrayAdapter<String> (
-						this, R.layout.spinner_row, R.id.spinner_textview,getResources().getStringArray(R.array.appointment_reminder_gap_values));
+			ArrayAdapter<String> reminderRepeatAdapter = new ArrayAdapter<String> (this,
+																				   R.layout.spinner_row, 
+																				   R.id.spinner_textview,
+																				   getResources().getStringArray(R.array.appointment_reminder_gap_values));
 							
 			reminderRepeatTime.setAdapter(reminderRepeatAdapter);
 			// ---------------------------------------------------------------------
@@ -283,20 +291,21 @@ public class AppointmentsActivity extends DibosonActivity
 				// 14/02/2014 ECU display existing appointments
 				// 21/11/2015 ECU changed to use selector class
 				// -----------------------------------------------------------------
-				selectAppointment ();	
+				selectAppointment ();
+				// -----------------------------------------------------------------
 			}
 			else
 			{
 
-				// ---------------------------------------------------------------------
+				// -----------------------------------------------------------------
 				// 07/01/2014 ECU default to displaying the first appointment in protected mode
 				//            ECU if there are no appointments then start in create mode
-				// ---------------------------------------------------------------------
+				// -----------------------------------------------------------------
 				if (PublicData.appointments.size () == 0)
 				{
-					// -----------------------------------------------------------------
+					// -------------------------------------------------------------
 					// 31/10/2016 ECU Note - want to create an initial appointment
-					// -----------------------------------------------------------------
+					// -------------------------------------------------------------
 					SetAllFields (appointmentLayout,false);
 				
 					mode = StaticData.APPOINTMENT_MODE_CREATE;
@@ -480,7 +489,13 @@ public class AppointmentsActivity extends DibosonActivity
 		// 04/03/2014 ECU make sure that alarms are regenerated
 		// -------------------------------------------------------------------------
 		GenerateAlarms (getBaseContext());
-		// -------------------------------------------------------------------------	
+		// -------------------------------------------------------------------------
+		// 09/01/2018 ECU make sure the progress bar is stopped
+		// 08/02/2018 ECU just check that the progress bar has been defined
+		// -------------------------------------------------------------------------
+		if (handleProgressBar != null)
+			handleProgressBar.finishProgressBarUpdate ();
+		// -------------------------------------------------------------------------
 		super.onDestroy();
 		// -------------------------------------------------------------------------
 	}
@@ -1111,7 +1126,7 @@ public class AppointmentsActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		setTitle (PublicData.dateSimpleFormatHHMMDDMMYY.format(theAppointment.dateTime) + 
 					"     Appointment " + (appointmentIndex + 1) + " of " + PublicData.appointments.size() +
-					(theAppointment.active ? "" : " actioned"));
+					(theAppointment.active ? StaticData.BLANK_STRING : " actioned"));
 		// -------------------------------------------------------------------------
 		// 07/01/2014 ECU try and sort the spinner
 		// 08/01/2014 ECU adjusted the code
@@ -1461,7 +1476,7 @@ public class AppointmentsActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 07/01/2014 ECU just clear the field
 				// -----------------------------------------------------------------
-				appointmentNotes.setText ("");
+				appointmentNotes.setText (StaticData.BLANK_STRING);
 			}	
 		}
 	}
@@ -1741,7 +1756,7 @@ public class AppointmentsActivity extends DibosonActivity
 			handleProgressBar = new HandleProgressBar ((Activity) GetMessage.context,
 					                                   1000,
 					                                   GetMessage.seekBarLayout,
-					                                   GetMessage.messageView);
+					                                   GetMessage.messageView);   					                               
 			// ---------------------------------------------------------------------
 		}
 		else
@@ -1822,8 +1837,8 @@ public class AppointmentsActivity extends DibosonActivity
     	// 05/11/2016 ECU give particular information on this appointment
 		// -------------------------------------------------------------------------
     	Utilities.popToastAndSpeak ("This appointment is " + 
-    				(PublicData.appointments.get (theAppointmentIndex).active ? "" : "in") + "active with " +
-    				(PublicData.appointments.get (theAppointmentIndex).anyNotes() ? "" : "no ") + "notes",true); 
+    				(PublicData.appointments.get (theAppointmentIndex).active ? StaticData.BLANK_STRING : "in") + "active with " +
+    				(PublicData.appointments.get (theAppointmentIndex).anyNotes() ? StaticData.BLANK_STRING : "no ") + "notes",true); 
     	// -------------------------------------------------------------------------
     }
     // =============================================================================

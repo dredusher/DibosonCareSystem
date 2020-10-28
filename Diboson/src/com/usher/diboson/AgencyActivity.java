@@ -25,6 +25,9 @@ public class AgencyActivity extends DibosonActivity
 	// 30/03/2016 ECU use hashCodes to determine whether the data has changed and should
 	//                be written to disk. Am aware that this is not perfect but good 
 	//                first attempt.
+	// 20/03/2017 ECU changed all "" to StaticData.BLANK_STRING
+	// 22/03/2018 ECU changed 'context' from 'static'
+	// 24/07/2019 ECU added a method to handle the 'help button'
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -39,7 +42,7 @@ public class AgencyActivity extends DibosonActivity
 				TextView	agencyNameView;
 				TextView	agencyNotesView;
 				TextView	agencyPhoneNumberView;
-	static		Context		context;
+				Context		context;										// 22/03/2018 ECU removed static
 				int			selectedItem			= StaticData.NO_RESULT; // 28/08/2015 ECU added
 	/* =============================================================================== */
 	public static	int		initialHashCode;								// 30/03/2016 ECU added
@@ -171,7 +174,7 @@ public class AgencyActivity extends DibosonActivity
 				// 30/03/2014 ECU added the index as an argument
 				// ---------------------------------------------------------------------
 				SelectorUtilities.selectorParameter.listItems.add (new ListItem (
-						"",
+						StaticData.BLANK_STRING,
 						PublicData.agencies.get(theIndex).name,
 						PublicData.agencies.get(theIndex).contactName,
 						PublicData.agencies.get(theIndex).phoneNumber,
@@ -266,12 +269,12 @@ public class AgencyActivity extends DibosonActivity
 	{
 		if (thePosition == StaticData.NO_RESULT)
 		{
-			agencyAddressView.setText ("");
-			agencyContactNameView.setText ("");
-			agencyEmailAddressView.setText ("");
-			agencyNameView.setText ("");
-			agencyNotesView.setText ("");;
-			agencyPhoneNumberView.setText ("");
+			agencyAddressView.setText (StaticData.BLANK_STRING);
+			agencyContactNameView.setText (StaticData.BLANK_STRING);
+			agencyEmailAddressView.setText (StaticData.BLANK_STRING);
+			agencyNameView.setText (StaticData.BLANK_STRING);
+			agencyNotesView.setText (StaticData.BLANK_STRING);;
+			agencyPhoneNumberView.setText (StaticData.BLANK_STRING);
 			//----------------------------------------------------------------------
 			// 05/02/2014 ECU update the button legend
 			//----------------------------------------------------------------------
@@ -309,7 +312,7 @@ public class AgencyActivity extends DibosonActivity
 		// 05/02/2014 ECU put last entry to indicate create
 		//--------------------------------------------------------------------------
 		localNames [0] = "Click here to select Agency to Edit";
-		
+		// -------------------------------------------------------------------------
 		return localNames;
 	}
 	// =============================================================================
@@ -317,6 +320,11 @@ public class AgencyActivity extends DibosonActivity
 	{
 		if (PublicData.agencies != null && PublicData.agencies.size() > 0)
 		{
+			// ---------------------------------------------------------------------
+			// 23/07/2019 ECU initialise the 'selector' parameter
+			// ---------------------------------------------------------------------
+			SelectorUtilities.Initialise ();
+			//----------------------------------------------------------------------
 			BuildTheAgenciesList ();
 			SelectorUtilities.selectorParameter.rowLayout 				= R.layout.agency_row;
 			SelectorUtilities.selectorParameter.customMethodDefinition 	= new MethodDefinition<AgencyActivity> (AgencyActivity.class,"AddAgency");
@@ -325,6 +333,11 @@ public class AgencyActivity extends DibosonActivity
 			SelectorUtilities.selectorParameter.swipeMethodDefinition	= new MethodDefinition<AgencyActivity> (AgencyActivity.class,"SwipeAction");
 			SelectorUtilities.selectorParameter.type 					= StaticData.OBJECT_AGENCIES;
 			SelectorUtilities.selectorParameter.sort					= true;		// 31/01/2016 ECU added
+			// ---------------------------------------------------------------------
+			// 24/07/2019 ECU declare the help function
+			// ---------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.helpMethodDefinition 	
+						= new MethodDefinition<AgencyActivity> (AgencyActivity.class,"HelpButtonAction");
 			// ----------------------------------------------------------------------
 			if (theStartActivityFlag)
 			{
@@ -344,6 +357,15 @@ public class AgencyActivity extends DibosonActivity
 		{
 			AddAgency (StaticData.NO_RESULT);
 		}		
+	}
+	// =============================================================================
+	public static void HelpButtonAction (int thePosition)
+	{
+		// -------------------------------------------------------------------------
+		// 24/07/2019 ECU created to process the 'help button'
+		// -------------------------------------------------------------------------
+		Utilities.popToast (PublicData.agencies.get (thePosition).Print(),true);
+		// -------------------------------------------------------------------------
 	}
 	// ============================================================================= 
     public static void SwipeAction (int thePosition)
@@ -376,11 +398,13 @@ public class AgencyActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
 		// 10/06/2015 ECU created to initiate the dialogue
 		// -------------------------------------------------------------------------
-		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-	    		   "Do you really want to delete the entry for '" + PublicData.agencies.get(thePosition).name + "'",
-	    		   (Object) thePosition,
-	    		   Utilities.createAMethod (AgencyActivity.class,"YesMethod",(Object) null),
-	    		   Utilities.createAMethod (AgencyActivity.class,"NoMethod",(Object) null)); 
+		DialogueUtilities.yesNo (Selector.context,
+								 "Item Deletion",
+	    		   				 "Do you really want to delete the entry for '" + 
+	    		   				 PublicData.agencies.get (thePosition).name + "'",
+	    		   				 (Object) thePosition,
+	    		   				 Utilities.createAMethod (AgencyActivity.class,"YesMethod",(Object) null),
+	    		   				 Utilities.createAMethod (AgencyActivity.class,"NoMethod",(Object) null)); 
 		// -------------------------------------------------------------------------  
     }
     /* ============================================================================= */

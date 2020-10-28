@@ -167,7 +167,7 @@ public class BlueToothActivity extends DibosonActivity
 								// 06/11/2013 ECU use the standard toast
 								// -------------------------------------------------	
 								Utilities.popToast ( "bluetooth is enabled\n" +
-													 "name : " + PublicData.bluetoothUtilities.bluetoothAdapter.getName() + "\n" +
+													 "name : " + PublicData.bluetoothUtilities.bluetoothAdapter.getName() + StaticData.NEWLINE +
 													 "address : " + PublicData.bluetoothUtilities.bluetoothAdapter.getAddress());
 								// -------------------------------------------------  
 								// 29/06/2013 ECU set the name of this device - needs 
@@ -311,8 +311,8 @@ public class BlueToothActivity extends DibosonActivity
         	// ---------------------------------------------------------------------
         	// 05/11/2013 ECU used the standard popToast
         	// ---------------------------------------------------------------------
-        	Utilities.popToast (theContext.getString(R.string.server_found) + "\n" +
-        						"name : " + theBluetoothDevice.getName() + "\n" +
+        	Utilities.popToast (theContext.getString(R.string.server_found) + StaticData.NEWLINE +
+        						"name : " + theBluetoothDevice.getName() + StaticData.NEWLINE +
         						"address : " + theBluetoothDevice.getAddress());
         	// ---------------------------------------------------------------------
         	serverDevice = theBluetoothDevice;
@@ -337,8 +337,8 @@ public class BlueToothActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 06/11/2013 ECU use the standard toast
 				// -----------------------------------------------------------------
-				Utilities.popToast (getString(R.string.paired_device_discovered) + "\n" +
-	                       "name : " + device.getName() + "\n" +
+				Utilities.popToast (getString(R.string.paired_device_discovered) + StaticData.NEWLINE +
+	                       "name : " + device.getName() + StaticData.NEWLINE +
 	                       "address : " + device.getAddress());
 				
 				if (device.getName().equalsIgnoreCase(theServer))
@@ -346,8 +346,8 @@ public class BlueToothActivity extends DibosonActivity
 					// -------------------------------------------------------------
 					// 06/11/2013 ECU use the standard toast
 					// -------------------------------------------------------------
-					Utilities.popToast (getString(R.string.server_found) + "\n" +
-		                       			"name : " + device.getName() + "\n" +
+					Utilities.popToast (getString(R.string.server_found) + StaticData.NEWLINE +
+		                       			"name : " + device.getName() + StaticData.NEWLINE +
 		                       			"address : " + device.getAddress());
 					
 			        serverDevice = device;
@@ -391,7 +391,7 @@ public class BlueToothActivity extends DibosonActivity
 	     } 
 		 catch (Exception theException) 
 	     { 
-			 Utilities.popToast (theContext.getString(R.string.connect_exception) + "\n" + theException);	    	 
+			 Utilities.popToast (theContext.getString(R.string.connect_exception) + StaticData.NEWLINE + theException);	    	 
 	     } 
 	}
 	/* ============================================================================= */
@@ -405,7 +405,7 @@ public class BlueToothActivity extends DibosonActivity
 		}
 		catch (IOException theException) 
 		{ 
-			 Utilities.popToast (theContext.getString(R.string.writeDataToSocket) + "\n" + theException);	   
+			 Utilities.popToast (theContext.getString(R.string.writeDataToSocket) + StaticData.NEWLINE + theException);	   
 		}
 	}
 	/* ======================================================================= */

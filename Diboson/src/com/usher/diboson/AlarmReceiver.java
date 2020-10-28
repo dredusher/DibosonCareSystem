@@ -21,9 +21,12 @@ public class AlarmReceiver extends BroadcastReceiver
 		// -------------------------------------------------------------------------
 		AlarmData alarmData = new AlarmData ();
 		// -------------------------------------------------------------------------
-		// 18/06/2013 ECU get the information that should have been passed in the intent */
+		// 18/06/2013 ECU get the information that should have been passed in the intent
+		// 07/10/2017 ECU because of an issue that was highlighted in Nougat (7.0)
+		//                using 'intent.getExtras()' was leading to a 'null' value
+		//                when retrieving 'getSerializable'
 		// -------------------------------------------------------------------------
-	    Bundle extras = intent.getExtras();
+	    Bundle extras = intent.getBundleExtra (StaticData.PARAMETER_ALARM_BUNDLE);
 	    // -------------------------------------------------------------------------
 	   	if (extras != null)
 	    {

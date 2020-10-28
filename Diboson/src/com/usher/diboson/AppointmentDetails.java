@@ -22,6 +22,7 @@ public class AppointmentDetails implements Serializable
 	// 25/10/2016 ECU changed recorded notes to be relative to the project folder
 	//                rather than being an absolute path
 	// 26/10/2016 ECU changed recordedNotes from String to RecordedNote
+	// 06/06/2017 ECU changed "\n" to StaticData.NEWLINE
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -245,7 +246,7 @@ public class AppointmentDetails implements Serializable
 			// ---------------------------------------------------------------------
 			// 25/10/2016 ECU add in the project folder because the record notes is
 			//                a path relative to it
-									   // 26/10/2016 ECU changed to use .fileName
+			// 26/10/2016 ECU changed to use .fileName
 			// ---------------------------------------------------------------------
 			for (int index = 0; index < localLength; index++)
 			{
@@ -264,12 +265,12 @@ public class AppointmentDetails implements Serializable
 			localActionString += StaticData.ACTION_DESTINATION_SPEAK + 
 					   			 StaticData.ACTION_DELIMITER + 
 					   			 "All of the stored notes have been spoken" + 
-					   			 StaticData.ACTION_SEPARATOR;;
+					   			 StaticData.ACTION_SEPARATOR;
 			// ---------------------------------------------------------------------
 			// 23/10/2016 ECU having generated the string then process it
 			// ---------------------------------------------------------------------
 			Utilities.actionHandler (MainActivity.activity,localActionString);
-			// ---------------------------------------------------------------------
+	 		// ---------------------------------------------------------------------
 		}
 	}
 	// =============================================================================
@@ -284,21 +285,21 @@ public class AppointmentDetails implements Serializable
 		// 31/10/2016 ECU added the context and used resources to provide array
 		//                information
 		// -------------------------------------------------------------------------
-		return 	"Type : " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + "\n" +
-				"Name : " + name + "\n" +
-				"Address : " + address + "\n" +
-				"Contact : " + contactName + "\n" +
-				"Phone : " + phoneNumber + "\n" +
-				"Notes : " + notes + "\n" +
+		return 	"Type : " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + StaticData.NEWLINE +
+				"Name : " + name + StaticData.NEWLINE +
+				"Address : " + address + StaticData.NEWLINE +
+				"Contact : " + contactName + StaticData.NEWLINE +
+				"Phone : " + phoneNumber + StaticData.NEWLINE +
+				"Notes : " + notes + StaticData.NEWLINE +
 				// -------------------------------------------------------------------------
 				// 04/11/2016 ECU check if there are audio notes to add
 				// -------------------------------------------------------------------------
 				returnRecordedNotesSummary ("Audio Notes : ") +
 				// -------------------------------------------------------------------------
-				"Active : " + active + "\n" +
-				"Time & Date : " +  PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + "\n" +
-				"Reminder Trigger : " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + "\n" +
-				"Reminder Repeat : " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + "\n" +
+				"Active : " + active + StaticData.NEWLINE +
+				"Time & Date : " +  PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + StaticData.NEWLINE +
+				"Reminder Trigger : " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + StaticData.NEWLINE +
+				"Reminder Repeat : " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + StaticData.NEWLINE +
 				"Reminder Preferred Time : " +  Utilities.AdjustedTime(reminderTimeHour, reminderTimeMinute);
 	}
 	/* ----------------------------------------------------------------------------- */
@@ -314,26 +315,26 @@ public class AppointmentDetails implements Serializable
 		//                information
 		// -------------------------------------------------------------------------
 		String theString =
-				"Time and Date    : " + PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + "\n" +
-				"Appointment Type : " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + "\n" +
-				"Name             : " + name + "\n" +
-				"Address          : " + address.replace ("\n","\n                   ") + "\n" +                    
-				"Contact          : " + contactName + "\n" +
-				"Phone            : " + phoneNumber + "\n" +
-				"Notes            : " + notes.replace ("\n","\n                   ") + "\n" +
+				"Time and Date    : " + PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + StaticData.NEWLINE +
+				"Appointment Type : " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + StaticData.NEWLINE +
+				"Name             : " + name + StaticData.NEWLINE +
+				"Address          : " + address.replace (StaticData.NEWLINE,"\n                   ") + StaticData.NEWLINE +                    
+				"Contact          : " + contactName + StaticData.NEWLINE +
+				"Phone            : " + phoneNumber + StaticData.NEWLINE +
+				"Notes            : " + notes.replace (StaticData.NEWLINE,"\n                   ") + StaticData.NEWLINE +
 		// -------------------------------------------------------------------------
 		// 04/11/2016 ECU check if there are audio notes to add
 		// -------------------------------------------------------------------------
 				returnRecordedNotesSummary ("Audio Notes      : ") +
 		// -------------------------------------------------------------------------
-				"Reminder Trigger : " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + "\n";
+				"Reminder Trigger : " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + StaticData.NEWLINE;
 		// -------------------------------------------------------------------------
 		// 06/03/2014 ECU if there is a reminder configured then show the details
 		// 09/03/2014 ECU changed with the redefinition of reminderTime
 		// -------------------------------------------------------------------------
 		if (reminderTrigger != StaticData.APPOINTMENT_NO_REMINDER)
 		{
-			theString += "Reminder Repeat  : " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + "\n" +
+			theString += "Reminder Repeat  : " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + StaticData.NEWLINE +
 						 "Reminder Time    : " +  Utilities.AdjustedTime(reminderTimeHour, reminderTimeMinute);
 		}
 		// -------------------------------------------------------------------------
@@ -352,34 +353,35 @@ public class AppointmentDetails implements Serializable
 		//                information
 		// -------------------------------------------------------------------------
 		String theString =
-				"<b>Time and Date</b>\n     " + PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + "\n" +
-				"<b>Appointment Type</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + "\n" +
-				"<b>Name</b>\n     " + name + "\n" +
-				"<b>Address</b>\n     " + address.replace ("\n","\n     ") + "\n" +                    
-				"<b>Contact</b>\n     " + contactName + "\n" +
-				"<b>Phone</b>\n     " + phoneNumber + "\n" +
-				"<b>Notes</b>\n     " + notes.replace ("\n","\n     ") + "\n" +
+				"<b>Time and Date</b>\n     " + PublicData.dateSimpleFormatHHMMDDMMYY.format(dateTime) + StaticData.NEWLINE +
+				"<b>Appointment Type</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_type_values) [type] + StaticData.NEWLINE +
+				"<b>Name</b>\n     " + name + StaticData.NEWLINE +
+				"<b>Address</b>\n     " + address.replace (StaticData.NEWLINE,"\n     ") + StaticData.NEWLINE +                    
+				"<b>Contact</b>\n     " + contactName + StaticData.NEWLINE +
+				"<b>Phone</b>\n     " + phoneNumber + StaticData.NEWLINE +
+				"<b>Notes</b>\n     " + notes.replace (StaticData.NEWLINE,"\n     ") + StaticData.NEWLINE +
 				// -------------------------------------------------------------------------
 				// 04/11/2016 ECU check if there are audio notes to add
 				// -------------------------------------------------------------------------
 				"<b>Audio Notes</b>\n" + returnRecordedNotesSummary ("     ") + 
 				// -------------------------------------------------------------------------
-				"<b>Reminder Trigger</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + "\n";
+				"<b>Reminder Trigger</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_reminder_start_values) [reminderTrigger] + StaticData.NEWLINE;
 		// -------------------------------------------------------------------------
 		// 06/03/2014 ECU if there is a reminder configured then show the details
 		// 09/03/2014 ECU changed with the redefinition of reminderTime
 		// -------------------------------------------------------------------------
 		if (reminderTrigger != StaticData.APPOINTMENT_NO_REMINDER)
 		{
-			theString += "<b>Reminder Repeat</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + "\n" +
+			theString += "<b>Reminder Repeat</b>\n     " + theContext.getResources().getStringArray(R.array.appointment_reminder_gap_values) [reminderRepeat] + StaticData.NEWLINE +
 						 "<b>Reminder Time</b>\n     " +  Utilities.AdjustedTime(reminderTimeHour, reminderTimeMinute);
 		}
 		// -------------------------------------------------------------------------
 		// 28/03/2016 ECU include the 'body' envelope and do any necessary
 		//                replacements
+		// 30/07/2017 ECU changed to use HTML_...
 		// -------------------------------------------------------------------------
 		return "<body>" + 
-			   theString.replaceAll ("\n","<br>").replaceAll (" ", "&nbsp;") +
+			   theString.replaceAll (StaticData.NEWLINE,StaticData.HTML_BREAK).replaceAll (" ", "&nbsp;") +
 			   "</body>";
 		// -------------------------------------------------------------------------
 	}
@@ -430,10 +432,11 @@ public class AppointmentDetails implements Serializable
 		// -------------------------------------------------------------------------
 		// 04/11/2016 ECU create a printable summary of the recorded notes
 		//                or 'empty string' if nothing exists
+		// 20/03/2017 ECU changed to use BLANK....
 		// -------------------------------------------------------------------------
 		if (recordedNotes != null && (recordedNotes.size() > 0))
 		{
-			String localString = "";
+			String localString = StaticData.BLANK_STRING;
 			String localIndent = new String (new char [theTitle.length()]).replace('\0',' ');
 			// ---------------------------------------------------------------------
 			// 04/11/2016 ECU loop for all stored notes
@@ -461,7 +464,7 @@ public class AppointmentDetails implements Serializable
 			// ---------------------------------------------------------------------
 			// 04/11/2016 ECU no notes so indicate that fact
 			// ---------------------------------------------------------------------
-			return "";
+			return StaticData.BLANK_STRING;
 			// ---------------------------------------------------------------------
 		}
 	}

@@ -2,7 +2,6 @@ package com.usher.diboson;
 
 import java.io.Serializable;
 import java.util.Arrays;
-
 import android.content.Context;
 import android.widget.Toast;
 
@@ -21,6 +20,9 @@ public class Carer implements Serializable
 	//                objects - if the list exists.
 	// 27/11/2016 ECU added 'visitActive' which is active for the whole duration of
 	//                the visit from 'arrival message'
+	// 20/03/2017 ECU changed from "" to BLANK.....
+	// 06/06/2017 ECU changed "\n" to StaticData.NEWLINE
+	// 08/09/2017 ECU added the 'hashCode' method to take account of the delete flag
 	/* ============================================================================= */
 	private static final long serialVersionUID = 1L;
 	/* ============================================================================= */
@@ -221,21 +223,32 @@ public class Carer implements Serializable
 		// 31/01/2016 ECU and invalidate all other relevant fields
 		// -------------------------------------------------------------------------
 		agencyIndex	= StaticData.NO_RESULT;
-		bluetooth	= "";
-		name 		= "";
-		phone		= "";
+		bluetooth	= StaticData.BLANK_STRING;
+		name 		= StaticData.BLANK_STRING;
+		phone		= StaticData.BLANK_STRING;
 		// -------------------------------------------------------------------------
 	}
-	/* ============================================================================= */
+	// =============================================================================
+	@Override
+	public int hashCode ()
+	{
+		// -------------------------------------------------------------------------
+		// 08/09/2017 ECU override the default method so that the hashcode can
+		//                accommodate the 'delete' flag
+		// -------------------------------------------------------------------------
+		return super.hashCode () + (deleted ? 1 : 0);
+		// -------------------------------------------------------------------------
+	}
+	// =============================================================================
 	public String Print ()
 	{
 		// -------------------------------------------------------------------------
 		// 14/01/2014 ECU print the agency name
 		// -------------------------------------------------------------------------
-		return "Name      : " + name + "\n" +
-			   "Phone     : " + phone + "\n" +
-			   "Bluetooth : " + bluetooth + "\n" +
-			   "Agency    : " + PublicData.agencies.get(agencyIndex).name + "\n" +
+		return "Name      : " + name + StaticData.NEWLINE +
+			   "Phone     : " + phone + StaticData.NEWLINE +
+			   "Bluetooth : " + bluetooth + StaticData.NEWLINE +
+			   "Agency    : " + PublicData.agencies.get(agencyIndex).name + StaticData.NEWLINE +
 			   "Photo     : " + photo;
 	}
 	// -----------------------------------------------------------------------------
@@ -245,14 +258,14 @@ public class Carer implements Serializable
 		// 14/01/2014 ECU print the agency name
 		// 31/01/2016 ECU added the 'deleted' flag
 		// -------------------------------------------------------------------------
-		return "Name      : " + name + "\n" +
-			   "Phone     : " + phone + "\n" +
-			   "Bluetooth : " + bluetooth + "\n" +
-			   "Agency    : " + PublicData.agencies.get(agencyIndex).name + "\n" +
-			   "Photo     : " + photo + "\n" +
-			   "Start of Visit : " + PublicData.dateFormatter.format(startOfVisit) + "\n" +
-			   "End   of Visit : " + PublicData.dateFormatter.format(endOfVisit) + "\n" +
-			   "Deleted : " + deleted + "\n";
+		return "Name      : " + name + StaticData.NEWLINE +
+			   "Phone     : " + phone + StaticData.NEWLINE +
+			   "Bluetooth : " + bluetooth + StaticData.NEWLINE +
+			   "Agency    : " + PublicData.agencies.get(agencyIndex).name + StaticData.NEWLINE +
+			   "Photo     : " + photo + StaticData.NEWLINE +
+			   "Start of Visit : " + PublicData.dateFormatter.format(startOfVisit) + StaticData.NEWLINE +
+			   "End   of Visit : " + PublicData.dateFormatter.format(endOfVisit) + StaticData.NEWLINE +
+			   "Deleted : " + deleted + StaticData.NEWLINE;
 	}
 	// =============================================================================
 	public static int Size ()
@@ -323,7 +336,7 @@ public class Carer implements Serializable
 	public String TasksPerformed (String theTitle)
 	{
 		boolean localTitle = true;
-		String  localString = "";
+		String  localString = StaticData.BLANK_STRING;
 		String  localIndent = new String(new char[theTitle.length()]).replace('\0', ' ');
 
 		// -------------------------------------------------------------------------

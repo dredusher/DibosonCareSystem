@@ -89,6 +89,7 @@ public void onCreate(Bundle savedInstanceState)
 				// 06/08/2013 ECU indicate that being remotely listed to
 				// -----------------------------------------------------------------
 				setTitle ("Being Listened to by " + PublicData.streamingDestination);	
+				// -----------------------------------------------------------------
 			}
 		}
 		// -------------------------------------------------------------------------
@@ -133,10 +134,14 @@ public void onCreate(Bundle savedInstanceState)
 			if (PublicData.streamingDestination == null)
 			{
 				// -----------------------------------------------------------------
+				// 06/07/2018 ECU get the list of devices that could be used
+				// -----------------------------------------------------------------
+				devices = Utilities.deviceListAsArray (false);
+				// -----------------------------------------------------------------
 				// 06/05/2016 ECU this is a manual start of the activity
 				// -----------------------------------------------------------------
 				DialogueUtilities.singleChoice (this, "Select the device which will receive the streamed audio",
-												(devices = Utilities.deviceListAsArray(false)),0, 
+												devices,0, 
 												Utilities.createAMethod (AudioStreamActivity.class,"Confirm",0),
 												Utilities.createAMethod (AudioStreamActivity.class,"Cancel",0));
 				// -----------------------------------------------------------------	
@@ -262,9 +267,10 @@ static String startTransmissionText ()
 {
 	// -----------------------------------------------------------------------------
 	// 06/05/2016 ECU created to set the legend for the 'start transmission' button
+	// 20/03/2017 ECU changed to use BLANK....
 	// -----------------------------------------------------------------------------
 	return activity.getString (R.string.start_transmission) + 
-								((PublicData.streamingDestination == null ) ? "" 
+								((PublicData.streamingDestination == null ) ? StaticData.BLANK_STRING 
 																			: " to '" + 
 																				Utilities.GetDeviceName(PublicData.streamingDestination) + "'");
 	// -----------------------------------------------------------------------------

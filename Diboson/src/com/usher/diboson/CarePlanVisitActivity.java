@@ -34,6 +34,7 @@ public class CarePlanVisitActivity extends DibosonActivity
 	//                correspond to that stored in the carer object. However the agency
 	//                can be changed if, for example, a carer is working for more than
 	//                one agency or is acting privately. Only do this in create mode.
+	// 20/03/2017 ECU changed "" to StaticData.BLANK_STRING
 	// -------------------------------------------------------------------------------
 	// Testing
 	// =======
@@ -295,7 +296,7 @@ public class CarePlanVisitActivity extends DibosonActivity
 					String localDuration = durationView.getText().toString();
 					CarePlanVisit localVisit 
 						= new CarePlanVisit (Utilities.ConvertTime (startTimeView.getCurrentHour(),startTimeView.getCurrentMinute()),
-											(localDuration.equals ("") ? 0 : Integer.parseInt (localDuration)),
+											(localDuration.equals (StaticData.BLANK_STRING) ? 0 : Integer.parseInt (localDuration)),
 											 agencySpinner.getSelectedItemPosition (),
 											 carerSpinner.getSelectedItemPosition (),
 											 tasksSpinner.getSelection ());
@@ -404,7 +405,7 @@ public class CarePlanVisitActivity extends DibosonActivity
 						  							  getString (R.string.enter_tasks_to_do_message),
 						  							  30,
 						  							  TasksToDoAsString (),
-						  							  Utilities.createAMethod (CarePlanVisitActivity.class,"TasksToDoMethod",""),
+						  							  Utilities.createAMethod (CarePlanVisitActivity.class,"TasksToDoMethod",StaticData.BLANK_STRING),
 						  							  null);
 				return true;
 				// -----------------------------------------------------------------
@@ -572,7 +573,7 @@ public class CarePlanVisitActivity extends DibosonActivity
 		// 06/12/2016 ECU created to return a string generated from the tasks to do
 		//                which is stored as a string array
 		// -------------------------------------------------------------------------
-		String localString = "";
+		String localString = StaticData.BLANK_STRING;
 		for (int index = 0; index < PublicData.tasksToDo.length; index++)
 		{
 			localString += PublicData.tasksToDoRaw [index] + StaticData.NEWLINE;
@@ -595,7 +596,7 @@ public class CarePlanVisitActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		// 07/12/2016 ECU changed from using a StringBuilder
 		// -------------------------------------------------------------------------
-		String localString = "";  
+		String localString = StaticData.BLANK_STRING;  
 		for (int index = 0; index < inputLines.length; index++)
 		{
 			// ---------------------------------------------------------------------
@@ -621,6 +622,11 @@ public class CarePlanVisitActivity extends DibosonActivity
 		// 06/12/2016 ECU now regenerate the 'task to do' array that is used
 		// -------------------------------------------------------------------------
 		PublicData.tasksToDo = TasksToDo (PublicData.patientDetails.preferredName,PublicData.tasksToDoRaw);
+		// -------------------------------------------------------------------------
+		// 25/03/2017 ECU make sure all existing visits are modified to the new
+		//                taks that have been entered/deleted
+		// -------------------------------------------------------------------------
+		CarePlanVisit.tasksAdjustmentAll ();
 		// -------------------------------------------------------------------------
 		// 07/12/2016 ECU remind the user to check existing visits
 		// -------------------------------------------------------------------------

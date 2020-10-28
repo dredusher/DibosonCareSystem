@@ -198,8 +198,18 @@ public class BroadcastServerThread implements Runnable
 			multicastLock.release();	
 			// ---------------------------------------------------------------------
 			// 24/03/2015 ECU log the fact that exception has occurred
+			// 28/04/2019 ECU when the thread is told to 'stop running' then a
+			//                'socket closed' exception will occur - this is not really
+			//                an error
 			// ---------------------------------------------------------------------
-			Utilities.LogToProjectFile (TAG,"received broadcast packet exception " + theException);
+			if (keepRunning)
+			{
+				// -----------------------------------------------------------------
+				// 28/04/2019 ECU this is a genuine exception which needs to be reported
+				// -----------------------------------------------------------------
+				Utilities.LogToProjectFile (TAG,"received broadcast packet exception " + theException);
+				// -----------------------------------------------------------------
+			}
 			// ---------------------------------------------------------------------
 	    }
 	}
@@ -224,8 +234,9 @@ public class BroadcastServerThread implements Runnable
 					// -------------------------------------------------------------
 					// 09/04/2016 ECU Note - wait a short period before checking 
 					//                       again for a message to send
+					// 29/04/2019 ECU changed from 200 to 1000
 					// -------------------------------------------------------------
-					sleep (200);
+					sleep (1000);
 					// -------------------------------------------------------------
 				}
 				else

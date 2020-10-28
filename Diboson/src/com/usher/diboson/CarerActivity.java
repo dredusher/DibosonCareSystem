@@ -3,7 +3,6 @@ package com.usher.diboson;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -46,6 +45,8 @@ public class CarerActivity extends DibosonActivity
 	// 30/03/2016 ECU use hashCodes to determine whether the data has changed and should
 	//                be written to disk. Am aware that this is not perfect but good 
 	//                first attempt.
+	// 20/03/2017 ECU changed "" to BLANK.....
+	// 24/03/2017 ECU in SelectAction indicate the state of the visit
 	// -----------------------------------------------------------------------------
 	// =============================================================================
 	// =============================================================================
@@ -137,12 +138,12 @@ public class CarerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 09/01/2014 ECU try and picked up text changes in name field
 				// -----------------------------------------------------------------
-				carerAgencySpinner 	= (Spinner) findViewById(R.id.input_carer_agency);
+				carerAgencySpinner 	= (Spinner) findViewById (R.id.input_carer_agency);
 				// -----------------------------------------------------------------
 				// 14/01/2014 ECU declare and set the spinner's adapter
 				// -----------------------------------------------------------------
-				ArrayAdapter<String> carerAgencyAdapter = new ArrayAdapter<String>(
-						this, R.layout.spinner_row, R.id.spinner_textview,CarePlanVisitActivity.GetAgencyNames());
+				ArrayAdapter<String> carerAgencyAdapter = new ArrayAdapter<String>
+					(this, R.layout.spinner_row, R.id.spinner_textview,CarePlanVisitActivity.GetAgencyNames());
 							
 				carerAgencySpinner.setAdapter(carerAgencyAdapter);
 				// -----------------------------------------------------------------
@@ -162,9 +163,23 @@ public class CarerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 02/01/2016 ECU called to manually register a carer's visit
 				// -----------------------------------------------------------------
-				 HandleCarerVisit (this);
+				// 09/09/2017 ECU check if there are any registered carers
+				// -----------------------------------------------------------------
+				if (Carer.Size () > 0)
+				{
+					HandleCarerVisit (this);
+				}
+				else
+				{
+					// -------------------------------------------------------------
+					// 09/09/2017 ECU tell the user that there are no carers
+					// -------------------------------------------------------------
+					Utilities.popToastAndSpeak (getString (R.string.carers_none_registered),true);
+					// -------------------------------------------------------------
+				}
 				// -----------------------------------------------------------------
 				finish ();
+				// -----------------------------------------------------------------
 			}
 		}
 		else
@@ -234,6 +249,7 @@ public class CarerActivity extends DibosonActivity
 			    	CreateACarerEntry ();
 			    	// -------------------------------------------------------------		
 					break;
+					// -------------------------------------------------------------
 				}
 				// -----------------------------------------------------------------
 			}
@@ -291,11 +307,12 @@ public class CarerActivity extends DibosonActivity
 				// -----------------------------------------------------------------
 				// 30/03/2014 ECU added the index as an argument
 				// 31/01/2016 ECU do not add carers which have been deleted
+				// 23/06/2017 ECU changed to get the carer photo using Absolute....
 				// -----------------------------------------------------------------
 				if (!localCarer.deleted)
 				{
 					ListItem localListItem = new ListItem (
-															PublicData.projectFolder + localCarer.photo,
+															Utilities.AbsoluteFileName (localCarer.photo),
 															localCarer.name,
 															localCarer.phone,
 															localCarer.bluetooth,
@@ -326,8 +343,10 @@ public class CarerActivity extends DibosonActivity
 			}
 		}
 		// -------------------------------------------------------------------------
-		Collections.sort (SelectorUtilities.selectorParameter.listItems);	
+		Collections.sort (SelectorUtilities.selectorParameter.listItems);
+		// -------------------------------------------------------------------------
 		return SelectorUtilities.selectorParameter.listItems;
+		// -------------------------------------------------------------------------
 	}	
 	// =============================================================================
 	public static void CarerDetection (Context theContext,List<BluetoothDevice> theDiscoveredDevices)
@@ -410,9 +429,10 @@ public class CarerActivity extends DibosonActivity
 							// -----------------------------------------------------
 							// 10/01/2014 ECU this is a new visit
 							// -----------------------------------------------------
-							// 30/11/2016 ECU check if the visit is scheduked or not
+							// 30/11/2016 ECU check if the visit is scheduled or not
+							// 03/02/2018 ECU added the context as an argument
 							// -----------------------------------------------------
-							checkIfVisitScheduled (theIndex);
+							checkIfVisitScheduled (theContext,theIndex);
 							// -----------------------------------------------------
 							// 10/01/2014 ECU set this time as start of the visit
 							// 02/01/2016 ECU changed to use the new method
@@ -591,7 +611,7 @@ public class CarerActivity extends DibosonActivity
 			// 10/01/2014 ECU indicate that report will be needed
 			// 11/01/2014 ECU changed - indicate a visit record to be added
 			// ---------------------------------------------------------------------
-			// 11/01/2014 ECU have a complete visit so indicate 
+			// 11/01/2014 ECU have an incomplete visit so indicate 
 			// ---------------------------------------------------------------------
 			PublicData.carers.get (theCarerIndex).visitAdded = false;
 			// ---------------------------------------------------------------------
@@ -646,17 +666,16 @@ public class CarerActivity extends DibosonActivity
 			}
 			// ---------------------------------------------------------------------
 			// 31/01/2016 ECU changed from the carer's name to the index
+			// 15/07/2017 ECU changed to create a local record rather adding to a 
+			//                list
+			// 16/07/2017 ECU added the manual flag as an argument
+			//            ECU added the context as an argument
 			// ---------------------------------------------------------------------
-			PublicData.visits.add (new Visit (theCarerIndex,
-					 						  PublicData.carers.get(theCarerIndex).startOfVisit, 
-					 						  PublicData.carers.get(theCarerIndex).endOfVisit));	
-			// ---------------------------------------------------------------------
-			// 11/01/2014 ECU write visits data to disk
-			// 03/04/2014 ECU changed to use 'AsyncUtilities' rather than 'Utilities'
-			// ---------------------------------------------------------------------	
-			// 27/08/2015 ECU change the file that is written to
-			// ---------------------------------------------------------------------
-			AsyncUtilities.writeObjectToDisk (PublicData.projectFolder + theContext.getString (R.string.visits_file),PublicData.visits);
+			Visit localVisit = new Visit (theContext,
+										  theCarerIndex,
+					 					  PublicData.carers.get(theCarerIndex).startOfVisit, 
+					 					  PublicData.carers.get(theCarerIndex).endOfVisit,
+					 					  theManualFlag);	
 			// ---------------------------------------------------------------------
 			// 27/08/2015 ECU write the carer data to disk
 			//            ECU added context as an argument
@@ -674,10 +693,13 @@ public class CarerActivity extends DibosonActivity
 			//                visit was recorded, i.e. manually or via bluetooth
 			// 31/03/2016 ECU changed to use resources
 			// 28/11/2016 ECU added the carer's name in the email subject
+			// 15/07/2017 ECU changed to use 'localVisit' rather than the last
+			//                entry in the 'visits list' which has been deleted
+			// 16/07/2017 ECU added the context as an argument to Print
 			// ---------------------------------------------------------------------
 			PublicData.emailDetails.TimedEmail (theContext, 
 					                            "Visit Confirmation - " +  PublicData.carers.get(theCarerIndex).name,
-				                                PublicData.visits.get (PublicData.visits.size() - 1).Print (true),
+				                                localVisit.Print (theContext,true),
 				(theManualFlag ? theContext.getString (R.string.visit_manual)
 				               : String.format (theContext.getString (R.string.visit_confirmation),PublicData.storedData.visit_end_minutes)));
 			// ---------------------------------------------------------------------
@@ -694,12 +716,13 @@ public class CarerActivity extends DibosonActivity
 	{
 	}
 	// =============================================================================
-	public static void checkIfVisitScheduled (int theCarerIndex)
+	public static void checkIfVisitScheduled (Context theContext,int theCarerIndex)
 	{
 		// -------------------------------------------------------------------------
 		// 30/11/2016 ECU created to check if there is a scheduled visit for the
 		//                specified carer.
 		//            ECU NOTE - this code used to be in the VisitStartMethod
+		// 03/02/2018 ECU added the context as an arguemnt
 		// -------------------------------------------------------------------------
 		CarePlanVisit localVisit = CarePlan.getPlan ();
    		if (localVisit != null)
@@ -712,10 +735,12 @@ public class CarerActivity extends DibosonActivity
    			{
    				// -----------------------------------------------------------------
    				// 02/10/2016 ECU it appears that this is not the scheduled carer
+   				// 18/07/2019 ECU indicate the length of the visit
    				// -----------------------------------------------------------------
-   				MessageHandler.popToastAndSpeakwithPhoto (String.format (Selector.context.getString (R.string.different_carer), 
+   				MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.different_carer_format), 
    															PublicData.carers.get (theCarerIndex).name,
-   															PublicData.carers.get (localVisit.carerIndex).name),
+   																PublicData.carers.get (localVisit.carerIndex).name,
+   																	localVisit.duration),
    														    Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
    				// -----------------------------------------------------------------
    			}
@@ -726,16 +751,18 @@ public class CarerActivity extends DibosonActivity
    				//                scheduled carer
    				// -----------------------------------------------------------------
    				// 05/10/2016 ECU confirm the visit as scheduled
+   				// 17/07/2019 ECU changed to use format and indicate the length of the visit
    				// -----------------------------------------------------------------
-   				MessageHandler.popToastAndSpeakwithPhoto (PublicData.carers.get(theCarerIndex).name + "\n" + 
-														  Selector.context.getString (R.string.scheduled_visit),
-														  Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
+   				MessageHandler.popToastAndSpeakwithPhoto (String.format (theContext.getString (R.string.scheduled_visit_format), 
+   															PublicData.carers.get(theCarerIndex).name,
+   																localVisit.duration),
+														    Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
    				// ------------------------------------------------------------------
    			}
    			// ----------------------------------------------------------------------
 			// 05/10/2016 ECU set the tasks that have been set for this visit
    			// 30/11/2016 ECU whether it is the write or wrong carer then the tasks
-   			//                associated with this vist need to be copied across
+   			//                associated with this visit need to be copied across
 			// ----------------------------------------------------------------------
 			PublicData.carers.get(theCarerIndex).Tasks (localVisit.tasks);
 			// ----------------------------------------------------------------------
@@ -745,9 +772,9 @@ public class CarerActivity extends DibosonActivity
    			// ---------------------------------------------------------------------
    			// 02/10/2016 ECU this appears to be an unscheduled visit
    			// ---------------------------------------------------------------------
-   			MessageHandler.popToastAndSpeakwithPhoto (PublicData.carers.get(theCarerIndex).name + "\n" + 
-   													  Selector.context.getString (R.string.unscheduled_visit),
-   													  Utilities.AbsoluteFileName (PublicData.carers.get(theCarerIndex).photo));
+   			MessageHandler.popToastAndSpeakwithPhoto (PublicData.carers.get(theCarerIndex).name + StaticData.NEWLINE + 
+   													  theContext.getString (R.string.unscheduled_visit),
+   													  Utilities.AbsoluteFileName (PublicData.carers.get (theCarerIndex).photo));
    			// ---------------------------------------------------------------------
    			// 05/10/2016 ECU indicate that no tasks have been set for this visit
    			// ---------------------------------------------------------------------
@@ -765,7 +792,7 @@ public class CarerActivity extends DibosonActivity
 		// -------------------------------------------------------------------------
 		if (theOptions != null)
 		{
-			String localString = "";	
+			String localString = StaticData.BLANK_STRING;	
 			// ---------------------------------------------------------------------
 			// 06/12/2016 ECU changed to use PublicData.tas... which is set during
 			//                app initialisation and sets the patient's preferred 
@@ -776,7 +803,11 @@ public class CarerActivity extends DibosonActivity
 				if (theOptions [theIndex])
 					localString += PublicData.tasksToDo [theIndex] + " ... performed\n";
 			}
-			Utilities.popToast (localString);
+			// ---------------------------------------------------------------------
+			// 17/07/2019 ECU only show the tasks if some have been done
+			// ---------------------------------------------------------------------
+			if (!localString.equalsIgnoreCase (StaticData.BLANK_STRING))
+				Utilities.popToast (localString);
 			// ---------------------------------------------------------------------
 			// 05/10/2016 ECU store the confirmed tasks in the record
 			// ---------------------------------------------------------------------
@@ -807,7 +838,7 @@ public class CarerActivity extends DibosonActivity
     	boolean startSelectorFlag = false;
     	// -------------------------------------------------------------------------
     	
-    	if (!carerNameView.getText().toString().equalsIgnoreCase(""))
+    	if (!carerNameView.getText().toString().equalsIgnoreCase(StaticData.BLANK_STRING))
     	{
     		// ---------------------------------------------------------------------
     		// 14/01/2014 ECU added the index to the carer's agency
@@ -826,12 +857,17 @@ public class CarerActivity extends DibosonActivity
     		{
     			// -----------------------------------------------------------------
     			// 28/08/2015 ECU this is a new carer to be added
+    			// 09/09/2017 ECU take into account the deleted flag and use Size
+    			//                which returns the number of 'non-deleted' entries
     			// -----------------------------------------------------------------
-    			if (PublicData.carers.size() > 0)
+    			if (Carer.Size() > 0)
     			{
     				for (int theIndex = 0; theIndex < PublicData.carers.size(); theIndex++)
     				{
-    					if (PublicData.carers.get (theIndex).name.equalsIgnoreCase(localCarer.name))
+    					// ---------------------------------------------------------
+    					// 09/09/2017 ECU only check records that are not deleted
+    					// ---------------------------------------------------------
+    					if (!PublicData.carers.get (theIndex).deleted && PublicData.carers.get (theIndex).name.equalsIgnoreCase(localCarer.name))
     					{
     						// -----------------------------------------------------
     						// 28/08/2015 ECU update the entry that matches the name
@@ -839,7 +875,7 @@ public class CarerActivity extends DibosonActivity
     						PublicData.carers.set (theIndex, localCarer);
     						// -----------------------------------------------------
     						existingEntry = true;
-    				
+    						// -----------------------------------------------------
     						break;
     					}
     		
@@ -900,10 +936,10 @@ public class CarerActivity extends DibosonActivity
 		if (thePosition == StaticData.NO_RESULT)
 		{
 			// ---------------------------------------------------------------------
-			carerNameView.setText ("");
-			carerPhoneView.setText ("");
-			carerBluetoothView.setText ("");
-			carerPhotoView.setText("");
+			carerNameView.setText (StaticData.BLANK_STRING);
+			carerPhoneView.setText (StaticData.BLANK_STRING);
+			carerBluetoothView.setText (StaticData.BLANK_STRING);
+			carerPhotoView.setText(StaticData.BLANK_STRING);
 			// ---------------------------------------------------------------------	
 			// 04/02/2014 ECU display the carer's agency
 			// ---------------------------------------------------------------------	
@@ -996,7 +1032,7 @@ public class CarerActivity extends DibosonActivity
 		// 05/02/2014 ECU put last entry to indicate create
 		// -------------------------------------------------------------------------
 		localNames [0] = "Click here to select Carer to Edit";
-		
+		// -------------------------------------------------------------------------
 		return localNames;
 	}
 	// =============================================================================
@@ -1040,8 +1076,8 @@ public class CarerActivity extends DibosonActivity
 			if (theStartActivityFlag)
 			{
 				SelectorUtilities.StartSelector (theContext,
-						new MethodDefinition<CarerActivity> (CarerActivity.class,"SelectAction"),
-						StaticData.OBJECT_CARERS);
+												 new MethodDefinition<CarerActivity> (CarerActivity.class,"SelectAction"),
+												 StaticData.OBJECT_CARERS);
 			}	
 			else	
 			{
@@ -1071,6 +1107,10 @@ public class CarerActivity extends DibosonActivity
 		if (PublicData.carers != null && PublicData.carers.size() > 0)
 		{
 			// ---------------------------------------------------------------------
+			// 23/07/2019 ECU make sure the 'selector' utility is initialised
+			// ---------------------------------------------------------------------
+			SelectorUtilities.Initialise ();
+			// ---------------------------------------------------------------------
 			BuildTheCarersList ();
 			SelectorUtilities.selectorParameter.rowLayout 				= R.layout.carer_visit_row;
 			SelectorUtilities.selectorParameter.classToRun 				= CarerActivity.class;
@@ -1092,6 +1132,10 @@ public class CarerActivity extends DibosonActivity
 			// ----------------------------------------------------------------------
 			SelectorUtilities.selectorParameter.finishOnSelect          = false;
 			// ----------------------------------------------------------------------
+			// 23/07/2019 ECU indicate that sorting is required
+			// ----------------------------------------------------------------------
+			SelectorUtilities.selectorParameter.sort	= true;
+			// ----------------------------------------------------------------------
 			SelectorUtilities.StartSelector (theContext,
 											 new MethodDefinition<CarerActivity> (CarerActivity.class,"SelectAction"),
 											 StaticData.OBJECT_CARERS);
@@ -1108,17 +1152,6 @@ public class CarerActivity extends DibosonActivity
 			Utilities.popToastAndSpeak (theContext.getString (R.string.carer_visit_long_press),true);
 			// ---------------------------------------------------------------------
 		}
-	}
-    // =============================================================================
-    static void LogTheData (String theData)
-	{
-    	// -------------------------------------------------------------------------
-		// 10/01/2014 ECU write data to the carer log file with timestamp
-    	// 11/01/2014 ECU add the terminating "\n"
-    	// -------------------------------------------------------------------------
-		Utilities.AppendToFile (PublicData.carerLogFile, Utilities.getAdjustedTime() + "\n   " + 
-							theData + "\n");
-		// -------------------------------------------------------------------------
 	}
     // ============================================================================= 
     public static void PhoneCallAction (int thePosition)
@@ -1212,6 +1245,15 @@ public class CarerActivity extends DibosonActivity
         	// ---------------------------------------------------------------------
         }
     };
+    // =============================================================================
+    public static void requestDisplayRefresh ()
+    {
+    	// -------------------------------------------------------------------------
+    	// 24/03/2017 ECU  called to try and get the display refreshed
+    	// -------------------------------------------------------------------------
+    	PublicData.carerRefreshWanted = true;
+    	// -------------------------------------------------------------------------
+    }
     // ============================================================================= 
     public static void SelectAction (int thePosition)
     {
@@ -1219,8 +1261,61 @@ public class CarerActivity extends DibosonActivity
     	// 29/08/2015 ECU created to handle the selection of an item
     	// -------------------------------------------------------------------------
     	// 05/11/2016 ECU tell the user what is happening
+    	// 24/03/2017 ECU give some information about the carer's visit
     	// -------------------------------------------------------------------------
-    	Utilities.popToastAndSpeak (PublicData.carers.get(thePosition).name + " has been selected",true);
+    	Carer localCarer = PublicData.carers.get(thePosition);
+    	// -------------------------------------------------------------------------
+    	// 24/03/2017 ECU initialise a response string
+    	// -------------------------------------------------------------------------
+    	String localResult = localCarer.name;
+    	// -------------------------------------------------------------------------
+    	// 24/03/2017 ECU check if there is a visit in progress
+    	// -------------------------------------------------------------------------
+    	if (localCarer.visitActive)
+    	{
+    		// ---------------------------------------------------------------------
+    		// 24/03/2017 ECU the visit is still active but this can mean
+    		//               	1) the visit has been started
+    		//                or
+    		//					2) the visit has ended but are still in the 'grace'
+    		//                     period in which the carer could reappear and the
+    		//                     existing visit will be extended rather than start
+    		//                     a new visit. This is to take account of detecting
+    		//                     a carer using 'bluetooth' which can drop out
+    		//                     occasionally
+    		// ---------------------------------------------------------------------
+    		if (localCarer.visitStarted)
+    		{
+    			// -----------------------------------------------------------------
+    			// 24/03/2017 ECU the visit has been started
+    			// -----------------------------------------------------------------
+    			localResult += String.format (context.getString (R.string.carer_visit_started_format),
+    					PublicData.dateFormatterShort.format (localCarer.startOfVisit));
+    			// -----------------------------------------------------------------
+    		}
+    		else
+    		{
+    			// -----------------------------------------------------------------
+    			// 24/03/2017 ECU visit has ended but are in the 'grace' period
+    			// -----------------------------------------------------------------
+    			localResult += String.format (context.getString(R.string.carer_visit_ended_format),
+    					PublicData.dateFormatterShort.format (localCarer.endOfVisit),
+    					PublicData.dateFormatterShort.format (localCarer.endOfVisit + PublicData.storedData.visit_end_milliseconds));
+    			// -----------------------------------------------------------------
+    		}
+    	}
+    	else
+    	{
+    		// ---------------------------------------------------------------------
+    		// 24/03/2017 ECU the selected carer is not visiting at the moment
+    		// ---------------------------------------------------------------------
+    		localResult += context.getString (R.string.carer_visit_none);
+    		// ---------------------------------------------------------------------
+    	}
+    	// -------------------------------------------------------------------------
+    	// 24/03/2017 ECU tell the user the situation
+    	// -------------------------------------------------------------------------
+    	Utilities.popToastAndSpeak (localResult,true);
     	// -------------------------------------------------------------------------   
     }
 	// ============================================================================= 
@@ -1277,9 +1372,10 @@ public class CarerActivity extends DibosonActivity
     	// -------------------------------------------------------------------------
 		// 10/06/2015 ECU created to initiate the dialogue
     	// 05/10/2016 ECU changed to use format resource
+    	// 07/06/2019 ECU changed from 'carer_delete_confirmation_format'
 		// -------------------------------------------------------------------------
 		DialogueUtilities.yesNo (Selector.context,"Item Deletion",
-				   				 String.format (Selector.context.getString (R.string.carer_delete_confirmation_format),PublicData.carers.get (thePosition).name),
+				   				 String.format (Selector.context.getString (R.string.delete_confirmation_format),PublicData.carers.get (thePosition).name),
 				   				 (Object) thePosition,
 				   				 Utilities.createAMethod (CarerActivity.class,"YesMethod",(Object) null),
 				   				 Utilities.createAMethod (CarerActivity.class,"NoMethod",(Object) null)); 
@@ -1305,6 +1401,12 @@ public class CarerActivity extends DibosonActivity
     		// 04/10/2016 ECU indicate that any carer display is updated
     		// ---------------------------------------------------------------------
     		PublicData.carerRefreshWanted = true;
+    		// ---------------------------------------------------------------------
+    		// 25/03/2017 ECU want to trigger an immediate synchronisation but because
+    		//                the writeObject.. is async then leave a slight delay
+    		//            ECU seems to be an issue here which needs investigation FRIG
+    		// ---------------------------------------------------------------------
+    		// FRIGUtilities.synchroniseNow (StaticData.ONE_SECOND * 5);
     		// ---------------------------------------------------------------------
     	}
     }
@@ -1350,17 +1452,37 @@ public class CarerActivity extends DibosonActivity
    		// -------------------------------------------------------------------------
    		if (localTasks != null)
    		{
-   			// -------------------------------------------------------------------------
-   			// 05/10/2016 ECU changed to use resource
-   			//            ECU set the 'null' cancel method
-   			// 06/12/2016 ECU changed to use PublicData.tas...
-   			// -------------------------------------------------------------------------
-   			DialogueUtilities.multipleChoice(Selector.context,
-   											 Selector.context.getString (R.string.carer_tasks_performed),
-   											 PublicData.tasksToDo, 
-   											 localTasks,
-   											 Utilities.createAMethod (CarerActivity.class,"ConfirmTasksMethod",localTasks),
-   											 Utilities.createAMethod (CarerActivity.class,"CancelTasksMethod",localTasks));
+   			// ---------------------------------------------------------------------
+   	   		// 25/03/2017 ECU check if there is a mismatch between the data
+   	   		// ---------------------------------------------------------------------
+   	   		if (PublicData.tasksToDo.length != localTasks.length)
+   	   		{
+   	   			// -----------------------------------------------------------------
+   	   			// 25/03/2017 ECU for some reason there has been a problem when syncing
+   	   			//                between devices so that the stored list of tasks is
+   	   			//                different in length to that stored in the carer
+   	   			// -----------------------------------------------------------------
+   	   			// 25/03/2017 ECU confirm the visit using the tasks stored in the carer's
+   	   			//                record
+   	   			// -----------------------------------------------------------------
+   	   			ConfirmTasksMethod (null);
+   	   			// -----------------------------------------------------------------
+   	   		}
+   	   		else
+   	   		{
+   	   			// -----------------------------------------------------------------
+   	   			// 05/10/2016 ECU changed to use resource
+   	   			//            ECU set the 'null' cancel method
+   	   			// 06/12/2016 ECU changed to use PublicData.tas...
+   	   			// -----------------------------------------------------------------
+   	   			DialogueUtilities.multipleChoice (Selector.context,
+   	   											  Selector.context.getString (R.string.carer_tasks_performed),
+   	   											  PublicData.tasksToDo, 
+   	   											  localTasks,
+   	   											  Utilities.createAMethod (CarerActivity.class,"ConfirmTasksMethod",localTasks),
+   	   											  Utilities.createAMethod (CarerActivity.class,"CancelTasksMethod",localTasks));
+   	   			// -----------------------------------------------------------------
+   	   		}
    		}
    		else
    		{
@@ -1383,8 +1505,9 @@ public class CarerActivity extends DibosonActivity
    		// 02/10/2016 ECU check if there is a visit scheduled for this time or, if
    		//                it is, then is this the scheduled carer
    		// 30/11/2016 ECU changed to use new method - code used to be here
+   		// 03/02/2018 ECU added the context as an argument
    		// -------------------------------------------------------------------------
-   		checkIfVisitScheduled (localCarerIndex);  		
+   		checkIfVisitScheduled (Selector.context,localCarerIndex);  		
    		// -------------------------------------------------------------------------
    		// 02/01/2016 ECU indicate that the visit has started
    		// 02/10/2016 ECU changed to use localCarerIndex
@@ -1410,12 +1533,35 @@ public class CarerActivity extends DibosonActivity
   		PublicData.carers.get (localSelection).Delete();
   		// -------------------------------------------------------------------------
   		// 04/10/2016 ECU added the 'false' argument
+  		// 06/09/2017 ECU changed the final flag to 'true' because of the new
+  		//                way that delete works means that the hash value does not
+  		//                change
+  		// 08/09/2017 ECU restore the final argument to 'false' because the Carer
+  		//                class now overrides the hashCode method and it accommodates
+  		//                the delete flag
   		// -------------------------------------------------------------------------
   		WriteCarerDataToDisk (Selector.context,false);
   		// -------------------------------------------------------------------------
-  		// 10/06/2015 ECU rebuild and then display the updated list view
+  		// 09/09/2017 ECU check if all of the carers have been deleted
   		// -------------------------------------------------------------------------
-  		Selector.Rebuild();
+  		if (Carer.Size () > 0)
+  		{
+  			// ---------------------------------------------------------------------
+  			// 10/06/2015 ECU rebuild and then display the updated list view
+  			// ---------------------------------------------------------------------
+  			Selector.Rebuild ();
+  			// ---------------------------------------------------------------------
+  		}
+  		else
+  		{
+  			// ---------------------------------------------------------------------
+  			// 09/09/2017 ECU all carers have been deleted so inform the use and
+  			//                terminate the activity
+  			// ---------------------------------------------------------------------
+  			Utilities.popToastAndSpeak (Selector.context.getString (R.string.carers_all_deleted));
+  			Selector.Finish ();
+  			// ---------------------------------------------------------------------
+  		}
   	}
   	// =============================================================================
 }

@@ -17,9 +17,11 @@ public class Complex
     /* ========================================================================== */
     public String toString() 
     {
+    	// ----------------------------------------------------------------------
     	// 18/10/2013 ECU put the complex number into a printable form
-    	
-        if (imaginaryPart == 0) return realPart + "";
+    	// 20/03/2017 ECU changed to use BLANK....
+    	// ----------------------------------------------------------------------
+        if (imaginaryPart == 0) return realPart + StaticData.BLANK_STRING;
         if (realPart == 0) return imaginaryPart + "i";
         if (imaginaryPart <  0) return realPart + " - " + (-imaginaryPart) + "i";
         

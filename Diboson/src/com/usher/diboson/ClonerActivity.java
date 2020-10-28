@@ -248,7 +248,7 @@ public class ClonerActivity extends DibosonActivity
 								(PublicData.projectFolder + getString(R.string.received_file_1) + getString(R.string.temp_file_socket))),
 						StaticData.SOCKET_CHUNK_SIZE).execute().get();
 				
-						filesList.append (" Result " + result + "\n");
+						filesList.append (" Result " + result + StaticData.NEWLINE);
 				} 
 				catch (Exception theException) 
 				{
@@ -731,7 +731,7 @@ public class ClonerActivity extends DibosonActivity
 		if (!ftpMode)
 		{
 			DeviceStatusHandler deviceStatusHandler 
-					= new DeviceStatusHandler (DialogueUtilities.context,
+					= new DeviceStatusHandler (DialogueUtilitiesNonStatic.context,
 											   Utilities.createAMethod (ClonerActivity.class,"StatusSuccessMethod"),
 											   Utilities.createAMethod (ClonerActivity.class,"StatusFailureMethod"));
 			deviceStatusHandler.initiate (IPaddress);

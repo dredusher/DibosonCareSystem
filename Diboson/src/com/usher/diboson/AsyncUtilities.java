@@ -1,6 +1,14 @@
 package com.usher.diboson;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.widget.ImageView;
 
 public class AsyncUtilities 
 {
@@ -13,6 +21,49 @@ public class AsyncUtilities
 	/* ============================================================================= */
 	//private static final String TAG = "AsyncUtilities";
 	/* ============================================================================= */
+	
+	// =============================================================================
+    public static class ImageLoadTask extends AsyncTask<Void, Void, Bitmap> 
+    {
+    	// -------------------------------------------------------------------------
+    	private String url;
+    	private ImageView imageView;
+    	// -------------------------------------------------------------------------
+    	public ImageLoadTask (String url, ImageView imageView) 
+    	{
+    		this.url = url;
+    		this.imageView = imageView;
+    	}
+    	// -------------------------------------------------------------------------
+    	@Override
+    	protected Bitmap doInBackground (Void... params) 
+    	{
+    		try 
+    		{
+    			URL urlConnection = new URL (url);
+    			HttpURLConnection connection 
+    				= (HttpURLConnection) urlConnection.openConnection();
+    			connection.setDoInput(true);
+    			connection.connect();
+    			InputStream input = connection.getInputStream();
+    			Bitmap myBitmap = BitmapFactory.decodeStream(input);
+    			return myBitmap;
+    		} 
+    		catch (Exception e) 
+    		{
+    			e.printStackTrace();
+    		}
+    		return null;
+    	}
+    	// -------------------------------------------------------------------------
+    	@Override
+    	protected void onPostExecute(Bitmap result) 
+    	{
+    		super.onPostExecute (result);
+    		imageView.setImageBitmap (result);
+    	}
+    	// -------------------------------------------------------------------------
+    }
 	// =============================================================================
 	public static Object readObjectFromDisk (Context theContext,String theFileName)
 	{
@@ -20,7 +71,7 @@ public class AsyncUtilities
 
 		try 
 		{
-			localObject = new AsyncClass (Utilities.createAMethod (Utilities.class,"readObjectFromDisk",theContext,""),
+			localObject = new AsyncClass (Utilities.createAMethod (Utilities.class,"readObjectFromDisk",theContext,StaticData.BLANK_STRING),
 					theContext,theFileName).execute().get();
 		} 
 		catch (Exception theException) 
@@ -35,7 +86,7 @@ public class AsyncUtilities
 	{
 		try
 		{
-			new AsyncClass (Utilities.createAMethod (Utilities.class, "writeObjectToDisk","",(Object)""),
+			new AsyncClass (Utilities.createAMethod (Utilities.class, "writeObjectToDisk",StaticData.BLANK_STRING,(Object)StaticData.BLANK_STRING),
 					theFileName,theObject).execute().get();
 	
 			return true;

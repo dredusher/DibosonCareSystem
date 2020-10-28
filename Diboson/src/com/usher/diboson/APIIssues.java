@@ -7,6 +7,7 @@ import java.net.SocketException;
 import java.util.Enumeration;
 import java.util.List;
 
+import android.content.Context;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.StrictMode;
@@ -21,26 +22,30 @@ public class APIIssues
 	// Testing
 	// =======
 	/* ============================================================================= */
-	public static void Fix001 (int theAPILevel)
+	public static void Fix001 (Context theContext,int theAPILevel)
 	{
 		// -------------------------------------------------------------------------
 		// 06/03/2014 ECU added to solve a problem with the speaking clock where
 		//                the TTS phrases seem to be batched (see Notes file)
 		// 09/03/2014 ECU the name was changed from 'SpeakingClock' because
 		//                it is used elsewhere
+		// 19/07/2017 ECU added theContext as an argument see 'raw/documentation_bugs'
 		// -------------------------------------------------------------------------
 		if (theAPILevel >= 19)
 		{
+			// ---------------------------------------------------------------------
+			// 19/07/2017 ECU changed the initial argument from 'null' to context
+			// ---------------------------------------------------------------------
 			MediaPlayer mediaPlayer 
-				= MediaPlayer.create(null, Uri.fromFile (new File(PublicData.projectFolder + "KitKat.wav")));
-		
+				= MediaPlayer.create (theContext, Uri.fromFile (new File(PublicData.projectFolder + "KitKat.wav")));
+			// ---------------------------------------------------------------------
 			// 10/08/2013 ECU check if it was possible to create the mediaPlayer
-	
+			// ---------------------------------------------------------------------
 			if (mediaPlayer != null)
 			{
+				// -----------------------------------------------------------------
 				mediaPlayer.start();
 				mediaPlayer.stop ();
-				
 				// -----------------------------------------------------------------
 				// 11/03/2014 ECU added the '.reset' because was getting warnings
 				//                about the media player being released with
@@ -49,6 +54,7 @@ public class APIIssues
 				mediaPlayer.reset ();
 				// -----------------------------------------------------------------
 				mediaPlayer.release();
+				// -----------------------------------------------------------------
 			}
 		}
 	}
@@ -58,7 +64,7 @@ public class APIIssues
 		// -------------------------------------------------------------------------
 		// 19/01/2015 ECU convert the length to an IPv4 (32 bit) mask as a string
 		// -------------------------------------------------------------------------
-		String	mask = "";
+		String	mask = StaticData.BLANK_STRING;
 		int 	octet;
 		// -------------------------------------------------------------------------
 		// 19/01/2015 ECU loop through the 4 octets that make up the IPv4 32 bit
@@ -69,7 +75,7 @@ public class APIIssues
 		for (int theIndex = 3; theIndex >= 0; theIndex--)
 		{
 			octet  = ((theNetworkLength >= 8) ? 8 : theNetworkLength);	
-			mask += ((0xFF << (8 - octet)) & 0xFF) + ((theIndex > 0) ? "." : "");	
+			mask += ((0xFF << (8 - octet)) & 0xFF) + ((theIndex > 0) ? "." : StaticData.BLANK_STRING);	
 			theNetworkLength -= 8;		
 		}
 		return mask;
@@ -94,7 +100,7 @@ public class APIIssues
     	if (theAPILevel > 9) 
 		{
 			StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-			StrictMode.setThreadPolicy(policy);
+			StrictMode.setThreadPolicy (policy);
 		}
     	// -------------------------------------------------------------------------
     }
@@ -149,8 +155,9 @@ public class APIIssues
     		//                should be OK
     		// ---------------------------------------------------------------------
     		return theCurrentNetworkMask;
+    		// ---------------------------------------------------------------------
     	}
-    	
+    	// -------------------------------------------------------------------------
     }
     // =============================================================================
 }

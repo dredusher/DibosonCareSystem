@@ -245,7 +245,7 @@ public class ArduinoCommunicatorService extends Service
                 
                 if (dataToSend == null) 
                 {     
-                    String text = String.format("No %1$s extra in intent!", DATA_EXTRA);
+                    String text = String.format ("No %1$s extra in intent!", DATA_EXTRA);
                     Utilities.popToast (text);
                     return;
                 }
